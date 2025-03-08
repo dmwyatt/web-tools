@@ -1,589 +1,623 @@
 <!DOCTYPE html>
 <html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Ford F-150 Towing Calculator</title>
-  <style>
-    * {
-      box-sizing: border-box;
-      margin: 0;
-      padding: 0;
-      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
-    }
-    
-    body {
-      background-color: #f5f5f5;
-      padding: 20px;
-    }
-    
-    .container {
-      max-width: 800px;
-      margin: 0 auto;
-      padding: 30px;
-      background-color: white;
-      border-radius: 8px;
-      box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
-    }
-    
-    h1 {
-      color: #0052cc;
-      margin-bottom: 24px;
-      font-size: 24px;
-    }
-    
-    .input-group {
-      margin-bottom: 20px;
-    }
-    
-    label {
-      display: block;
-      margin-bottom: 8px;
-      font-weight: 500;
-      color: #333;
-    }
-    
-    input {
-      width: 100%;
-      padding: 10px;
-      border: 1px solid #ccc;
-      border-radius: 4px;
-      font-size: 16px;
-    }
-    
-    textarea {
-      width: 100%;
-      padding: 10px;
-      border: 1px solid #ccc;
-      border-radius: 4px;
-      font-size: 16px;
-      resize: vertical;
-    }
-    
-    .hint {
-      display: block;
-      margin-top: 6px;
-      font-size: 14px;
-      color: #666;
-    }
-    
-    .small-btn {
-      padding: 6px 12px;
-      font-size: 14px;
-      background-color: #4caf50;
-      color: white;
-      border: none;
-      border-radius: 4px;
-      cursor: pointer;
-    }
-    
-    .small-btn:hover {
-      background-color: #388e3c;
-    }
-    
-    .extracted-vin-box {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      padding: 10px;
-      background-color: #f0f4f8;
-      border: 1px solid #d0dae6;
-      border-radius: 4px;
-      margin-bottom: 10px;
-    }
-    
-    .extracted-vin-box span {
-      font-family: monospace;
-      font-size: 18px;
-      font-weight: 600;
-      letter-spacing: 1px;
-    }
-    
-    .warning-message {
-      padding: 8px 12px;
-      background-color: #fff3cd;
-      border-left: 4px solid #ffc107;
-      color: #856404;
-      margin-bottom: 10px;
-    }
-    
-    .vin-option {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      padding: 8px 12px;
-      border: 1px solid #e9ecef;
-      border-radius: 4px;
-      margin-bottom: 6px;
-      background-color: #f8f9fa;
-      transition: background-color 0.2s;
-    }
-    
-    .vin-option:hover {
-      background-color: #e9ecef;
-      cursor: pointer;
-    }
-    
-    .vin-option.selected {
-      background-color: #e3f2fd;
-      border-color: #90caf9;
-    }
-    
-    .error {
-      padding: 15px;
-      margin-bottom: 20px;
-      background-color: #ffebee;
-      border-left: 4px solid #d32f2f;
-      color: #d32f2f;
-    }
-    
-    .results {
-      margin-top: 30px;
-      padding: 20px;
-      background-color: #f8f9fa;
-      border-radius: 6px;
-      border: 1px solid #e9ecef;
-      position: relative;
-    }
-    
-    .results h2 {
-      margin-bottom: 20px;
-      font-size: 20px;
-    }
-    
-    .results-grid {
-      display: grid;
-      grid-template-columns: 1fr;
-      gap: 24px;
-    }
-    
-    @media (min-width: 768px) {
-      .results-grid {
-        grid-template-columns: 1fr 1fr;
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Ford F-150 Towing Calculator</title>
+    <style>
+      * {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+          Oxygen, Ubuntu, Cantarell, "Open Sans", "Helvetica Neue", sans-serif;
       }
-    }
-    
-    h3 {
-      margin-bottom: 12px;
-      font-size: 18px;
-    }
-    
-    table {
-      width: 100%;
-      border-collapse: collapse;
-    }
-    
-    tr {
-      border-bottom: 1px solid #e9ecef;
-    }
-    
-    td {
-      padding: 10px 0;
-      vertical-align: top;
-    }
-    
-    td:first-child {
-      color: #555;
-      padding-right: 10px;
-    }
-    
-    td:last-child {
-      font-weight: 500;
-    }
-    
-    .tow-rating {
-      margin-top: 24px;
-      padding: 16px;
-      background-color: #e3f2fd;
-      border-left: 4px solid #1976d2;
-    }
-    
-    .tow-rating h3 {
-      color: #0d47a1;
-      margin-bottom: 8px;
-    }
-    
-    .note {
-      margin-top: 32px;
-      font-size: 14px;
-      color: #666;
-    }
-    
-    .loading {
-      display: inline-block;
-      width: 20px;
-      height: 20px;
-      border: 3px solid rgba(255, 255, 255, 0.3);
-      border-radius: 50%;
-      border-top-color: white;
-      animation: spin 1s ease-in-out infinite;
-      margin-right: 10px;
-      vertical-align: middle;
-    }
-    
-    .loading-overlay {
-      position: absolute;
-      top: 0;
-      left: 0;
-      right: 0;
-      bottom: 0;
-      background-color: rgba(255, 255, 255, 0.8);
-      display: flex;
-      flex-direction: column;
-      justify-content: center;
-      align-items: center;
-      border-radius: 6px;
-      z-index: 10;
-    }
-    
-    .loading-overlay .loading {
-      width: 30px;
-      height: 30px;
-      border: 3px solid rgba(0, 82, 204, 0.3);
-      border-top-color: #0052cc;
-      margin-bottom: 15px;
-    }
-    
-    .loading-overlay p {
-      color: #0052cc;
-      font-weight: 500;
-    }
-    
-    @keyframes spin {
-      to { transform: rotate(360deg); }
-    }
-  </style>
-</head>
-<body>
-  <div class="container">
-    <h1>Ford F-150 Towing Calculator</h1>
-    
-    <div class="input-group">
-      <label for="text-input">Enter or paste text containing VIN:</label>
-      <textarea 
-        id="text-input" 
-        placeholder="Paste any text that contains a VIN..."
-        rows="4"
-      ></textarea>
-      <span class="hint">Tool will automatically extract VINs and calculate towing capacity</span>
-    </div>
-    
-    <div class="input-group extracted-vin-container" style="display: none;">
-      <label>Extracted VIN:</label>
-      <div class="extracted-vin-box">
-        <span id="extracted-vin">No VIN detected</span>
-      </div>
-      <div id="multiple-vin-warning" class="warning-message" style="display: none;">
-        Multiple VINs detected! Please select one to use.
-      </div>
-      <div id="vin-list-container" style="display: none;"></div>
-    </div>
-    
-    <div class="input-group">
-      <label for="occupant-weight">Occupant & Cargo Weight (lbs):</label>
-      <input 
-        type="number" 
-        id="occupant-weight" 
-        value="700"
-        min="0"
-      >
-      <span class="hint">Default is 700 lbs (approx. 4 passengers + cargo). Changing weight updates calculation instantly.</span>
-    </div>
-    
-    <div id="error-container" class="error" style="display: none;"></div>
-    
-    <div id="results-container" class="results" style="display: none;">
-      <h2 id="vehicle-title">Results</h2>
-      
-      <div class="results-grid">
-        <div>
-          <h3>Vehicle Specifications</h3>
-          <table>
-            <tbody>
-              <tr>
-                <td>VIN:</td>
-                <td id="result-vin"></td>
-              </tr>
-              <tr>
-                <td>Maximum Payload:</td>
-                <td id="result-max-payload"></td>
-              </tr>
-              <tr>
-                <td>Maximum Conventional Towing:</td>
-                <td id="result-max-towing"></td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
-        
-        <div>
-          <h3>Towing Calculation</h3>
-          <table>
-            <tbody>
-              <tr>
-                <td>Occupant & Cargo Weight:</td>
-                <td id="result-occupant-weight"></td>
-              </tr>
-              <tr>
-                <td>Available Payload:</td>
-                <td id="result-available-payload"></td>
-              </tr>
-              <tr>
-                <td>Payload-Based Towing <span style="font-size: 12px;">(10% tongue weight)</span>:</td>
-                <td id="result-payload-based-towing"></td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
-      </div>
-      
-      <div class="tow-rating">
-        <h3>Safe Tow Rating: <span id="result-safe-tow-rating"></span></h3>
-        <p>This is the lower of the maximum conventional towing capacity and the payload-based towing capacity.</p>
-      </div>
-    </div>
-    
-    <p class="note">Note: This application connects directly to the Ford API to fetch real data for F-150 vehicles. Enter a valid F-150 VIN to get accurate towing calculations.</p>
-  </div>
 
-  <script>
-    // DOM Elements
-    const textInput = document.getElementById('text-input');
-    const occupantWeightInput = document.getElementById('occupant-weight');
-    const calculateBtn = document.getElementById('calculate-btn');
-    const errorContainer = document.getElementById('error-container');
-    const resultsContainer = document.getElementById('results-container');
-    const extractedVinContainer = document.querySelector('.extracted-vin-container');
-    const extractedVinEl = document.getElementById('extracted-vin');
-    const useVinBtn = document.getElementById('use-vin-btn');
-    const multipleVinWarning = document.getElementById('multiple-vin-warning');
-    const vinListContainer = document.getElementById('vin-list-container');
-    
-    // Current selected VIN
-    let selectedVin = null;
-    
-    // Format number with commas
-    function formatNumber(num) {
-      return Math.round(num).toLocaleString();
-    }
-    
-    // Function to extract VINs from text
-    // VINs are 17 characters long and contain letters and numbers
-    // They don't contain I, O, or Q to avoid confusion with 1 and 0
-    function extractVins(text) {
-      // Regex for finding potential VINs - 17 alphanumeric characters
-      // excluding I, O, Q (letters commonly excluded from VINs)
-      const vinRegex = /\b[A-HJ-NPR-Z0-9]{17}\b/gi;
-      
-      // Find all potential matches
-      const matches = text.match(vinRegex) || [];
-      
-      // Filter to keep only valid VINs
-      return matches.filter(potentialVin => {
-        // Additional validation could go here
-        // For example, checking the check digit (9th character)
-        return true;
-      });
-    }
-    
-    // API Call Function
-    async function getF150TowRating(vin, occupantWeight) {
-      // Ford API endpoint
-      const API_ENDPOINT = "https://api.pd01e.gcp.ford.com/digitalservices/fs/api/v3/vehicles/vehicle-type";
-      const CONSUMER_KEY = "Z28tbmEtZm9yZA=="; // Base64 encoded key
-      
-      try {
-        // Call the Ford API
-        const response = await fetch(`${API_ENDPOINT}?locale=en-us&country=USA`, {
-          headers: {
-            "Accept": "application/json",
-            "Consumer-Key": CONSUMER_KEY,
-            "Origin": "https://www.ford.com",
-            "Referer": "https://www.ford.com/",
-            "vin": vin
-          }
-        });
-        
-        if (!response.ok) {
-          throw new Error(`Ford API error: ${response.status}`);
+      body {
+        background-color: #f5f5f5;
+        padding: 20px;
+      }
+
+      .container {
+        max-width: 800px;
+        margin: 0 auto;
+        padding: 30px;
+        background-color: white;
+        border-radius: 8px;
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+      }
+
+      h1 {
+        color: #0052cc;
+        margin-bottom: 24px;
+        font-size: 24px;
+      }
+
+      .input-group {
+        margin-bottom: 20px;
+      }
+
+      label {
+        display: block;
+        margin-bottom: 8px;
+        font-weight: 500;
+        color: #333;
+      }
+
+      input {
+        width: 100%;
+        padding: 10px;
+        border: 1px solid #ccc;
+        border-radius: 4px;
+        font-size: 16px;
+      }
+
+      textarea {
+        width: 100%;
+        padding: 10px;
+        border: 1px solid #ccc;
+        border-radius: 4px;
+        font-size: 16px;
+        resize: vertical;
+      }
+
+      .hint {
+        display: block;
+        margin-top: 6px;
+        font-size: 14px;
+        color: #666;
+      }
+
+      .small-btn {
+        padding: 6px 12px;
+        font-size: 14px;
+        background-color: #4caf50;
+        color: white;
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+      }
+
+      .small-btn:hover {
+        background-color: #388e3c;
+      }
+
+      .extracted-vin-box {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 10px;
+        background-color: #f0f4f8;
+        border: 1px solid #d0dae6;
+        border-radius: 4px;
+        margin-bottom: 10px;
+      }
+
+      .extracted-vin-box span {
+        font-family: monospace;
+        font-size: 18px;
+        font-weight: 600;
+        letter-spacing: 1px;
+      }
+
+      .warning-message {
+        padding: 8px 12px;
+        background-color: #fff3cd;
+        border-left: 4px solid #ffc107;
+        color: #856404;
+        margin-bottom: 10px;
+      }
+
+      .vin-option {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 8px 12px;
+        border: 1px solid #e9ecef;
+        border-radius: 4px;
+        margin-bottom: 6px;
+        background-color: #f8f9fa;
+        transition: background-color 0.2s;
+      }
+
+      .vin-option:hover {
+        background-color: #e9ecef;
+        cursor: pointer;
+      }
+
+      .vin-option.selected {
+        background-color: #e3f2fd;
+        border-color: #90caf9;
+      }
+
+      .error {
+        padding: 15px;
+        margin-bottom: 20px;
+        background-color: #ffebee;
+        border-left: 4px solid #d32f2f;
+        color: #d32f2f;
+      }
+
+      .results {
+        margin-top: 30px;
+        padding: 20px;
+        background-color: #f8f9fa;
+        border-radius: 6px;
+        border: 1px solid #e9ecef;
+        position: relative;
+      }
+
+      .results h2 {
+        margin-bottom: 20px;
+        font-size: 20px;
+      }
+
+      .results-grid {
+        display: grid;
+        grid-template-columns: 1fr;
+        gap: 24px;
+      }
+
+      @media (min-width: 768px) {
+        .results-grid {
+          grid-template-columns: 1fr 1fr;
         }
-        
-        // Parse the response
-        const data = await response.json();
-        const vehicleData = data.vehicleData;
-        
-        // Get the payload and max tow values
-        const maxPayload = parseInt(vehicleData.maximumPayloadPounds, 10);
-        const maxTow = parseInt(vehicleData.maximumConventionalPounds, 10);
-        
-        // Calculate with custom occupant + cargo weight
-        const availablePayload = maxPayload - occupantWeight;
-        const payloadBasedTowing = availablePayload / 0.1; // 10% tongue weight
-        
-        // Get the safe tow rating (lower of payload-based or manufacturer max)
-        const safeTowRating = Math.min(maxTow, payloadBasedTowing);
-        
-        return {
-          vin: vehicleData.vin,
-          model: vehicleData.model,
-          year: vehicleData.year,
-          maxPayloadPounds: maxPayload,
-          maxConventionalTowing: maxTow,
-          occupantAndCargoWeight: occupantWeight,
-          availablePayload: availablePayload,
-          payloadBasedTowing: payloadBasedTowing,
-          calculatedTowRating: safeTowRating,
-          rawResponse: data // Include full API response for reference
-        };
-        
-      } catch (error) {
-        console.error(`Failed to get tow rating for VIN ${vin}:`, error);
-        throw error;
       }
-    }
-    
-    // Display Results Function
-    function displayResults(results) {
-      // Set all the result fields
-      document.getElementById('vehicle-title').textContent = `Results for ${results.year} ${results.model}`;
-      document.getElementById('result-vin').textContent = results.vin;
-      document.getElementById('result-max-payload').textContent = `${formatNumber(results.maxPayloadPounds)} lbs`;
-      document.getElementById('result-max-towing').textContent = `${formatNumber(results.maxConventionalTowing)} lbs`;
-      document.getElementById('result-occupant-weight').textContent = `${formatNumber(results.occupantAndCargoWeight)} lbs`;
-      document.getElementById('result-available-payload').textContent = `${formatNumber(results.availablePayload)} lbs`;
-      document.getElementById('result-payload-based-towing').textContent = `${formatNumber(results.payloadBasedTowing)} lbs`;
-      document.getElementById('result-safe-tow-rating').textContent = `${formatNumber(results.calculatedTowRating)} lbs`;
-      
-      // Show the results container
-      resultsContainer.style.display = 'block';
-    }
-    
-    // Function to process input text and extract VINs
-    function processInputText() {
-      const text = textInput.value.trim();
-      
-      if (!text) {
-        extractedVinContainer.style.display = 'none';
-        return;
+
+      h3 {
+        margin-bottom: 12px;
+        font-size: 18px;
       }
-      
-      // Extract VINs
-      const vins = extractVins(text);
-      
-      // Show the VIN container
-      extractedVinContainer.style.display = 'block';
-      
-      if (vins.length === 0) {
-        // No VINs found
-        extractedVinEl.textContent = 'No VIN detected';
-        useVinBtn.style.display = 'none';
-        multipleVinWarning.style.display = 'none';
-        vinListContainer.style.display = 'none';
-        selectedVin = null;
-        
-      } else if (vins.length === 1) {
-        // Single VIN found - automatically select it and calculate
-        extractedVinEl.textContent = vins[0];
-        useVinBtn.style.display = 'none';
-        multipleVinWarning.style.display = 'none';
-        vinListContainer.style.display = 'none';
-        selectedVin = vins[0];
-        
-        // Automatically trigger calculation
-        performCalculation(selectedVin);
-        
-      } else {
-        // Multiple VINs found
-        extractedVinEl.textContent = 'Multiple VINs detected';
-        useVinBtn.style.display = 'none';
-        multipleVinWarning.style.display = 'block';
-        vinListContainer.style.display = 'block';
-        
-        // Create a list of VIN options
-        vinListContainer.innerHTML = '';
-        vins.forEach(vin => {
-          const vinOption = document.createElement('div');
-          vinOption.className = 'vin-option';
-          vinOption.innerHTML = `
+
+      table {
+        width: 100%;
+        border-collapse: collapse;
+      }
+
+      tr {
+        border-bottom: 1px solid #e9ecef;
+      }
+
+      td {
+        padding: 10px 0;
+        vertical-align: top;
+      }
+
+      td:first-child {
+        color: #555;
+        padding-right: 10px;
+      }
+
+      td:last-child {
+        font-weight: 500;
+      }
+
+      .tow-rating {
+        margin-top: 24px;
+        padding: 16px;
+        background-color: #e3f2fd;
+        border-left: 4px solid #1976d2;
+      }
+
+      .tow-rating h3 {
+        color: #0d47a1;
+        margin-bottom: 8px;
+      }
+
+      .note {
+        margin-top: 32px;
+        font-size: 14px;
+        color: #666;
+      }
+
+      .loading {
+        display: inline-block;
+        width: 20px;
+        height: 20px;
+        border: 3px solid rgba(255, 255, 255, 0.3);
+        border-radius: 50%;
+        border-top-color: white;
+        animation: spin 1s ease-in-out infinite;
+        margin-right: 10px;
+        vertical-align: middle;
+      }
+
+      .loading-overlay {
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background-color: rgba(255, 255, 255, 0.8);
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        border-radius: 6px;
+        z-index: 10;
+      }
+
+      .loading-overlay .loading {
+        width: 30px;
+        height: 30px;
+        border: 3px solid rgba(0, 82, 204, 0.3);
+        border-top-color: #0052cc;
+        margin-bottom: 15px;
+      }
+
+      .loading-overlay p {
+        color: #0052cc;
+        font-weight: 500;
+      }
+
+      @keyframes spin {
+        to {
+          transform: rotate(360deg);
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <h1>Ford F-150 Towing Calculator</h1>
+
+      <div class="input-group">
+        <label for="text-input">Enter or paste text containing VIN:</label>
+        <textarea
+          id="text-input"
+          placeholder="Paste any text that contains a VIN..."
+          rows="4"
+        ></textarea>
+        <span class="hint"
+          >Tool will automatically extract VINs and calculate towing
+          capacity</span
+        >
+      </div>
+
+      <div class="input-group extracted-vin-container" style="display: none">
+        <label>Extracted VIN:</label>
+        <div class="extracted-vin-box">
+          <span id="extracted-vin">No VIN detected</span>
+        </div>
+        <div
+          id="multiple-vin-warning"
+          class="warning-message"
+          style="display: none"
+        >
+          Multiple VINs detected! Please select one to use.
+        </div>
+        <div id="vin-list-container" style="display: none"></div>
+      </div>
+
+      <div class="input-group">
+        <label for="occupant-weight">Occupant & Cargo Weight (lbs):</label>
+        <input type="number" id="occupant-weight" value="700" min="0" />
+        <span class="hint"
+          >Default is 700 lbs (approx. 4 passengers + cargo). Changing weight
+          updates calculation instantly.</span
+        >
+      </div>
+
+      <div id="error-container" class="error" style="display: none"></div>
+
+      <div id="results-container" class="results" style="display: none">
+        <h2 id="vehicle-title">Results</h2>
+
+        <div class="results-grid">
+          <div>
+            <h3>Vehicle Specifications</h3>
+            <table>
+              <tbody>
+                <tr>
+                  <td>VIN:</td>
+                  <td id="result-vin"></td>
+                </tr>
+                <tr>
+                  <td>Maximum Payload:</td>
+                  <td id="result-max-payload"></td>
+                </tr>
+                <tr>
+                  <td>Maximum Conventional Towing:</td>
+                  <td id="result-max-towing"></td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <div>
+            <h3>Towing Calculation</h3>
+            <table>
+              <tbody>
+                <tr>
+                  <td>Occupant & Cargo Weight:</td>
+                  <td id="result-occupant-weight"></td>
+                </tr>
+                <tr>
+                  <td>Available Payload:</td>
+                  <td id="result-available-payload"></td>
+                </tr>
+                <tr>
+                  <td>
+                    Payload-Based Towing
+                    <span style="font-size: 12px">(10% tongue weight)</span>:
+                  </td>
+                  <td id="result-payload-based-towing"></td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <div class="tow-rating">
+          <h3>Safe Tow Rating: <span id="result-safe-tow-rating"></span></h3>
+          <p>
+            This is the lower of the maximum conventional towing capacity and
+            the payload-based towing capacity.
+          </p>
+        </div>
+      </div>
+
+      <p class="note">
+        Note: This application connects directly to the Ford API to fetch real
+        data for F-150 vehicles. Enter a valid F-150 VIN to get accurate towing
+        calculations.
+      </p>
+    </div>
+
+    <script>
+      // DOM Elements
+      const textInput = document.getElementById("text-input");
+      const occupantWeightInput = document.getElementById("occupant-weight");
+      const calculateBtn = document.getElementById("calculate-btn");
+      const errorContainer = document.getElementById("error-container");
+      const resultsContainer = document.getElementById("results-container");
+      const extractedVinContainer = document.querySelector(
+        ".extracted-vin-container"
+      );
+      const extractedVinEl = document.getElementById("extracted-vin");
+      const multipleVinWarning = document.getElementById(
+        "multiple-vin-warning"
+      );
+      const vinListContainer = document.getElementById("vin-list-container");
+
+      // Current selected VIN
+      let selectedVin = null;
+
+      // Format number with commas
+      function formatNumber(num) {
+        return Math.round(num).toLocaleString();
+      }
+
+      // Function to extract VINs from text
+      // VINs are 17 characters long and contain letters and numbers
+      // They don't contain I, O, or Q to avoid confusion with 1 and 0
+      function extractVins(text) {
+        // Regex for finding potential VINs - 17 alphanumeric characters
+        // excluding I, O, Q (letters commonly excluded from VINs)
+        const vinRegex = /\b[A-HJ-NPR-Z0-9]{17}\b/gi;
+
+        // Find all potential matches
+        const matches = text.match(vinRegex) || [];
+
+        // Filter to keep only valid VINs
+        return matches.filter((potentialVin) => {
+          // Additional validation could go here
+          // For example, checking the check digit (9th character)
+          return true;
+        });
+      }
+
+      // API Call Function
+      async function getF150TowRating(vin, occupantWeight) {
+        // Ford API endpoint
+        const API_ENDPOINT =
+          "https://api.pd01e.gcp.ford.com/digitalservices/fs/api/v3/vehicles/vehicle-type";
+        const CONSUMER_KEY = "Z28tbmEtZm9yZA=="; // Base64 encoded key
+
+        try {
+          // Call the Ford API
+          const response = await fetch(
+            `${API_ENDPOINT}?locale=en-us&country=USA`,
+            {
+              headers: {
+                Accept: "application/json",
+                "Consumer-Key": CONSUMER_KEY,
+                Origin: "https://www.ford.com",
+                Referer: "https://www.ford.com/",
+                vin: vin,
+              },
+            }
+          );
+
+          if (!response.ok) {
+            throw new Error(`Ford API error: ${response.status}`);
+          }
+
+          // Parse the response
+          const data = await response.json();
+          const vehicleData = data.vehicleData;
+
+          // Get the payload and max tow values
+          const maxPayload = parseInt(vehicleData.maximumPayloadPounds, 10);
+          const maxTow = parseInt(vehicleData.maximumConventionalPounds, 10);
+
+          // Calculate with custom occupant + cargo weight
+          const availablePayload = maxPayload - occupantWeight;
+          const payloadBasedTowing = availablePayload / 0.1; // 10% tongue weight
+
+          // Get the safe tow rating (lower of payload-based or manufacturer max)
+          const safeTowRating = Math.min(maxTow, payloadBasedTowing);
+
+          return {
+            vin: vehicleData.vin,
+            model: vehicleData.model,
+            year: vehicleData.year,
+            maxPayloadPounds: maxPayload,
+            maxConventionalTowing: maxTow,
+            occupantAndCargoWeight: occupantWeight,
+            availablePayload: availablePayload,
+            payloadBasedTowing: payloadBasedTowing,
+            calculatedTowRating: safeTowRating,
+            rawResponse: data, // Include full API response for reference
+          };
+        } catch (error) {
+          console.error(`Failed to get tow rating for VIN ${vin}:`, error);
+          throw error;
+        }
+      }
+
+      // Display Results Function
+      function displayResults(results) {
+        // Set all the result fields
+        document.getElementById(
+          "vehicle-title"
+        ).textContent = `Results for ${results.year} ${results.model}`;
+        document.getElementById("result-vin").textContent = results.vin;
+        document.getElementById(
+          "result-max-payload"
+        ).textContent = `${formatNumber(results.maxPayloadPounds)} lbs`;
+        document.getElementById(
+          "result-max-towing"
+        ).textContent = `${formatNumber(results.maxConventionalTowing)} lbs`;
+        document.getElementById(
+          "result-occupant-weight"
+        ).textContent = `${formatNumber(results.occupantAndCargoWeight)} lbs`;
+        document.getElementById(
+          "result-available-payload"
+        ).textContent = `${formatNumber(results.availablePayload)} lbs`;
+        document.getElementById(
+          "result-payload-based-towing"
+        ).textContent = `${formatNumber(results.payloadBasedTowing)} lbs`;
+        document.getElementById(
+          "result-safe-tow-rating"
+        ).textContent = `${formatNumber(results.calculatedTowRating)} lbs`;
+
+        // Show the results container
+        resultsContainer.style.display = "block";
+      }
+
+      // Function to process input text and extract VINs
+      function processInputText() {
+        const text = textInput.value.trim();
+
+        if (!text) {
+          extractedVinContainer.style.display = "none";
+          return;
+        }
+
+        // Extract VINs
+        const vins = extractVins(text);
+
+        // Show the VIN container
+        extractedVinContainer.style.display = "block";
+
+        if (vins.length === 0) {
+          // No VINs found
+          extractedVinEl.textContent = "No VIN detected";
+          multipleVinWarning.style.display = "none";
+          vinListContainer.style.display = "none";
+          selectedVin = null;
+        } else if (vins.length === 1) {
+          // Single VIN found - automatically select it and calculate
+          extractedVinEl.textContent = vins[0];
+          multipleVinWarning.style.display = "none";
+          vinListContainer.style.display = "none";
+          selectedVin = vins[0];
+
+          // Automatically trigger calculation
+          performCalculation(selectedVin);
+        } else {
+          // Multiple VINs found
+          extractedVinEl.textContent = "Multiple VINs detected";
+          multipleVinWarning.style.display = "block";
+          vinListContainer.style.display = "block";
+
+          // Create a list of VIN options
+          vinListContainer.innerHTML = "";
+          vins.forEach((vin) => {
+            const vinOption = document.createElement("div");
+            vinOption.className = "vin-option";
+            vinOption.innerHTML = `
             <span>${vin}</span>
             <button class="small-btn select-vin-btn">Select</button>
           `;
-          
-          // Add click handler for the button
-          const selectBtn = vinOption.querySelector('.select-vin-btn');
-          selectBtn.addEventListener('click', function() {
-            selectedVin = vin;
-            extractedVinEl.textContent = vin;
-            
-            // Highlight the selected VIN
-            document.querySelectorAll('.vin-option').forEach(option => {
-              option.classList.remove('selected');
+
+            // Add click handler for the button
+            const selectBtn = vinOption.querySelector(".select-vin-btn");
+            selectBtn.addEventListener("click", function () {
+              selectedVin = vin;
+              extractedVinEl.textContent = vin;
+
+              // Highlight the selected VIN
+              document.querySelectorAll(".vin-option").forEach((option) => {
+                option.classList.remove("selected");
+              });
+              vinOption.classList.add("selected");
+
+              // Automatically trigger calculation with the selected VIN
+              performCalculation(selectedVin);
             });
-            vinOption.classList.add('selected');
-            
-            // Automatically trigger calculation with the selected VIN
-            performCalculation(selectedVin);
+
+            vinListContainer.appendChild(vinOption);
           });
-          
-          vinListContainer.appendChild(vinOption);
-        });
-        
-        // Reset selected VIN
-        selectedVin = null;
-      }
-    }
-    
-    // Function to perform the tow rating calculation
-    async function performCalculation(vin) {
-      // Show loading indicator in results section
-      if (resultsContainer.style.display === 'block') {
-        // If already displaying results, show a loading overlay
-        let loadingOverlay = document.getElementById('loading-overlay');
-        if (!loadingOverlay) {
-          loadingOverlay = document.createElement('div');
-          loadingOverlay.id = 'loading-overlay';
-          loadingOverlay.className = 'loading-overlay';
-          loadingOverlay.innerHTML = '<div class="loading"></div><p>Updating...</p>';
-          resultsContainer.appendChild(loadingOverlay);
-        } else {
-          loadingOverlay.style.display = 'flex';
+
+          // Reset selected VIN
+          selectedVin = null;
         }
       }
-      
-      errorContainer.style.display = 'none';
-      
-      try {
-        const occupantWeight = parseInt(occupantWeightInput.value, 10) || 700;
-        
-        // Call API and get results
-        const results = await getF150TowRating(vin, occupantWeight);
-        
-        // Display results
-        displayResults(results);
-        
-      } catch (error) {
-        // Show error
-        errorContainer.textContent = error.message || 'An error occurred while fetching vehicle data';
-        errorContainer.style.display = 'block';
-        resultsContainer.style.display = 'none';
-      } finally {
-        // Remove loading overlay if it exists
-        const loadingOverlay = document.getElementById('loading-overlay');
-        if (loadingOverlay) {
-          loadingOverlay.style.display = 'none';
+
+      // Function to perform the tow rating calculation
+      async function performCalculation(vin) {
+        // Show loading indicator in results section
+        if (resultsContainer.style.display === "block") {
+          // If already displaying results, show a loading overlay
+          let loadingOverlay = document.getElementById("loading-overlay");
+          if (!loadingOverlay) {
+            loadingOverlay = document.createElement("div");
+            loadingOverlay.id = "loading-overlay";
+            loadingOverlay.className = "loading-overlay";
+            loadingOverlay.innerHTML =
+              '<div class="loading"></div><p>Updating...</p>';
+            resultsContainer.appendChild(loadingOverlay);
+          } else {
+            loadingOverlay.style.display = "flex";
+          }
+        }
+
+        errorContainer.style.display = "none";
+
+        try {
+          const occupantWeight = parseInt(occupantWeightInput.value, 10) || 700;
+
+          // Call API and get results
+          const results = await getF150TowRating(vin, occupantWeight);
+
+          // Display results
+          displayResults(results);
+        } catch (error) {
+          // Show error
+          errorContainer.textContent =
+            error.message || "An error occurred while fetching vehicle data";
+          errorContainer.style.display = "block";
+          resultsContainer.style.display = "none";
+        } finally {
+          // Remove loading overlay if it exists
+          const loadingOverlay = document.getElementById("loading-overlay");
+          if (loadingOverlay) {
+            loadingOverlay.style.display = "none";
+          }
         }
       }
-    }
-    
-    // Event for processing pasted text
-    textInput.addEventListener('input', processInputText);
-    
-    // Add event listener for occupant weight to recalculate in real-time
-    occupantWeightInput.addEventListener('input', function() {
-      if (selectedVin) {
-        performCalculation(selectedVin);
-      }
-    });
-  </script>
-</body>
+
+      // Event for processing pasted text
+      textInput.addEventListener("input", processInputText);
+
+      // Add event listener for occupant weight to recalculate in real-time
+      occupantWeightInput.addEventListener("input", function () {
+        if (selectedVin) {
+          performCalculation(selectedVin);
+        }
+      });
+    </script>
+  </body>
 </html>
