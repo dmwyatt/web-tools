@@ -294,6 +294,45 @@
           transform: rotate(360deg);
         }
       }
+
+      .url-input-container {
+        display: flex;
+        gap: 10px;
+      }
+
+      .url-input-container input {
+        flex: 1;
+      }
+
+      #fetch-url-btn {
+        background-color: #0052cc;
+      }
+
+      #fetch-url-btn:hover {
+        background-color: #003d99;
+      }
+
+      .loading-btn {
+        position: relative;
+        pointer-events: none;
+        color: transparent !important;
+      }
+
+      .loading-btn::after {
+        content: "";
+        position: absolute;
+        width: 16px;
+        height: 16px;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        margin: auto;
+        border: 3px solid rgba(255, 255, 255, 0.3);
+        border-radius: 50%;
+        border-top-color: white;
+        animation: spin 1s ease-in-out infinite;
+      }
     </style>
   </head>
   <body>
@@ -310,6 +349,22 @@
         <span class="hint"
           >Tool will automatically extract VINs and calculate towing
           capacity</span
+        >
+      </div>
+
+      <div class="input-group">
+        <label for="url-input">Or enter a URL to search for VINs:</label>
+        <div class="url-input-container">
+          <input
+            type="url"
+            id="url-input"
+            placeholder="https://example.com/page-with-vin"
+          />
+          <button id="fetch-url-btn" class="small-btn">Fetch</button>
+        </div>
+        <span class="hint"
+          >Enter a web page URL that might contain VINs (may not work with all
+          websites due to security restrictions)</span
         >
       </div>
 
@@ -430,6 +485,8 @@
         "multiple-vin-warning"
       );
       const vinListContainer = document.getElementById("vin-list-container");
+      const urlInput = document.getElementById("url-input");
+      const fetchUrlBtn = document.getElementById("fetch-url-btn");
 
       // Current selected VIN
       let selectedVin = null;
@@ -452,11 +509,55 @@
         // Find all potential matches
         const matches = text.match(vinRegex) || [];
 
-        // Filter to keep only valid VINs
+        // Basic Ford VIN check - first character should be F for Ford VINs
+        // or 1F for Ford vehicles built in US
+        // Filter matches and deduplicate
+        const uniqueVins = [];
+        const seenVins = new Set();
+
         return matches.filter((potentialVin) => {
-          // Additional validation could go here
-          // For example, checking the check digit (9th character)
-          return true;
+          // Convert to uppercase for consistency
+          potentialVin = potentialVin.toUpperCase();
+
+          // Skip if we've already seen this VIN
+          if (seenVins.has(potentialVin)) {
+            return false;
+          }
+
+          // Perform basic VIN validation
+
+          // Check for common patterns that aren't VINs
+          // Example: reject strings like "u0022SharedNewVdp"
+          if (
+            potentialVin.includes("SHARED") ||
+            potentialVin.includes("U0022") ||
+            potentialVin.includes("\\U") ||
+            /[A-Z0-9]{5}U[A-Z0-9]{11}/.test(potentialVin)
+          ) {
+            return false;
+          }
+
+          // More Ford-specific VIN validation
+          // Most Ford VINs start with F or 1F
+          // Position 10 should be a valid year character
+          const validYearChars = "ABCDEFGHJKLMNPRSTVWXY123456789";
+          const yearChar = potentialVin.charAt(9); // 10th character (0-indexed)
+
+          // Basic structural validation
+          const isLikelyVin =
+            // Contains at least 2 letters and 5 numbers (most VINs have a mix)
+            /[A-Z].*[A-Z]/.test(potentialVin) &&
+            /[0-9].*[0-9].*[0-9].*[0-9].*[0-9]/.test(potentialVin) &&
+            // Year character is valid
+            validYearChars.includes(yearChar);
+
+          // Only add if it passes validation
+          if (isLikelyVin) {
+            seenVins.add(potentialVin);
+            return true;
+          }
+
+          return false;
         });
       }
 
@@ -801,6 +902,173 @@
       occupantWeightInput.addEventListener("input", function () {
         if (selectedVin) {
           performCalculation(selectedVin);
+        }
+      });
+
+      // Function to fetch content from a URL
+      async function fetchUrlContent(url) {
+        // Check and normalize URL
+        if (!url.startsWith("http://") && !url.startsWith("https://")) {
+          url = "https://" + url;
+        }
+
+        // Show loading state
+        fetchUrlBtn.classList.add("loading-btn");
+        fetchUrlBtn.textContent = "";
+        errorContainer.style.display = "none";
+
+        // First check if the URL itself contains a VIN
+        console.log("Checking URL for VINs:", url);
+        const urlVins = extractVins(url);
+
+        if (urlVins.length > 0) {
+          console.log("Found VIN(s) in URL:", urlVins);
+
+          // Display the found VINs
+          textInput.value = "VIN found in URL: " + urlVins.join(", ");
+          processInputText();
+
+          // If only one VIN found, auto-select it
+          if (urlVins.length === 1) {
+            selectedVin = urlVins[0];
+            performCalculation(selectedVin);
+          }
+
+          // Reset loading state and return
+          fetchUrlBtn.classList.remove("loading-btn");
+          fetchUrlBtn.textContent = "Fetch";
+          return true;
+        }
+
+        // If no VIN in URL, proceed with fetching the page content
+        try {
+          // Try direct fetch first
+          console.log(
+            "No VIN found in URL. Attempting direct fetch of URL:",
+            url
+          );
+          const directResponse = await fetch(url);
+
+          // If successful, process the response
+          const html = await directResponse.text();
+          const tempDiv = document.createElement("div");
+          tempDiv.innerHTML = html;
+          const text = tempDiv.textContent || tempDiv.innerText || "";
+
+          // Set the text in the text input and process it
+          textInput.value = text;
+          processInputText();
+
+          console.log("Direct fetch successful");
+          return true;
+        } catch (directError) {
+          // If direct fetch fails, try with CORS proxy
+          console.log("Direct fetch failed:", directError.message);
+
+          // Try multiple proxies in sequence
+          const proxies = [
+            {
+              name: "corsproxy.io",
+              url: "https://corsproxy.io/?",
+              urlFormatter: (targetUrl) =>
+                "https://corsproxy.io/?" + encodeURIComponent(targetUrl),
+            },
+            {
+              name: "allorigins.win",
+              url: "https://api.allorigins.win/raw?url=",
+              urlFormatter: (targetUrl) =>
+                "https://api.allorigins.win/raw?url=" +
+                encodeURIComponent(targetUrl),
+            },
+            {
+              name: "cors-anywhere (limited)",
+              url: "https://cors-anywhere.herokuapp.com/",
+              urlFormatter: (targetUrl) =>
+                "https://cors-anywhere.herokuapp.com/" + targetUrl,
+            },
+          ];
+
+          // Try each proxy in sequence
+          for (const proxy of proxies) {
+            try {
+              console.log(`Attempting fetch with ${proxy.name} proxy`);
+              const proxyUrl = proxy.urlFormatter(url);
+              const proxyResponse = await fetch(proxyUrl);
+
+              // Check if we got an actual response
+              if (!proxyResponse.ok) {
+                console.log(
+                  `${proxy.name} proxy returned ${proxyResponse.status}: ${proxyResponse.statusText}`
+                );
+
+                // If 404 from the proxy, try the next one
+                if (proxyResponse.status === 404) {
+                  console.log(
+                    `404 error from ${proxy.name}, trying next proxy`
+                  );
+                  continue;
+                }
+
+                throw new Error(
+                  `${proxy.name} proxy error: ${proxyResponse.status}`
+                );
+              }
+
+              // Get the HTML content as text
+              const html = await proxyResponse.text();
+
+              // Convert HTML to plain text
+              const tempDiv = document.createElement("div");
+              tempDiv.innerHTML = html;
+              const text = tempDiv.textContent || tempDiv.innerText || "";
+
+              // Set the text in the text input and process it
+              textInput.value = text;
+              processInputText();
+
+              console.log(`${proxy.name} proxy fetch successful`);
+              return true;
+            } catch (proxyError) {
+              console.error(
+                `${proxy.name} proxy attempt failed:`,
+                proxyError.message
+              );
+              // Continue to the next proxy
+            }
+          }
+
+          // If we get here, all proxies failed
+          errorContainer.textContent = `Error fetching URL: All proxy attempts failed. The site may be blocking access or the URL might be invalid.`;
+          errorContainer.style.display = "block";
+          return false;
+        } finally {
+          // Reset loading state
+          fetchUrlBtn.classList.remove("loading-btn");
+          fetchUrlBtn.textContent = "Fetch";
+        }
+      }
+
+      // Add event listener for URL fetch button
+      fetchUrlBtn.addEventListener("click", function () {
+        const url = urlInput.value.trim();
+        if (url) {
+          fetchUrlContent(url);
+        } else {
+          errorContainer.textContent = "Please enter a valid URL";
+          errorContainer.style.display = "block";
+        }
+      });
+
+      // Add event listener for URL input to allow pressing Enter
+      urlInput.addEventListener("keypress", function (e) {
+        if (e.key === "Enter") {
+          const url = urlInput.value.trim();
+          if (url) {
+            fetchUrlContent(url);
+          } else {
+            errorContainer.textContent = "Please enter a valid URL";
+            errorContainer.style.display = "block";
+          }
         }
       });
     </script>
