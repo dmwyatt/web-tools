@@ -333,11 +333,61 @@
         border-top-color: white;
         animation: spin 1s ease-in-out infinite;
       }
+
+      /* NHTSA data styles */
+      .nhtsa-data {
+        margin-top: 30px;
+        padding: 20px;
+        background-color: #f8faff;
+        border-radius: 6px;
+        border: 1px solid #d0dae6;
+      }
+
+      .nhtsa-data h3 {
+        color: #0d47a1;
+        margin-bottom: 16px;
+      }
+
+      .nhtsa-data-grid {
+        display: grid;
+        grid-template-columns: 1fr;
+        gap: 24px;
+      }
+
+      @media (min-width: 768px) {
+        .nhtsa-data-grid {
+          grid-template-columns: 1fr 1fr;
+        }
+      }
+
+      .nhtsa-data-section {
+        margin-bottom: 20px;
+      }
+
+      .nhtsa-logo {
+        display: block;
+        max-width: 100px;
+        margin-bottom: 16px;
+      }
+
+      .data-source {
+        font-size: 12px;
+        color: #666;
+        margin-top: 10px;
+      }
+
+      /* Show spinner for NHTSA data loading */
+      .nhtsa-loading {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 20px;
+      }
     </style>
   </head>
   <body>
     <div class="container">
-      <h1>Ford F-150 Towing Calculator</h1>
+      <h1>Ford Truck Towing Calculator</h1>
 
       <div class="input-group">
         <label for="text-input">Enter or paste text containing VIN:</label>
@@ -461,13 +511,66 @@
           </div>
           <div class="chart-legend" id="chart-legend"></div>
         </div>
+
+        <!-- NHTSA Data Section -->
+        <div id="nhtsa-data-container" class="nhtsa-data">
+          <h3>Additional Vehicle Data (NHTSA)</h3>
+          <div id="nhtsa-loading" class="nhtsa-loading">
+            <div class="loading"></div>
+            <p>Loading NHTSA data...</p>
+          </div>
+          <div id="nhtsa-data-content" style="display: none">
+            <div class="nhtsa-data-grid">
+              <div class="nhtsa-data-section">
+                <h4>Vehicle Details</h4>
+                <table>
+                  <tbody id="nhtsa-vehicle-details">
+                    <!-- NHTSA vehicle details will be populated here -->
+                  </tbody>
+                </table>
+              </div>
+              <div class="nhtsa-data-section">
+                <h4>Engine & Transmission</h4>
+                <table>
+                  <tbody id="nhtsa-engine-details">
+                    <!-- NHTSA engine details will be populated here -->
+                  </tbody>
+                </table>
+              </div>
+            </div>
+            <div class="data-source">
+              Source: National Highway Traffic Safety Administration Vehicle API
+            </div>
+          </div>
+        </div>
       </div>
 
       <p class="note">
-        Note: This application connects directly to the Ford API to fetch real
-        data for F-150 vehicles. Enter a valid F-150 VIN to get accurate towing
-        calculations.
+        Note: This application connects directly to the Ford API and NHTSA API
+        to fetch real data for Ford trucks. Enter a valid Ford truck VIN to get
+        accurate towing calculations and comprehensive vehicle specifications.
       </p>
+
+      <!-- Add UI elements for cache management -->
+      <div
+        class="cache-controls"
+        style="margin-top: 15px; font-size: 14px; color: #666"
+      >
+        <button
+          id="clear-cache-btn"
+          style="
+            padding: 5px 10px;
+            background-color: #f5f5f5;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            font-size: 12px;
+            margin-right: 10px;
+          "
+        >
+          Clear URL Cache
+        </button>
+        <span id="cache-status"></span>
+      </div>
     </div>
 
     <script>
@@ -488,10 +591,88 @@
       const urlInput = document.getElementById("url-input");
       const fetchUrlBtn = document.getElementById("fetch-url-btn");
 
+      // URL Parameter Handling for shareable links
+      function getUrlParams() {
+        const params = new URLSearchParams(window.location.search);
+        return {
+          vin: params.get("vin"),
+          url: params.get("url"),
+          weight: params.get("weight"),
+        };
+      }
+
+      // Function to update URL with current parameters
+      function updateUrlWithParams(params = {}) {
+        // Create URL parameters object
+        const urlParams = new URLSearchParams();
+
+        // Add parameters if they exist
+        if (params.vin) urlParams.set("vin", params.vin);
+        if (params.url) urlParams.set("url", params.url);
+        if (params.weight) urlParams.set("weight", params.weight);
+
+        // Create the new URL
+        const newUrl =
+          window.location.pathname +
+          (urlParams.toString() ? "?" + urlParams.toString() : "");
+
+        // Update browser history without refreshing the page
+        window.history.replaceState({}, "", newUrl);
+      }
+
+      // NHTSA related elements
+      const nhtsaDataContainer = document.getElementById(
+        "nhtsa-data-container"
+      );
+      const nhtsaLoading = document.getElementById("nhtsa-loading");
+      const nhtsaDataContent = document.getElementById("nhtsa-data-content");
+      const nhtsaVehicleDetails = document.getElementById(
+        "nhtsa-vehicle-details"
+      );
+      const nhtsaEngineDetails = document.getElementById(
+        "nhtsa-engine-details"
+      );
+
       // Current selected VIN
       let selectedVin = null;
       // Storage for vehicle data to be used in graph
       let currentVehicleData = null;
+      // Cache for storing VINs extracted from URLs
+      let urlVinCache = {};
+
+      // Load the URL VIN cache from localStorage on page load
+      (function loadUrlVinCache() {
+        try {
+          const cachedData = localStorage.getItem("fordTowCalcUrlVinCache");
+          if (cachedData) {
+            urlVinCache = JSON.parse(cachedData);
+            console.log(
+              "Loaded URL VIN cache from localStorage:",
+              Object.keys(urlVinCache).length,
+              "entries"
+            );
+          }
+        } catch (error) {
+          console.error(
+            "Error loading URL VIN cache from localStorage:",
+            error
+          );
+          // If there's an error loading the cache, start with an empty one
+          urlVinCache = {};
+        }
+      })();
+
+      // Function to save the URL VIN cache to localStorage
+      function saveUrlVinCache() {
+        try {
+          localStorage.setItem(
+            "fordTowCalcUrlVinCache",
+            JSON.stringify(urlVinCache)
+          );
+        } catch (error) {
+          console.error("Error saving URL VIN cache to localStorage:", error);
+        }
+      }
 
       // Format number with commas
       function formatNumber(num) {
@@ -870,16 +1051,44 @@
           }
         }
 
+        // Reset NHTSA section to loading state
+        if (nhtsaDataContainer) {
+          nhtsaLoading.style.display = "flex";
+          nhtsaDataContent.style.display = "none";
+        }
+
         errorContainer.style.display = "none";
 
         try {
           const occupantWeight = parseInt(occupantWeightInput.value, 10) || 700;
 
-          // Call API and get results
+          // Call Ford API and get results
           const results = await getF150TowRating(vin, occupantWeight);
 
           // Display results
           displayResults(results);
+
+          // Update URL with the VIN and weight parameters
+          updateUrlWithParams({
+            vin: vin,
+            weight: occupantWeight,
+          });
+
+          // Fetch and display NHTSA data
+          try {
+            const nhtsaData = await getNHTSAVehicleData(vin);
+            displayNHTSAData(nhtsaData);
+          } catch (nhtsaError) {
+            console.error("Error fetching NHTSA data:", nhtsaError);
+            // Display error in NHTSA section
+            nhtsaLoading.style.display = "none";
+            nhtsaDataContent.style.display = "block";
+            nhtsaDataContent.innerHTML = `
+              <div class="error">
+                <p>Unable to retrieve NHTSA data: ${nhtsaError.message}</p>
+              </div>
+            `;
+          }
         } catch (error) {
           // Show error
           errorContainer.textContent =
@@ -917,12 +1126,43 @@
         fetchUrlBtn.textContent = "";
         errorContainer.style.display = "none";
 
+        // Update URL with the target URL parameter
+        updateUrlWithParams({ url: url });
+
+        // First check if we have this URL cached
+        if (urlVinCache[url]) {
+          console.log("Using cached VINs for URL:", url);
+          const cachedVins = urlVinCache[url];
+
+          if (cachedVins.length > 0) {
+            // Display a message that we're using cached data
+            textInput.value =
+              "Using cached VINs from URL: " + cachedVins.join(", ");
+            processInputText();
+
+            // If only one VIN found, auto-select it
+            if (cachedVins.length === 1) {
+              selectedVin = cachedVins[0];
+              performCalculation(selectedVin);
+            }
+
+            // Reset loading state and return
+            fetchUrlBtn.classList.remove("loading-btn");
+            fetchUrlBtn.textContent = "Fetch";
+            return true;
+          }
+        }
+
         // First check if the URL itself contains a VIN
         console.log("Checking URL for VINs:", url);
         const urlVins = extractVins(url);
 
         if (urlVins.length > 0) {
           console.log("Found VIN(s) in URL:", urlVins);
+
+          // Cache the VINs found in the URL
+          urlVinCache[url] = urlVins;
+          saveUrlVinCache();
 
           // Display the found VINs
           textInput.value = "VIN found in URL: " + urlVins.join(", ");
@@ -954,6 +1194,16 @@
           const tempDiv = document.createElement("div");
           tempDiv.innerHTML = html;
           const text = tempDiv.textContent || tempDiv.innerText || "";
+
+          // Extract VINs from the text
+          const extractedVins = extractVins(text);
+
+          // Cache the extracted VINs
+          if (extractedVins.length > 0) {
+            urlVinCache[url] = extractedVins;
+            saveUrlVinCache();
+            console.log("Cached", extractedVins.length, "VINs for URL:", url);
+          }
 
           // Set the text in the text input and process it
           textInput.value = text;
@@ -1022,6 +1272,21 @@
               tempDiv.innerHTML = html;
               const text = tempDiv.textContent || tempDiv.innerText || "";
 
+              // Extract VINs from the text
+              const extractedVins = extractVins(text);
+
+              // Cache the extracted VINs
+              if (extractedVins.length > 0) {
+                urlVinCache[url] = extractedVins;
+                saveUrlVinCache();
+                console.log(
+                  "Cached",
+                  extractedVins.length,
+                  "VINs for URL:",
+                  url
+                );
+              }
+
               // Set the text in the text input and process it
               textInput.value = text;
               processInputText();
@@ -1071,6 +1336,168 @@
           }
         }
       });
+
+      // NHTSA API Function to get vehicle data from VIN
+      async function getNHTSAVehicleData(vin) {
+        try {
+          // Use the NHTSA API's DecodeVinValues endpoint (flat format for easier processing)
+          const apiUrl = `https://vpic.nhtsa.dot.gov/api/vehicles/DecodeVinValues/${vin}?format=json`;
+
+          const response = await fetch(apiUrl);
+
+          if (!response.ok) {
+            throw new Error(`NHTSA API error: ${response.status}`);
+          }
+
+          const data = await response.json();
+
+          // The API returns an array of results, but we only need the first one
+          if (data.Results && data.Results.length > 0) {
+            return data.Results[0];
+          } else {
+            throw new Error("No data returned from NHTSA API");
+          }
+        } catch (error) {
+          console.error(`Failed to get NHTSA data for VIN ${vin}:`, error);
+          throw error;
+        }
+      }
+
+      // Function to display NHTSA data
+      function displayNHTSAData(nhtsaData) {
+        // Clear previous data
+        nhtsaVehicleDetails.innerHTML = "";
+        nhtsaEngineDetails.innerHTML = "";
+
+        // Vehicle details section
+        const vehicleDetails = [
+          { label: "Make", value: nhtsaData.Make },
+          { label: "Model", value: nhtsaData.Model },
+          { label: "Model Year", value: nhtsaData.ModelYear },
+          { label: "Trim", value: nhtsaData.Trim || "N/A" },
+          { label: "Vehicle Type", value: nhtsaData.VehicleType || "N/A" },
+          { label: "Body Class", value: nhtsaData.BodyClass || "N/A" },
+          { label: "Doors", value: nhtsaData.Doors || "N/A" },
+          { label: "GVWR", value: nhtsaData.GVWR || "N/A" },
+          { label: "Plant Country", value: nhtsaData.PlantCountry || "N/A" },
+          { label: "Plant City", value: nhtsaData.PlantCity || "N/A" },
+        ];
+
+        // Engine & transmission details
+        const engineDetails = [
+          { label: "Engine Type", value: nhtsaData.EngineModel || "N/A" },
+          {
+            label: "Displacement (L)",
+            value: nhtsaData.DisplacementL || "N/A",
+          },
+          { label: "Cylinders", value: nhtsaData.EngineCylinders || "N/A" },
+          { label: "Fuel Type", value: nhtsaData.FuelTypePrimary || "N/A" },
+          {
+            label: "Transmission Style",
+            value: nhtsaData.TransmissionStyle || "N/A",
+          },
+          {
+            label: "Transmission Speeds",
+            value: nhtsaData.TransmissionSpeeds || "N/A",
+          },
+          { label: "Drive Type", value: nhtsaData.DriveType || "N/A" },
+          { label: "Axles", value: nhtsaData.Axles || "N/A" },
+          {
+            label: "Trailer Type Connection",
+            value: nhtsaData.TrailerTypeConnection || "N/A",
+          },
+          {
+            label: "Trailer Body Type",
+            value: nhtsaData.TrailerBodyType || "N/A",
+          },
+        ];
+
+        // Populate vehicle details
+        vehicleDetails.forEach((detail) => {
+          if (
+            detail.value &&
+            detail.value !== "" &&
+            detail.value !== "Not Applicable"
+          ) {
+            const row = document.createElement("tr");
+            row.innerHTML = `
+              <td>${detail.label}:</td>
+              <td>${detail.value}</td>
+            `;
+            nhtsaVehicleDetails.appendChild(row);
+          }
+        });
+
+        // Populate engine details
+        engineDetails.forEach((detail) => {
+          if (
+            detail.value &&
+            detail.value !== "" &&
+            detail.value !== "Not Applicable"
+          ) {
+            const row = document.createElement("tr");
+            row.innerHTML = `
+              <td>${detail.label}:</td>
+              <td>${detail.value}</td>
+            `;
+            nhtsaEngineDetails.appendChild(row);
+          }
+        });
+
+        // Show the NHTSA data content
+        nhtsaLoading.style.display = "none";
+        nhtsaDataContent.style.display = "block";
+      }
+
+      // Update cache status display
+      function updateCacheStatus() {
+        const cacheEntries = Object.keys(urlVinCache).length;
+        document.getElementById(
+          "cache-status"
+        ).textContent = `URL cache: ${cacheEntries} ${
+          cacheEntries === 1 ? "entry" : "entries"
+        }`;
+      }
+
+      // Initialize: Check for URL parameters and process them
+      document.addEventListener("DOMContentLoaded", function () {
+        const params = getUrlParams();
+
+        // If we have a VIN parameter, use it directly
+        if (params.vin) {
+          console.log("VIN found in URL parameters:", params.vin);
+          selectedVin = params.vin;
+          extractedVinEl.textContent = params.vin;
+          extractedVinContainer.style.display = "block";
+
+          // If we have a weight parameter, set it
+          if (params.weight) {
+            occupantWeightInput.value = params.weight;
+          }
+
+          // Perform calculation with the VIN
+          performCalculation(params.vin);
+        }
+        // If we have a URL parameter, fetch from that URL
+        else if (params.url) {
+          console.log("URL found in URL parameters:", params.url);
+          urlInput.value = params.url;
+          fetchUrlContent(params.url);
+        }
+
+        // Update cache status display
+        updateCacheStatus();
+      });
+
+      // Add event listener for clear cache button
+      document
+        .getElementById("clear-cache-btn")
+        .addEventListener("click", function () {
+          urlVinCache = {};
+          localStorage.removeItem("fordTowCalcUrlVinCache");
+          updateCacheStatus();
+          alert("URL cache has been cleared");
+        });
     </script>
   </body>
 </html>
