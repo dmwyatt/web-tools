@@ -4,6 +4,7 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Ford F-150 Towing Calculator</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
       * {
         box-sizing: border-box;
@@ -250,6 +251,44 @@
         font-weight: 500;
       }
 
+      .graph-container {
+        margin-top: 30px;
+        padding: 20px;
+        background-color: white;
+        border-radius: 6px;
+        border: 1px solid #e9ecef;
+      }
+
+      .graph-container h3 {
+        margin-bottom: 16px;
+        color: #0d47a1;
+      }
+
+      .chart-wrapper {
+        position: relative;
+        height: 400px;
+      }
+
+      .chart-legend {
+        margin-top: 20px;
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: center;
+        gap: 16px;
+      }
+
+      .legend-item {
+        display: flex;
+        align-items: center;
+      }
+
+      .legend-color {
+        width: 16px;
+        height: 16px;
+        margin-right: 8px;
+        border-radius: 3px;
+      }
+
       @keyframes spin {
         to {
           transform: rotate(360deg);
@@ -355,6 +394,18 @@
             the payload-based towing capacity.
           </p>
         </div>
+
+        <div class="graph-container">
+          <h3>Tow Rating Analysis</h3>
+          <p>
+            This graph shows how your tow rating changes with different occupant
+            weights and tongue weight percentages.
+          </p>
+          <div class="chart-wrapper">
+            <canvas id="towRatingChart"></canvas>
+          </div>
+          <div class="chart-legend" id="chart-legend"></div>
+        </div>
       </div>
 
       <p class="note">
@@ -382,6 +433,8 @@
 
       // Current selected VIN
       let selectedVin = null;
+      // Storage for vehicle data to be used in graph
+      let currentVehicleData = null;
 
       // Format number with commas
       function formatNumber(num) {
@@ -466,8 +519,134 @@
         }
       }
 
+      // Function to calculate tow ratings for various weight combinations
+      function calculateTowRatingMatrix(maxPayload, maxTowing) {
+        // Define ranges for the graph
+        const occupantWeights = [300, 500, 700, 900, 1100, 1300, 1500];
+        const tongueWeights = [0.08, 0.1, 0.12, 0.15];
+        const tongueWeightLabels = ["8%", "10%", "12%", "15%"];
+
+        // Generate datasets for each tongue weight percentage
+        const datasets = tongueWeights.map((tongueWeight, index) => {
+          const data = occupantWeights.map((weight) => {
+            const availablePayload = maxPayload - weight;
+            // Calculate payload-based towing (cannot be negative)
+            const payloadBasedTowing = Math.max(
+              0,
+              availablePayload / tongueWeight
+            );
+            // Safe tow rating is the lower of payload-based or max towing
+            return Math.min(maxTowing, payloadBasedTowing);
+          });
+
+          // Define colors for each line
+          const colors = [
+            "rgba(66, 133, 244, 1)", // Blue
+            "rgba(219, 68, 55, 1)", // Red
+            "rgba(244, 180, 0, 1)", // Yellow
+            "rgba(15, 157, 88, 1)", // Green
+          ];
+
+          return {
+            label: `${tongueWeightLabels[index]} Tongue Weight`,
+            data: data,
+            borderColor: colors[index],
+            backgroundColor: colors[index].replace("1)", "0.1)"),
+            tension: 0.1,
+          };
+        });
+
+        return {
+          labels: occupantWeights.map((weight) => `${weight} lbs`),
+          datasets: datasets,
+        };
+      }
+
+      // Function to render the tow rating chart
+      function renderTowRatingChart(maxPayload, maxTowing) {
+        const ctx = document.getElementById("towRatingChart").getContext("2d");
+
+        // Calculate data for the chart
+        const chartData = calculateTowRatingMatrix(maxPayload, maxTowing);
+
+        // Destroy previous chart if it exists
+        if (window.towChart) {
+          window.towChart.destroy();
+        }
+
+        // Create the chart
+        window.towChart = new Chart(ctx, {
+          type: "line",
+          data: chartData,
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            scales: {
+              y: {
+                beginAtZero: false,
+                title: {
+                  display: true,
+                  text: "Towing Capacity (lbs)",
+                },
+                ticks: {
+                  callback: function (value) {
+                    return value.toLocaleString();
+                  },
+                },
+              },
+              x: {
+                title: {
+                  display: true,
+                  text: "Occupant & Cargo Weight",
+                },
+              },
+            },
+            plugins: {
+              tooltip: {
+                callbacks: {
+                  label: function (context) {
+                    return (
+                      context.dataset.label +
+                      ": " +
+                      Math.round(context.raw).toLocaleString() +
+                      " lbs"
+                    );
+                  },
+                },
+              },
+              legend: {
+                display: false,
+              },
+            },
+          },
+        });
+
+        // Create custom legend
+        const legendContainer = document.getElementById("chart-legend");
+        legendContainer.innerHTML = "";
+
+        chartData.datasets.forEach((dataset, index) => {
+          const legendItem = document.createElement("div");
+          legendItem.className = "legend-item";
+
+          const colorBox = document.createElement("div");
+          colorBox.className = "legend-color";
+          colorBox.style.backgroundColor = dataset.borderColor;
+
+          const label = document.createElement("span");
+          label.textContent = dataset.label;
+
+          legendItem.appendChild(colorBox);
+          legendItem.appendChild(label);
+          legendContainer.appendChild(legendItem);
+        });
+      }
+
       // Display Results Function
       function displayResults(results) {
+        // Store the vehicle data globally for reference
+        currentVehicleData = results;
+
         // Set all the result fields
         document.getElementById(
           "vehicle-title"
@@ -494,6 +673,12 @@
 
         // Show the results container
         resultsContainer.style.display = "block";
+
+        // Render the tow rating chart
+        renderTowRatingChart(
+          results.maxPayloadPounds,
+          results.maxConventionalTowing
+        );
       }
 
       // Function to process input text and extract VINs
