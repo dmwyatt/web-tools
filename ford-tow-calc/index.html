@@ -99,6 +99,124 @@
         font-size: 18px;
         font-weight: 600;
         letter-spacing: 1px;
+        cursor: pointer;
+        padding: 4px 8px;
+        border-radius: 4px;
+        transition: background-color 0.2s;
+      }
+
+      .extracted-vin-box span:hover {
+        background-color: #e3f2fd;
+      }
+
+      .extracted-vin-box span:active {
+        background-color: #bbdefb;
+      }
+
+      .copy-tooltip {
+        position: relative;
+        display: inline-block;
+      }
+
+      .copy-tooltip .tooltip-text {
+        visibility: hidden;
+        width: 140px;
+        background-color: #555;
+        color: #fff;
+        text-align: center;
+        border-radius: 6px;
+        padding: 5px;
+        position: absolute;
+        z-index: 1;
+        bottom: 150%;
+        left: 50%;
+        margin-left: -70px;
+        opacity: 0;
+        transition: opacity 0.3s;
+        font-size: 14px;
+        font-weight: normal;
+        font-family: sans-serif;
+      }
+
+      .copy-tooltip .tooltip-text::after {
+        content: "";
+        position: absolute;
+        top: 100%;
+        left: 50%;
+        margin-left: -5px;
+        border-width: 5px;
+        border-style: solid;
+        border-color: #555 transparent transparent transparent;
+      }
+
+      .copy-tooltip:hover .tooltip-text {
+        visibility: visible;
+        opacity: 1;
+      }
+
+      .share-button {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 36px;
+        height: 36px;
+        padding: 8px;
+        background-color: #0052cc;
+        color: white;
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+        transition: background-color 0.2s;
+        margin-left: 10px;
+        position: relative;
+      }
+
+      .share-button:hover {
+        background-color: #003d99;
+      }
+
+      .share-button:active {
+        background-color: #002966;
+      }
+
+      .share-icon {
+        width: 20px;
+        height: 20px;
+      }
+
+      .share-button .tooltip-text {
+        visibility: hidden;
+        width: 120px;
+        background-color: #555;
+        color: #fff;
+        text-align: center;
+        border-radius: 6px;
+        padding: 5px;
+        position: absolute;
+        z-index: 1;
+        bottom: -40px;
+        left: 50%;
+        margin-left: -60px;
+        opacity: 0;
+        transition: opacity 0.3s;
+        font-size: 14px;
+        font-weight: normal;
+      }
+
+      .share-button .tooltip-text::after {
+        content: "";
+        position: absolute;
+        top: -10px;
+        left: 50%;
+        margin-left: -5px;
+        border-width: 5px;
+        border-style: solid;
+        border-color: transparent transparent #555 transparent;
+      }
+
+      .share-button:hover .tooltip-text {
+        visibility: visible;
+        opacity: 1;
       }
 
       .warning-message {
@@ -383,6 +501,86 @@
         justify-content: center;
         padding: 20px;
       }
+
+      .title-container {
+        display: flex;
+        align-items: center;
+        margin-bottom: 20px;
+      }
+
+      .title-container h2 {
+        margin-bottom: 0;
+      }
+
+      .window-sticker-btn {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 36px;
+        height: 36px;
+        padding: 8px;
+        background-color: #4caf50;
+        color: white;
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+        transition: background-color 0.2s;
+        margin-left: 10px;
+        position: relative;
+      }
+
+      .window-sticker-btn:hover {
+        background-color: #388e3c;
+      }
+
+      .window-sticker-btn:active {
+        background-color: #2e7d32;
+      }
+
+      .window-sticker-icon {
+        width: 20px;
+        height: 20px;
+      }
+
+      .window-sticker-btn .tooltip-text {
+        visibility: hidden;
+        width: 140px;
+        background-color: #555;
+        color: #fff;
+        text-align: center;
+        border-radius: 6px;
+        padding: 5px;
+        position: absolute;
+        z-index: 1;
+        bottom: -40px;
+        left: 50%;
+        margin-left: -70px;
+        opacity: 0;
+        transition: opacity 0.3s;
+        font-size: 14px;
+        font-weight: normal;
+      }
+
+      .window-sticker-btn .tooltip-text::after {
+        content: "";
+        position: absolute;
+        top: -10px;
+        left: 50%;
+        margin-left: -5px;
+        border-width: 5px;
+        border-style: solid;
+        border-color: transparent transparent #555 transparent;
+      }
+
+      .window-sticker-btn:hover .tooltip-text {
+        visibility: visible;
+        opacity: 1;
+      }
+
+      .actions-container {
+        display: flex;
+        align-items: center;
+      }
     </style>
   </head>
   <body>
@@ -421,7 +619,10 @@
       <div class="input-group extracted-vin-container" style="display: none">
         <label>Extracted VIN:</label>
         <div class="extracted-vin-box">
-          <span id="extracted-vin">No VIN detected</span>
+          <span id="extracted-vin" class="copy-tooltip"
+            >No VIN detected
+            <span class="tooltip-text" id="vin-tooltip">Click to copy VIN</span>
+          </span>
         </div>
         <div
           id="multiple-vin-warning"
@@ -445,7 +646,49 @@
       <div id="error-container" class="error" style="display: none"></div>
 
       <div id="results-container" class="results" style="display: none">
-        <h2 id="vehicle-title">Results</h2>
+        <div class="title-container">
+          <h2 id="vehicle-title">Results</h2>
+          <div class="actions-container">
+            <a
+              id="window-sticker-link"
+              href="#"
+              target="_blank"
+              class="window-sticker-btn"
+              title="View window sticker"
+            >
+              <svg
+                class="window-sticker-icon"
+                viewBox="0 0 24 24"
+                xmlns="http://www.w3.org/2000/svg"
+              >
+                <path
+                  fill="white"
+                  d="M14,2H6A2,2 0 0,0 4,4V20A2,2 0 0,0 6,22H18A2,2 0 0,0 20,20V8L14,2M18,20H6V4H13V9H18V20M10,19L12,15H9V10L7,14H10V19Z"
+                />
+              </svg>
+              <span class="tooltip-text">View window sticker (new tab)</span>
+            </a>
+            <button
+              id="share-button"
+              class="share-button"
+              title="Share this result"
+            >
+              <svg
+                class="share-icon"
+                viewBox="0 0 24 24"
+                xmlns="http://www.w3.org/2000/svg"
+              >
+                <path
+                  fill="white"
+                  d="M18,16.08C17.24,16.08 16.56,16.38 16.04,16.85L8.91,12.7C8.96,12.47 9,12.24 9,12C9,11.76 8.96,11.53 8.91,11.3L15.96,7.19C16.5,7.69 17.21,8 18,8A3,3 0 0,0 21,5A3,3 0 0,0 18,2A3,3 0 0,0 15,5C15,5.24 15.04,5.47 15.09,5.7L8.04,9.81C7.5,9.31 6.79,9 6,9A3,3 0 0,0 3,12A3,3 0 0,0 6,15C6.79,15 7.5,14.69 8.04,14.19L15.16,18.34C15.11,18.55 15.08,18.77 15.08,19C15.08,20.61 16.39,21.91 18,21.91C19.61,21.91 20.92,20.61 20.92,19A2.92,2.92 0 0,0 18,16.08Z"
+                />
+              </svg>
+              <span class="tooltip-text" id="share-tooltip"
+                >Click to copy link</span
+              >
+            </button>
+          </div>
+        </div>
 
         <div class="results-grid">
           <div>
@@ -455,24 +698,6 @@
                 <tr>
                   <td>VIN:</td>
                   <td id="result-vin"></td>
-                </tr>
-                <tr>
-                  <td></td>
-                  <td>
-                    <a
-                      id="window-sticker-link"
-                      href="#"
-                      target="_blank"
-                      style="
-                        font-size: 14px;
-                        color: #0052cc;
-                        text-decoration: underline;
-                      "
-                    >
-                      View Window Sticker
-                      <i style="font-size: 12px">(opens in new tab)</i>
-                    </a>
-                  </td>
                 </tr>
                 <tr>
                   <td>Maximum Payload:</td>
@@ -608,6 +833,7 @@
       const vinListContainer = document.getElementById("vin-list-container");
       const urlInput = document.getElementById("url-input");
       const fetchUrlBtn = document.getElementById("fetch-url-btn");
+      const shareButton = document.getElementById("share-button");
 
       // URL Parameter Handling for shareable links
       function getUrlParams() {
@@ -988,6 +1214,53 @@
         );
       }
 
+      // Function to copy text to clipboard
+      function copyToClipboard(text, tooltipEl, successMessage = "Copied!") {
+        const originalTooltipText = tooltipEl.textContent;
+
+        navigator.clipboard
+          .writeText(text)
+          .then(() => {
+            // Show success message
+            tooltipEl.textContent = successMessage;
+
+            // Reset tooltip after delay
+            setTimeout(() => {
+              tooltipEl.textContent = originalTooltipText;
+            }, 2000);
+          })
+          .catch((err) => {
+            console.error("Failed to copy: ", err);
+            tooltipEl.textContent = "Copy failed!";
+
+            // Reset tooltip after delay
+            setTimeout(() => {
+              tooltipEl.textContent = originalTooltipText;
+            }, 2000);
+          });
+      }
+
+      // Add click event for extracted VIN to copy to clipboard
+      extractedVinEl.addEventListener("click", function () {
+        const vinText = this.textContent.trim();
+        const tooltipEl = document.getElementById("vin-tooltip");
+
+        if (
+          vinText &&
+          vinText !== "No VIN detected" &&
+          vinText !== "Multiple VINs detected"
+        ) {
+          copyToClipboard(vinText, tooltipEl);
+        }
+      });
+
+      // Add click event for share button to copy URL
+      shareButton.addEventListener("click", function () {
+        const currentUrl = window.location.href;
+        const tooltipEl = document.getElementById("share-tooltip");
+        copyToClipboard(currentUrl, tooltipEl, "Link copied!");
+      });
+
       // Function to process input text and extract VINs
       function processInputText() {
         const text = textInput.value.trim();
@@ -1006,12 +1279,14 @@
         if (vins.length === 0) {
           // No VINs found
           extractedVinEl.textContent = "No VIN detected";
+          extractedVinEl.classList.remove("copy-tooltip");
           multipleVinWarning.style.display = "none";
           vinListContainer.style.display = "none";
           selectedVin = null;
         } else if (vins.length === 1) {
           // Single VIN found - automatically select it and calculate
           extractedVinEl.textContent = vins[0];
+          extractedVinEl.classList.add("copy-tooltip");
           multipleVinWarning.style.display = "none";
           vinListContainer.style.display = "none";
           selectedVin = vins[0];
@@ -1021,6 +1296,7 @@
         } else {
           // Multiple VINs found
           extractedVinEl.textContent = "Multiple VINs detected";
+          extractedVinEl.classList.remove("copy-tooltip");
           multipleVinWarning.style.display = "block";
           vinListContainer.style.display = "block";
 
@@ -1030,7 +1306,7 @@
             const vinOption = document.createElement("div");
             vinOption.className = "vin-option";
             vinOption.innerHTML = `
-            <span>${vin}</span>
+            <span class="copyable-vin" data-vin="${vin}">${vin}</span>
             <button class="small-btn select-vin-btn">Select</button>
           `;
 
@@ -1039,6 +1315,7 @@
             selectBtn.addEventListener("click", function () {
               selectedVin = vin;
               extractedVinEl.textContent = vin;
+              extractedVinEl.classList.add("copy-tooltip");
 
               // Highlight the selected VIN
               document.querySelectorAll(".vin-option").forEach((option) => {
@@ -1048,6 +1325,20 @@
 
               // Automatically trigger calculation with the selected VIN
               performCalculation(selectedVin);
+            });
+
+            // Add click handler for the VIN span to make it copyable
+            const vinSpan = vinOption.querySelector(".copyable-vin");
+            vinSpan.addEventListener("click", function () {
+              const vinText = this.getAttribute("data-vin");
+              navigator.clipboard.writeText(vinText).then(() => {
+                // Visual feedback for copy
+                const originalBg = vinSpan.style.backgroundColor;
+                vinSpan.style.backgroundColor = "#bbdefb";
+                setTimeout(() => {
+                  vinSpan.style.backgroundColor = originalBg;
+                }, 300);
+              });
             });
 
             vinListContainer.appendChild(vinOption);
