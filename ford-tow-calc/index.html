@@ -1467,6 +1467,11 @@
         if (params.vin) {
           console.log("VIN found in URL parameters:", params.vin);
           selectedVin = params.vin;
+
+          // Autofill the text input with the VIN
+          textInput.value = params.vin;
+
+          // Update the extracted VIN display
           extractedVinEl.textContent = params.vin;
           extractedVinContainer.style.display = "block";
 
