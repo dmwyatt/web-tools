@@ -457,6 +457,24 @@
                   <td id="result-vin"></td>
                 </tr>
                 <tr>
+                  <td></td>
+                  <td>
+                    <a
+                      id="window-sticker-link"
+                      href="#"
+                      target="_blank"
+                      style="
+                        font-size: 14px;
+                        color: #0052cc;
+                        text-decoration: underline;
+                      "
+                    >
+                      View Window Sticker
+                      <i style="font-size: 12px">(opens in new tab)</i>
+                    </a>
+                  </td>
+                </tr>
+                <tr>
                   <td>Maximum Payload:</td>
                   <td id="result-max-payload"></td>
                 </tr>
@@ -934,6 +952,13 @@
           "vehicle-title"
         ).textContent = `Results for ${results.year} ${results.model}`;
         document.getElementById("result-vin").textContent = results.vin;
+
+        // Update window sticker link with the current VIN
+        const windowStickerLink = document.getElementById(
+          "window-sticker-link"
+        );
+        windowStickerLink.href = `https://www.windowsticker.forddirect.com/windowsticker.pdf?vin=${results.vin}`;
+
         document.getElementById(
           "result-max-payload"
         ).textContent = `${formatNumber(results.maxPayloadPounds)} lbs`;
