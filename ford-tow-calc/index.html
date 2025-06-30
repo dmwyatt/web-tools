@@ -988,16 +988,25 @@
 
       // API Call Function
       async function getF150TowRating(vin, occupantWeight) {
-        // Ford API endpoint
         const API_ENDPOINT =
           "https://api.pd01e.gcp.ford.com/digitalservices/fs/api/v3/vehicles/vehicle-type";
         const CONSUMER_KEY = "Z28tbmEtZm9yZA=="; // Base64 encoded key
 
-        try {
-          // Call the Ford API
-          const response = await fetch(
-            `${API_ENDPOINT}?locale=en-us&country=USA`,
-            {
+        // List of CORS proxies to try
+        const proxies = [
+          (url) => `https://corsproxy.io/?${encodeURIComponent(url)}`,
+          (url) =>
+            `https://api.allorigins.win/raw?url=${encodeURIComponent(url)}`,
+          (url) => `https://cors-anywhere.herokuapp.com/${url}`,
+        ];
+
+        let lastError = null;
+        for (const proxy of proxies) {
+          try {
+            const proxiedUrl = proxy(
+              `${API_ENDPOINT}?locale=en-us&country=USA`
+            );
+            const response = await fetch(proxiedUrl, {
               headers: {
                 Accept: "application/json",
                 "Consumer-Key": CONSUMER_KEY,
@@ -1005,44 +1014,41 @@
                 Referer: "https://www.ford.com/",
                 vin: vin,
               },
+            });
+
+            if (!response.ok) {
+              throw new Error(`Ford API error: ${response.status}`);
             }
-          );
 
-          if (!response.ok) {
-            throw new Error(`Ford API error: ${response.status}`);
+            const data = await response.json();
+            const vehicleData = data.vehicleData;
+
+            const maxPayload = parseInt(vehicleData.maximumPayloadPounds, 10);
+            const maxTow = parseInt(vehicleData.maximumConventionalPounds, 10);
+
+            const availablePayload = maxPayload - occupantWeight;
+            const payloadBasedTowing = availablePayload / 0.1;
+            const safeTowRating = Math.min(maxTow, payloadBasedTowing);
+
+            return {
+              vin: vehicleData.vin,
+              model: vehicleData.model,
+              year: vehicleData.year,
+              maxPayloadPounds: maxPayload,
+              maxConventionalTowing: maxTow,
+              occupantAndCargoWeight: occupantWeight,
+              availablePayload: availablePayload,
+              payloadBasedTowing: payloadBasedTowing,
+              calculatedTowRating: safeTowRating,
+              rawResponse: data, // Include full API response for reference
+            };
+          } catch (error) {
+            lastError = error;
+            // Try next proxy
           }
-
-          // Parse the response
-          const data = await response.json();
-          const vehicleData = data.vehicleData;
-
-          // Get the payload and max tow values
-          const maxPayload = parseInt(vehicleData.maximumPayloadPounds, 10);
-          const maxTow = parseInt(vehicleData.maximumConventionalPounds, 10);
-
-          // Calculate with custom occupant + cargo weight
-          const availablePayload = maxPayload - occupantWeight;
-          const payloadBasedTowing = availablePayload / 0.1; // 10% tongue weight
-
-          // Get the safe tow rating (lower of payload-based or manufacturer max)
-          const safeTowRating = Math.min(maxTow, payloadBasedTowing);
-
-          return {
-            vin: vehicleData.vin,
-            model: vehicleData.model,
-            year: vehicleData.year,
-            maxPayloadPounds: maxPayload,
-            maxConventionalTowing: maxTow,
-            occupantAndCargoWeight: occupantWeight,
-            availablePayload: availablePayload,
-            payloadBasedTowing: payloadBasedTowing,
-            calculatedTowRating: safeTowRating,
-            rawResponse: data, // Include full API response for reference
-          };
-        } catch (error) {
-          console.error(`Failed to get tow rating for VIN ${vin}:`, error);
-          throw error;
         }
+        // If all proxies fail, throw the last error
+        throw lastError || new Error("All proxy attempts failed");
       }
 
       // Function to calculate tow ratings for various weight combinations
