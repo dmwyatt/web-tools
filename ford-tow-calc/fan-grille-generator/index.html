@@ -1,0 +1,511 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Fan Grille Drilling Template Generator — Alpine JS</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <!-- Alpine v3 (CDN, version pinned) -->
+  <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.14.0/dist/cdn.min.js"></script>
+
+  <style>
+      /* ----- Layout & typography ------------------------------------------- */
+      body {
+          font-family: system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif;
+          margin: 0;
+          background: #f5f6f8;
+          color: #111
+      }
+
+      .container {
+          max-width: 1180px;
+          margin: auto;
+          padding: 24px
+      }
+
+      h1 {
+          font-size: 1.75rem;
+          margin: 0 0 24px;
+          font-weight: 700
+      }
+
+      h2 {
+          font-size: 1rem;
+          margin: 0 0 12px;
+          font-weight: 600
+      }
+
+      .flex {
+          display: flex
+      }
+
+      .grid {
+          display: grid;
+          gap: 24px
+      }
+
+      @media (min-width: 1024px) {
+          .grid-cols-2 {
+              grid-template-columns:1fr 1fr
+          }
+      }
+
+      /* ----- Cards, inputs, buttons ---------------------------------------- */
+      .card {
+          background: #fafafa;
+          border: 1px solid #e2e3e5;
+          border-radius: 8px;
+          padding: 16px
+      }
+
+      label {
+          font-size: .9rem;
+          font-weight: 500;
+          margin-bottom: 4px;
+          display: block
+      }
+
+      select, input[type=number] {
+          width: 100%;
+          padding: 6px 8px;
+          border: 1px solid #ced0d4;
+          border-radius: 4px;
+          font-size: .9rem
+      }
+
+      .radio-group {
+          display: flex;
+          gap: 12px;
+          margin-bottom: 6px
+      }
+
+      .radio-group input {
+          margin-right: 4px
+      }
+
+      button {
+          cursor: pointer;
+          border: none;
+          font-weight: 600;
+          border-radius: 6px
+      }
+
+      #generateBtn {
+          width: 100%;
+          padding: 10px;
+          background: #2563eb;
+          color: #fff;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          gap: 8px
+      }
+
+      #generateBtn:hover {
+          background: #1e4ec8
+      }
+
+      .copy-btn {
+          padding: 4px 10px;
+          background: #e5e7eb;
+          border-radius: 4px;
+          font-size: .8rem
+      }
+
+      .copy-btn:hover {
+          background: #d6d9dd
+      }
+
+      /* ----- Preview -------------------------------------------------------- */
+      svg {
+          background: #fff;
+          border: 1px solid #d1d5db;
+          border-radius: 6px
+      }
+
+      .text-sm {
+          font-size: .8rem;
+          color: #475569
+      }
+
+      .list-small {
+          list-style: decimal;
+          padding-left: 18px;
+          margin: 4px 0
+      }
+
+      .list-small li {
+          margin: 2px 0
+      }
+
+      /* ----- Modal ---------------------------------------------------------- */
+      [x-cloak] {
+          display: none !important
+      }
+
+      .modal {
+          position: fixed;
+          inset: 0;
+          background: rgba(0, 0, 0, .5);
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          padding: 20px;
+          z-index: 50
+      }
+
+      .modal-box {
+          background: #fff;
+          border-radius: 8px;
+          max-width: 840px;
+          width: 100%;
+          max-height: 90vh;
+          display: flex;
+          flex-direction: column
+      }
+
+      .modal-header {
+          padding: 12px 16px;
+          border-bottom: 1px solid #e2e3e5;
+          display: flex;
+          justify-content: space-between;
+          align-items: center
+      }
+
+      .modal-body {
+          padding: 16px;
+          overflow: auto;
+          flex: 1
+      }
+
+      textarea {
+          width: 100%;
+          height: 260px;
+          padding: 8px;
+          font-family: SFMono-Regular, Consolas, Menlo, monospace;
+          font-size: .78rem;
+          background: #f7f7f8;
+          border: 1px solid #d1d5db;
+          border-radius: 4px
+      }
+
+      .code-hint {
+          background: #e0e7ff;
+          padding: 12px;
+          border-radius: 6px;
+          font-size: .82rem;
+          margin-bottom: 12px;
+          color: #1e40af
+      }
+  </style>
+</head>
+<body>
+<div class="container"
+     x-data="fanGrille()"
+     x-init="
+        fillSelects();
+        updatePreview();
+     ">
+
+  <h1>Fan Grille Drilling Template Generator</h1>
+
+  <div class="grid grid-cols-2">
+    <!-- Controls ------------------------------------------------------- -->
+    <div class="card">
+      <h2>Template Configuration</h2>
+
+      <div style="display:grid;gap:16px">
+        <!-- Fan size -->
+        <div>
+          <label>Fan Size</label>
+          <select x-model="fanSize"
+                  @change="hubDiameter=Math.round(fans[fanSize].size*0.35);updatePreview();">
+            <template x-for="(obj,label) in fans" :key="label">
+              <option :value="label" x-text="label"></option>
+            </template>
+          </select>
+        </div>
+
+        <!-- Mounting hole diameter -->
+        <div>
+          <label>Mounting Hole Diameter</label>
+          <div class="radio-group">
+            <label><input type="radio" value="metric" x-model="mountUnit" @change="refreshMountSel()">Metric</label>
+            <label><input type="radio" value="imperial" x-model="mountUnit" @change="refreshMountSel()">Imperial</label>
+          </div>
+          <select x-ref="mountSel" x-model.number="mountingHoleSize" @change="updatePreview()"></select>
+        </div>
+
+        <!-- Grille hole size -->
+        <div>
+          <label>Grille Hole Size</label>
+          <div class="radio-group">
+            <label><input type="radio" value="metric" x-model="grilleUnit" @change="refreshGrilleSel()">Metric</label>
+            <label><input type="radio"
+                          value="imperial"
+                          x-model="grilleUnit"
+                          @change="refreshGrilleSel()">Imperial</label>
+          </div>
+          <select x-ref="grilleSel" x-model.number="holeSize" @change="updatePreview()"></select>
+        </div>
+
+        <!-- Hub diameter -->
+        <div>
+          <label>Hub Avoidance Diameter (mm)</label>
+          <input type="number" x-model.number="hubDiameter" min="0"
+                 :max="fans[fanSize].size-10" step="5" @input.debounce.300ms="updatePreview()">
+          <p class="text-sm">Leave center area clear for the fan hub (typically 30–50 mm).</p>
+        </div>
+
+        <!-- Thickness -->
+        <div>
+          <label>Template Thickness (mm)</label>
+          <input type="number" x-model.number="thickness" min="1" max="10" step="0.5">
+        </div>
+      </div>
+    </div>
+
+    <!-- Preview -------------------------------------------------------- -->
+    <div class="card">
+      <h2>2D Preview (Top View)</h2>
+      <div class="flex" style="justify-content:center">
+        <svg width="300" height="300" x-ref="svg"></svg>
+      </div>
+      <div class="text-sm" style="margin-top:12px" x-html="legend"></div>
+    </div>
+  </div>
+
+  <!-- Generate button -------------------------------------------------- -->
+  <button id="generateBtn"
+          @click="scadText=generateScad();modalOpen=true"
+          style="margin-top:24px">
+    Generate OpenSCAD Code
+  </button>
+
+  <!-- Instructions ----------------------------------------------------- -->
+  <div class="card" style="margin-top:24px;background:#ebf5ff">
+    <h3 style="margin:0 0 8px;font-weight:600;color:#0f3e8d">How to Use</h3>
+    <ol class="list-small" style="color:#0f3e8d">
+      <li>Configure fan size and hole sizes.</li>
+      <li>Validate the honeycomb pattern in the 2D preview.</li>
+      <li>Click “Generate OpenSCAD Code.”</li>
+      <li>Copy the code into OpenSCAD.</li>
+      <li>Render (F6) and export as STL.</li>
+      <li>3D print the drilling template.</li>
+      <li>Use the template as a drill guide.</li>
+    </ol>
+  </div>
+
+  <!-- Modal ------------------------------------------------------------ -->
+  <div class="modal" x-show="modalOpen" x-cloak
+       x-transition.opacity
+       @click.self="modalOpen=false">
+    <div class="modal-box" x-transition.scale>
+      <div class="modal-header">
+        <h3 style="margin:0;font-size:1rem;font-weight:600">Generated OpenSCAD Code</h3>
+        <button class="close" @click="modalOpen=false">✕</button>
+      </div>
+      <div class="modal-body">
+        <div class="code-hint">
+          <strong>To create the STL file:</strong>
+          <ol class="list-small" style="margin-top:6px">
+            <li>Copy the code below.</li>
+            <li>Open OpenSCAD (openscad.org).</li>
+            <li>Paste the code, press F6.</li>
+            <li>File → Export → STL.</li>
+          </ol>
+        </div>
+
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
+          <label style="font-size:.85rem;font-weight:500">OpenSCAD Code</label>
+          <button class="copy-btn"
+                  @click="navigator.clipboard.writeText(scadText)">
+            Copy
+          </button>
+        </div>
+
+        <textarea x-model="scadText" readonly spellcheck="false"></textarea>
+        <p class="text-sm" style="margin-top:8px">
+          File name suggestion:
+          <code style="background:#f1f2f4;padding:2px 4px;border-radius:4px"
+                x-text="`fan_grille_${fanSize}_honeycomb.scad`"></code>
+        </p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  function fanGrille() {
+    return {
+      /* ------------ Look-up tables ------------------------------------- */
+      fans: {
+        "80mm": {size: 80, spacing: 71.5},
+        "92mm": {size: 92, spacing: 82.5},
+        "120mm": {size: 120, spacing: 105},
+        "140mm": {size: 140, spacing: 124.5}
+      },
+      drills: {
+        metric: [
+          {label: "3 mm", value: 3}, {label: "3.5 mm", value: 3.5}, {label: "4 mm", value: 4},
+          {label: "4.5 mm", value: 4.5}, {label: "5 mm", value: 5}, {label: "5.5 mm", value: 5.5},
+          {label: "6 mm", value: 6}, {label: "6.5 mm", value: 6.5}, {label: "7 mm", value: 7},
+          {label: "8 mm", value: 8}, {label: "9 mm", value: 9}, {label: "10 mm", value: 10}
+        ],
+        imperial: [
+          {label: '1/8″', value: 3.175}, {label: '9/64″', value: 3.572}, {label: '5/32″', value: 3.969},
+          {label: '11/64″', value: 4.366}, {label: '3/16″', value: 4.763}, {label: '13/64″', value: 5.159},
+          {label: '7/32″', value: 5.556}, {label: '15/64″', value: 5.953}, {label: '1/4″', value: 6.35},
+          {label: '17/64″', value: 6.747}, {label: '9/32″', value: 7.144}, {label: '5/16″', value: 7.938},
+          {label: '11/32″', value: 8.731}, {label: '3/8″', value: 9.525}
+        ]
+      },
+
+      /* ------------ Reactive state ------------------------------------- */
+      fanSize: "120mm",
+      mountUnit: "metric",
+      grilleUnit: "metric",
+      mountingHoleSize: 4.5,
+      holeSize: 4,
+      hubDiameter: 42,
+      thickness: 3,
+      modalOpen: false,
+      scadText: "",
+      legend: "",
+
+      /* ------------ Utility -------------------------------------------- */
+      fillSelects() {
+        this.refreshMountSel();
+        this.refreshGrilleSel();
+      },
+      refreshMountSel() {
+        const sel = this.$refs.mountSel;
+        sel.innerHTML = this.drills[this.mountUnit].map(d =>
+            `<option value="${d.value}">${d.label}${this.mountUnit === 'imperial'
+                                                    ? ` (${d.value.toFixed(2)} mm)`
+                                                    : ''}</option>`
+        ).join("");
+        this.mountingHoleSize = parseFloat(sel.value);
+        this.updatePreview();
+      },
+      refreshGrilleSel() {
+        const sel = this.$refs.grilleSel;
+        sel.innerHTML = this.drills[this.grilleUnit].map(d =>
+            `<option value="${d.value}">${d.label}${this.grilleUnit === 'imperial'
+                                                    ? ` (${d.value.toFixed(2)} mm)`
+                                                    : ''}</option>`
+        ).join("");
+        this.holeSize = parseFloat(sel.value);
+        this.updatePreview();
+      },
+
+      /* ------------ Geometry calculations ------------------------------ */
+      calcHoles() {
+        const fan = this.fans[this.fanSize];
+        const holes = [];
+        const spacing = this.holeSize * 2.2;
+        const R = fan.size / 2;
+        const Rmin = this.hubDiameter / 2;
+        const rows = Math.ceil(R * 2 / spacing);
+        const cols = Math.ceil(R * 2 / (spacing * Math.sqrt(3) / 2));
+        for (let r = -rows; r <= rows; r++) {
+          for (let c = -cols; c <= cols; c++) {
+            const x = c * spacing * Math.sqrt(3) / 2;
+            const y = r * spacing + (c % 2 ? spacing / 2 : 0);
+            const d = Math.hypot(x, y);
+            if (d <= R && d >= Rmin) {
+              const s = fan.spacing;
+              const mounts = [[-s / 2, -s / 2], [s / 2, -s / 2], [-s / 2, s / 2], [s / 2, s / 2]];
+              const ok = mounts.every(([mx, my]) =>
+                  Math.hypot(x - mx, y - my) >
+                  (this.mountingHoleSize + this.holeSize) / 2 + 2);
+              if (ok) holes.push({x, y});
+            }
+          }
+        }
+        return holes;
+      },
+
+      /* ------------ Preview drawing ------------------------------------ */
+      updatePreview() {
+        const fan = this.fans[this.fanSize];
+        const svg = this.$refs.svg;
+        const holes = this.calcHoles();
+        const plate = fan.spacing + 20;
+        const scale = 280 / (fan.spacing + 40);
+        const svgNS = "http://www.w3.org/2000/svg";
+        svg.innerHTML = "";
+        const g = document.createElementNS(svgNS, "g");
+        g.setAttribute("transform", `translate(150 150) scale(${scale})`);
+        svg.appendChild(g);
+
+        const rect = (attrs) => {
+          const el = document.createElementNS(svgNS, "rect");
+          Object.entries(attrs).forEach(([k, v]) => el.setAttribute(k, v));
+          g.appendChild(el);
+        };
+        const circle = (attrs) => {
+          const el = document.createElementNS(svgNS, "circle");
+          Object.entries(attrs).forEach(([k, v]) => el.setAttribute(k, v));
+          g.appendChild(el);
+        };
+
+        rect({
+          x: -plate / 2, y: -plate / 2, width: plate, height: plate, fill: "#e5e7eb",
+          stroke: "#374151", "stroke-width": .5
+        });
+        const s = fan.spacing;
+        [[-s / 2, -s / 2], [s / 2, -s / 2], [-s / 2, s / 2], [s / 2, s / 2]].forEach(([cx, cy]) => {
+          circle({cx, cy, r: this.mountingHoleSize / 2, fill: "#fff", stroke: "#374151", "stroke-width": .5});
+        });
+        holes.forEach(h => {
+          circle({
+            cx: h.x.toFixed(2), cy: h.y.toFixed(2), r: this.holeSize / 2,
+            fill: "#fff", stroke: "#374151", "stroke-width": .3
+          });
+        });
+        circle({
+          cx: 0, cy: 0, r: fan.size / 2, fill: "none", stroke: "#9ca3af",
+          "stroke-width": .5, "stroke-dasharray": "2 2"
+        });
+        if (this.hubDiameter > 0) {
+          circle({
+            cx: 0, cy: 0, r: this.hubDiameter / 2, fill: "none", stroke: "#ef4444",
+            "stroke-width": .5, "stroke-dasharray": "2 2"
+          });
+        }
+
+        /* legend */
+        const findLabel = (arr, val) => arr.find(d => d.value === val)?.label || `${val} mm`;
+        const mountLabel = findLabel(this.drills[this.mountUnit], this.mountingHoleSize);
+        const holeLabel = findLabel(this.drills[this.grilleUnit], this.holeSize);
+        this.legend =
+            `&#8226; Gray area: Template plate<br>` +
+            `&#8226; Large circles: Mounting holes (${mountLabel})<br>` +
+            `&#8226; Small circles: Grille holes (${holeLabel})<br>` +
+            `&#8226; Gray dashed circle: Fan blade area` +
+            (this.hubDiameter > 0 ? `<br>&#8226; Red dashed circle: Hub avoidance area (${this.hubDiameter} mm)` : "");
+      },
+
+      /* ------------ OpenSCAD export ------------------------------------ */
+      generateScad() {
+        const fan = this.fans[this.fanSize];
+        const plate = fan.spacing + 20;
+        const holes = this.calcHoles();
+        let code = `// Fan Grille Drilling Template\n// Generated for ${this.fanSize} fan\n\n$fn = 32;\n\ndifference() {\n`;
+        code += `  translate([0,0,${this.thickness / 2}]) cube([${plate},${plate},${this.thickness}],center=true);\n\n`;
+        const s = fan.spacing;
+        [[-s / 2, -s / 2], [s / 2, -s / 2], [-s / 2, s / 2], [s / 2, s / 2]].forEach(([x, y]) => {
+          code += `  translate([${x},${y},-1]) cylinder(h=${this.thickness + 2},r=${this.mountingHoleSize / 2});\n`;
+        });
+        code += `\n  // Grille holes\n`;
+        holes.forEach(h => {
+          code += `  translate([${h.x.toFixed(2)},${h.y.toFixed(2)},-1]) cylinder(h=${this.thickness + 2},r=${this.holeSize / 2});\n`;
+        });
+        code += "}\n";
+        return code;
+      }
+    }
+  }
+</script>
+</body>
+</html>
