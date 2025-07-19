@@ -3,6 +3,14 @@ let nutritionData = [];
 let filteredData = [];
 let currentSortField = 'Item';
 let currentSortOrder = 'asc';
+let ingredients = {
+    breads: [],
+    proteins: [],
+    cheeses: [],
+    vegetables: [],
+    condiments: []
+};
+let selectedIngredients = [];
 
 // DOM elements
 const searchInput = document.getElementById('searchInput');
@@ -13,6 +21,20 @@ const menuGrid = document.getElementById('menuGrid');
 const itemCount = document.getElementById('itemCount');
 const loadingSpinner = document.getElementById('loadingSpinner');
 const dataDate = document.getElementById('dataDate');
+
+// New elements for sandwich builder
+const browseModeBtn = document.getElementById('browseMode');
+const buildModeBtn = document.getElementById('buildMode');
+const browseSection = document.getElementById('browseSection');
+const buildSection = document.getElementById('buildSection');
+const breadOptions = document.getElementById('breadOptions');
+const proteinOptions = document.getElementById('proteinOptions');
+const cheeseOptions = document.getElementById('cheeseOptions');
+const vegetableOptions = document.getElementById('vegetableOptions');
+const condimentOptions = document.getElementById('condimentOptions');
+const selectedIngredientsDiv = document.getElementById('selectedIngredients');
+const totalNutritionDiv = document.getElementById('totalNutrition');
+const clearAllBtn = document.getElementById('clearAll');
 
 // Initialize the app
 document.addEventListener('DOMContentLoaded', async () => {
@@ -43,6 +65,9 @@ async function loadNutritionData() {
         if (data.generated) {
             dataDate.textContent = data.generated;
         }
+        
+        // Process ingredients for sandwich builder
+        processIngredients();
     } catch (error) {
         throw new Error('Could not load nutrition data: ' + error.message);
     }
@@ -54,6 +79,11 @@ function setupEventListeners() {
     categoryFilter.addEventListener('change', handleCategoryFilter);
     sortBySelect.addEventListener('change', handleSort);
     sortOrderButton.addEventListener('click', toggleSortOrder);
+    
+    // Mode toggle listeners
+    browseModeBtn.addEventListener('click', () => switchMode('browse'));
+    buildModeBtn.addEventListener('click', () => switchMode('build'));
+    clearAllBtn.addEventListener('click', clearAllIngredients);
 }
 
 // Debounce function to limit search frequency
@@ -267,9 +297,201 @@ function scrollToTop() {
     window.scrollTo({ top: 0, behavior: 'smooth' });
 }
 
+// Process ingredients from nutrition data
+function processIngredients() {
+    // Define category mappings based on the categories file
+    const categoryMappings = {
+        breads: ['Breads', 'Bread'],
+        proteins: [
+            'Individual Proteins',
+            'Chicken',
+            'Amount on 6" sandwich or Wrap'
+        ],
+        cheeses: ['Cheese'],
+        vegetables: ['Vegetables'],
+        condiments: [
+            'Seasonings and Spices',
+            'Amount on 6" sandwich or Wrap. Double values for footlong nutrition information (one footlong=two 6" servings). Double Sandwich Condiments and Toppings sauce values for salad dressing portion'
+        ]
+    };
+    
+    // Clear existing ingredients
+    Object.keys(ingredients).forEach(key => {
+        ingredients[key] = [];
+    });
+    
+    // Process each nutrition item
+    nutritionData.forEach(item => {
+        // Categorize ingredients based on category mappings
+        for (const [ingredientType, categories] of Object.entries(categoryMappings)) {
+            if (categories.some(category => 
+                item.Category.toLowerCase().includes(category.toLowerCase()) ||
+                category.toLowerCase().includes(item.Category.toLowerCase())
+            )) {
+                ingredients[ingredientType].push(item);
+                break;
+            }
+        }
+    });
+    
+    // Populate ingredient options
+    populateIngredientOptions();
+}
+
+// Populate ingredient options in the UI
+function populateIngredientOptions() {
+    populateCategory('bread', ingredients.breads, breadOptions);
+    populateCategory('protein', ingredients.proteins, proteinOptions);
+    populateCategory('cheese', ingredients.cheeses, cheeseOptions);
+    populateCategory('vegetable', ingredients.vegetables, vegetableOptions);
+    populateCategory('condiment', ingredients.condiments, condimentOptions);
+}
+
+// Populate a specific ingredient category
+function populateCategory(type, items, container) {
+    container.innerHTML = '';
+    
+    items.forEach(item => {
+        const optionDiv = document.createElement('div');
+        optionDiv.className = 'ingredient-option';
+        optionDiv.dataset.type = type;
+        optionDiv.dataset.item = JSON.stringify(item);
+        
+        optionDiv.innerHTML = `
+            <div class="ingredient-info">
+                <div class="ingredient-name">${item.Item}</div>
+                <div class="ingredient-nutrition">
+                    ${formatNutritionValue(item.Calories)} cal, 
+                    ${formatNutritionValue(item['Total Fat (g)'])}g fat, 
+                    ${formatNutritionValue(item['Sodium (mg)'])}mg sodium
+                </div>
+            </div>
+            <button class="add-btn" onclick="toggleIngredient(this)"></button>
+        `;
+        
+        container.appendChild(optionDiv);
+    });
+}
+
+// Toggle ingredient selection
+function toggleIngredient(button) {
+    const optionDiv = button.parentElement;
+    const isSelected = optionDiv.classList.contains('selected');
+    const itemData = JSON.parse(optionDiv.dataset.item);
+    
+    if (isSelected) {
+        // Remove ingredient
+        optionDiv.classList.remove('selected');
+        selectedIngredients = selectedIngredients.filter(ingredient => 
+            ingredient.Item !== itemData.Item
+        );
+    } else {
+        // Add ingredient
+        optionDiv.classList.add('selected');
+        selectedIngredients.push(itemData);
+    }
+    
+    updateSelectedIngredients();
+    updateTotalNutrition();
+}
+
+// Update selected ingredients display
+function updateSelectedIngredients() {
+    if (selectedIngredients.length === 0) {
+        selectedIngredientsDiv.innerHTML = '<p class="placeholder">Select ingredients to build your sandwich</p>';
+        return;
+    }
+    
+    selectedIngredientsDiv.innerHTML = selectedIngredients.map(ingredient => `
+        <div class="selected-ingredient">
+            <span class="selected-ingredient-name">${ingredient.Item}</span>
+            <button class="remove-ingredient" onclick="removeIngredient('${ingredient.Item}')" title="Remove ingredient">×</button>
+        </div>
+    `).join('');
+}
+
+// Remove specific ingredient
+function removeIngredient(itemName) {
+    // Remove from selected ingredients
+    selectedIngredients = selectedIngredients.filter(ingredient => ingredient.Item !== itemName);
+    
+    // Update UI
+    const ingredientOptions = document.querySelectorAll('.ingredient-option');
+    ingredientOptions.forEach(option => {
+        const itemData = JSON.parse(option.dataset.item);
+        if (itemData.Item === itemName) {
+            option.classList.remove('selected');
+        }
+    });
+    
+    updateSelectedIngredients();
+    updateTotalNutrition();
+}
+
+// Clear all selected ingredients
+function clearAllIngredients() {
+    selectedIngredients = [];
+    
+    // Remove selected class from all options
+    const ingredientOptions = document.querySelectorAll('.ingredient-option');
+    ingredientOptions.forEach(option => {
+        option.classList.remove('selected');
+    });
+    
+    updateSelectedIngredients();
+    updateTotalNutrition();
+}
+
+// Update total nutrition display
+function updateTotalNutrition() {
+    const totals = {
+        'Calories': 0,
+        'Total Fat (g)': 0,
+        'Sodium (mg)': 0,
+        'Carbohydrates (g)': 0,
+        'Protein (g)': 0
+    };
+    
+    selectedIngredients.forEach(ingredient => {
+        Object.keys(totals).forEach(nutrient => {
+            const value = parseFloat(ingredient[nutrient]) || 0;
+            totals[nutrient] += value;
+        });
+    });
+    
+    // Update the display
+    const nutritionItems = totalNutritionDiv.querySelectorAll('.nutrition-item');
+    const labels = ['Calories', 'Fat (g)', 'Sodium (mg)', 'Carbs (g)', 'Protein (g)'];
+    const keys = ['Calories', 'Total Fat (g)', 'Sodium (mg)', 'Carbohydrates (g)', 'Protein (g)'];
+    
+    nutritionItems.forEach((item, index) => {
+        const valueSpan = item.querySelector('.nutrition-value');
+        valueSpan.textContent = formatNutritionValue(totals[keys[index]]);
+    });
+}
+
+// Switch between browse and build modes
+function switchMode(mode) {
+    if (mode === 'browse') {
+        browseModeBtn.classList.add('active');
+        buildModeBtn.classList.remove('active');
+        browseSection.classList.add('active');
+        buildSection.classList.remove('active');
+    } else {
+        buildModeBtn.classList.add('active');
+        browseModeBtn.classList.remove('active');
+        buildSection.classList.add('active');
+        browseSection.classList.remove('active');
+    }
+}
+
 // Export functions for potential future use
 window.SubwayNutritionApp = {
     loadNutritionData,
     filterAndDisplay,
-    scrollToTop
+    scrollToTop,
+    toggleIngredient,
+    removeIngredient,
+    clearAllIngredients,
+    switchMode
 };

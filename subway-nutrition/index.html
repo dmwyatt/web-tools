@@ -15,31 +15,113 @@
     </header>
 
     <main class="container">
-        <div class="controls">
-            <div class="search-filter">
-                <input type="text" id="searchInput" placeholder="Search menu items...">
-                <select id="categoryFilter">
-                    <option value="">All Categories</option>
-                </select>
+        <!-- Mode Toggle -->
+        <div class="mode-toggle">
+            <button id="browseMode" class="mode-btn active">Browse Menu</button>
+            <button id="buildMode" class="mode-btn">Build Custom Sandwich</button>
+        </div>
+
+        <!-- Browse Mode -->
+        <div id="browseSection" class="mode-section active">
+            <div class="controls">
+                <div class="search-filter">
+                    <input type="text" id="searchInput" placeholder="Search menu items...">
+                    <select id="categoryFilter">
+                        <option value="">All Categories</option>
+                    </select>
+                </div>
+                <div class="sort-controls">
+                    <label for="sortBy">Sort by:</label>
+                    <select id="sortBy">
+                        <option value="Item">Name</option>
+                        <option value="Calories">Calories</option>
+                        <option value="Total Fat (g)">Total Fat</option>
+                        <option value="Sodium (mg)">Sodium</option>
+                        <option value="Protein (g)">Protein</option>
+                        <option value="Carbohydrates (g)">Carbs</option>
+                    </select>
+                    <button id="sortOrder" class="sort-btn">↑ Asc</button>
+                </div>
             </div>
-            <div class="sort-controls">
-                <label for="sortBy">Sort by:</label>
-                <select id="sortBy">
-                    <option value="Item">Name</option>
-                    <option value="Calories">Calories</option>
-                    <option value="Total Fat (g)">Total Fat</option>
-                    <option value="Sodium (mg)">Sodium</option>
-                    <option value="Protein (g)">Protein</option>
-                    <option value="Carbohydrates (g)">Carbs</option>
-                </select>
-                <button id="sortOrder" class="sort-btn">↑ Asc</button>
+
+            <div id="itemCount" class="item-count"></div>
+
+            <div id="menuGrid" class="menu-grid">
+                <!-- Menu items will be populated here -->
             </div>
         </div>
 
-        <div id="itemCount" class="item-count"></div>
-
-        <div id="menuGrid" class="menu-grid">
-            <!-- Menu items will be populated here -->
+        <!-- Build Custom Sandwich Mode -->
+        <div id="buildSection" class="mode-section">
+            <div class="sandwich-builder">
+                <div class="builder-left">
+                    <div class="ingredient-categories">
+                        <div class="ingredient-category">
+                            <h3>🍞 Bread</h3>
+                            <div id="breadOptions" class="ingredient-options"></div>
+                        </div>
+                        
+                        <div class="ingredient-category">
+                            <h3>🥩 Protein</h3>
+                            <div id="proteinOptions" class="ingredient-options"></div>
+                        </div>
+                        
+                        <div class="ingredient-category">
+                            <h3>🧀 Cheese</h3>
+                            <div id="cheeseOptions" class="ingredient-options"></div>
+                        </div>
+                        
+                        <div class="ingredient-category">
+                            <h3>🥬 Vegetables</h3>
+                            <div id="vegetableOptions" class="ingredient-options"></div>
+                        </div>
+                        
+                        <div class="ingredient-category">
+                            <h3>🥄 Condiments & Seasonings</h3>
+                            <div id="condimentOptions" class="ingredient-options"></div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="builder-right">
+                    <div class="custom-sandwich-summary">
+                        <h3>Your Custom Sandwich</h3>
+                        <div id="selectedIngredients" class="selected-ingredients">
+                            <p class="placeholder">Select ingredients to build your sandwich</p>
+                        </div>
+                        
+                        <div class="clear-all">
+                            <button id="clearAll" class="clear-btn">Clear All</button>
+                        </div>
+                        
+                        <div class="nutrition-summary">
+                            <h4>Total Nutrition</h4>
+                            <div id="totalNutrition" class="total-nutrition">
+                                <div class="nutrition-item">
+                                    <span class="nutrition-value">0</span>
+                                    <div class="nutrition-label">Calories</div>
+                                </div>
+                                <div class="nutrition-item">
+                                    <span class="nutrition-value">0</span>
+                                    <div class="nutrition-label">Fat (g)</div>
+                                </div>
+                                <div class="nutrition-item">
+                                    <span class="nutrition-value">0</span>
+                                    <div class="nutrition-label">Sodium (mg)</div>
+                                </div>
+                                <div class="nutrition-item">
+                                    <span class="nutrition-value">0</span>
+                                    <div class="nutrition-label">Carbs (g)</div>
+                                </div>
+                                <div class="nutrition-item">
+                                    <span class="nutrition-value">0</span>
+                                    <div class="nutrition-label">Protein (g)</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
         </div>
 
         <div id="loadingSpinner" class="loading">Loading nutrition data...</div>

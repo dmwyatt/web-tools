@@ -279,3 +279,272 @@ footer p {
 .menu-item {
     animation: fadeInUp 0.5s ease-out;
 }
+
+/* Mode Toggle */
+.mode-toggle {
+    display: flex;
+    justify-content: center;
+    gap: 0.5rem;
+    margin: 2rem 0;
+}
+
+.mode-btn {
+    padding: 0.75rem 1.5rem;
+    border: 2px solid #00873b;
+    background: white;
+    color: #00873b;
+    border-radius: 25px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s;
+}
+
+.mode-btn.active {
+    background: #00873b;
+    color: white;
+}
+
+.mode-btn:hover:not(.active) {
+    background: #f0f8f4;
+}
+
+/* Mode Sections */
+.mode-section {
+    display: none;
+}
+
+.mode-section.active {
+    display: block;
+}
+
+/* Sandwich Builder */
+.sandwich-builder {
+    display: flex;
+    gap: 2rem;
+    margin: 2rem 0;
+}
+
+.builder-left {
+    flex: 2;
+}
+
+.builder-right {
+    flex: 1;
+    position: sticky;
+    top: 2rem;
+    height: fit-content;
+}
+
+.ingredient-categories {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+}
+
+.ingredient-category {
+    background: white;
+    border-radius: 10px;
+    padding: 1.5rem;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+}
+
+.ingredient-category h3 {
+    color: #00873b;
+    font-size: 1.2rem;
+    margin-bottom: 1rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.ingredient-options {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+    gap: 0.75rem;
+}
+
+.ingredient-option {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.75rem;
+    border: 2px solid #e9ecef;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.3s;
+    background: white;
+}
+
+.ingredient-option:hover {
+    border-color: #00873b;
+    background: #f0f8f4;
+}
+
+.ingredient-option.selected {
+    border-color: #00873b;
+    background: #e6f7e9;
+}
+
+.ingredient-info {
+    flex: 1;
+}
+
+.ingredient-name {
+    font-weight: 600;
+    color: #333;
+}
+
+.ingredient-nutrition {
+    font-size: 0.8rem;
+    color: #666;
+    margin-top: 0.25rem;
+}
+
+.add-btn {
+    background: #00873b;
+    color: white;
+    border: none;
+    border-radius: 50%;
+    width: 30px;
+    height: 30px;
+    font-size: 1.2rem;
+    cursor: pointer;
+    transition: background-color 0.3s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.add-btn:hover {
+    background: #006d2f;
+}
+
+.ingredient-option.selected .add-btn {
+    background: #dc3545;
+}
+
+.ingredient-option.selected .add-btn::before {
+    content: "×";
+}
+
+.ingredient-option:not(.selected) .add-btn::before {
+    content: "+";
+}
+
+/* Custom Sandwich Summary */
+.custom-sandwich-summary {
+    background: white;
+    border-radius: 10px;
+    padding: 1.5rem;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+}
+
+.custom-sandwich-summary h3 {
+    color: #00873b;
+    margin-bottom: 1rem;
+}
+
+.selected-ingredients {
+    margin-bottom: 1.5rem;
+    min-height: 100px;
+}
+
+.selected-ingredient {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.5rem;
+    margin-bottom: 0.5rem;
+    background: #f8f9fa;
+    border-radius: 5px;
+}
+
+.selected-ingredient-name {
+    font-weight: 500;
+}
+
+.remove-ingredient {
+    background: #dc3545;
+    color: white;
+    border: none;
+    border-radius: 50%;
+    width: 20px;
+    height: 20px;
+    font-size: 0.8rem;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.placeholder {
+    color: #999;
+    font-style: italic;
+    text-align: center;
+    padding: 2rem 0;
+}
+
+.clear-all {
+    text-align: center;
+    margin-bottom: 1.5rem;
+}
+
+.clear-btn {
+    background: #dc3545;
+    color: white;
+    border: none;
+    padding: 0.5rem 1rem;
+    border-radius: 5px;
+    cursor: pointer;
+    font-weight: 600;
+}
+
+.clear-btn:hover {
+    background: #c82333;
+}
+
+.nutrition-summary h4 {
+    color: #333;
+    margin-bottom: 1rem;
+}
+
+.total-nutrition {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 0.75rem;
+}
+
+.total-nutrition .nutrition-item {
+    background: #f0f8f4;
+    border: 1px solid #c3e6cb;
+}
+
+.total-nutrition .nutrition-value {
+    color: #00873b;
+    font-size: 1.1rem;
+    font-weight: 700;
+}
+
+/* Mobile Responsive */
+@media (max-width: 768px) {
+    .sandwich-builder {
+        flex-direction: column;
+    }
+    
+    .builder-right {
+        position: static;
+    }
+    
+    .ingredient-options {
+        grid-template-columns: 1fr;
+    }
+    
+    .mode-toggle {
+        margin: 1rem 0;
+    }
+    
+    .mode-btn {
+        padding: 0.5rem 1rem;
+        font-size: 0.9rem;
+    }
+}
