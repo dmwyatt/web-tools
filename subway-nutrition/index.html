@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Subway Nutrition Guide</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <header>
+        <div class="container">
+            <h1>🥪 Subway Nutrition Guide</h1>
+            <p>Explore nutritional information for all Subway menu items</p>
+        </div>
+    </header>
+
+    <main class="container">
+        <div class="controls">
+            <div class="search-filter">
+                <input type="text" id="searchInput" placeholder="Search menu items...">
+                <select id="categoryFilter">
+                    <option value="">All Categories</option>
+                </select>
+            </div>
+            <div class="sort-controls">
+                <label for="sortBy">Sort by:</label>
+                <select id="sortBy">
+                    <option value="Item">Name</option>
+                    <option value="Calories">Calories</option>
+                    <option value="Total Fat (g)">Total Fat</option>
+                    <option value="Sodium (mg)">Sodium</option>
+                    <option value="Protein (g)">Protein</option>
+                    <option value="Carbohydrates (g)">Carbs</option>
+                </select>
+                <button id="sortOrder" class="sort-btn">↑ Asc</button>
+            </div>
+        </div>
+
+        <div id="itemCount" class="item-count"></div>
+
+        <div id="menuGrid" class="menu-grid">
+            <!-- Menu items will be populated here -->
+        </div>
+
+        <div id="loadingSpinner" class="loading">Loading nutrition data...</div>
+    </main>
+
+    <footer>
+        <div class="container">
+            <p>Data generated: <span id="dataDate"></span> | Nutritional information provided by Subway</p>
+        </div>
+    </footer>
+
+    <script src="script.js"></script>
+</body>
+</html>

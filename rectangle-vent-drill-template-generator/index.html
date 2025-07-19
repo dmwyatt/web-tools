@@ -1,0 +1,553 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Rectangular Ventilation Grille Generator — Alpine JS</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <!-- Alpine v3 -->
+  <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.14.0/dist/cdn.min.js"></script>
+  <!-- Lucide icons (ESM) -->
+  <script type="module">
+    import { Download, Copy, X } from "https://unpkg.com/lucide@latest/dist/esm/index.js";
+
+    window.icons = {Download, Copy, X};
+  </script>
+
+  <style>
+      /* ---- layout & typography -------------------------------------------- */
+      body {
+          font-family: system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif;
+          margin: 0;
+          background: #f5f6f8;
+          color: #111
+      }
+
+      .container {
+          max-width: 1180px;
+          margin: auto;
+          padding: 24px
+      }
+
+      h1 {
+          font-size: 1.75rem;
+          margin: 0 0 24px;
+          font-weight: 700
+      }
+
+      h2 {
+          font-size: 1rem;
+          margin: 0 0 12px;
+          font-weight: 600
+      }
+
+      .flex {
+          display: flex
+      }
+
+      .grid {
+          display: grid;
+          gap: 24px
+      }
+
+      @media (min-width: 1024px) {
+          .grid-cols-2 {
+              grid-template-columns:1fr 1fr
+          }
+      }
+
+      /* ---- cards, inputs, buttons ----------------------------------------- */
+      .card {
+          background: #fafafa;
+          border: 1px solid #e2e3e5;
+          border-radius: 8px;
+          padding: 16px
+      }
+
+      label {
+          font-size: .9rem;
+          font-weight: 500;
+          margin-bottom: 4px;
+          display: block
+      }
+
+      select, input[type=number] {
+          width: 100%;
+          padding: 6px 8px;
+          border: 1px solid #ced0d4;
+          border-radius: 4px;
+          font-size: .9rem
+      }
+
+      .radio-group {
+          display: flex;
+          gap: 12px;
+          margin-bottom: 6px
+      }
+
+      .radio-group input {
+          margin-right: 4px
+      }
+
+      button {
+          cursor: pointer;
+          border: none;
+          font-weight: 600;
+          border-radius: 6px
+      }
+
+      #generateBtn {
+          width: 100%;
+          padding: 10px;
+          background: #2563eb;
+          color: #fff;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          gap: 8px
+      }
+
+      #generateBtn:hover {
+          background: #1e4ec8
+      }
+
+      .copy-btn {
+          padding: 4px 10px;
+          background: #e5e7eb;
+          border-radius: 4px;
+          font-size: .8rem
+      }
+
+      .copy-btn:hover {
+          background: #d6d9dd
+      }
+
+      /* ---- preview --------------------------------------------------------- */
+      svg {
+          background: #fff;
+          border: 1px solid #d1d5db;
+          border-radius: 6px
+      }
+
+      .text-sm {
+          font-size: .8rem;
+          color: #475569
+      }
+
+      .list-small {
+          list-style: decimal;
+          padding-left: 18px;
+          margin: 4px 0
+      }
+
+      [x-cloak] {
+          display: none !important
+      }
+
+      /* ---- modal ----------------------------------------------------------- */
+      .modal {
+          position: fixed;
+          inset: 0;
+          background: rgba(0, 0, 0, .5);
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          padding: 20px;
+          z-index: 50
+      }
+
+      .modal-box {
+          background: #fff;
+          border-radius: 8px;
+          max-width: 840px;
+          width: 100%;
+          max-height: 90vh;
+          display: flex;
+          flex-direction: column
+      }
+
+      .modal-header {
+          padding: 12px 16px;
+          border-bottom: 1px solid #e2e3e5;
+          display: flex;
+          justify-content: space-between;
+          align-items: center
+      }
+
+      .modal-body {
+          padding: 16px;
+          overflow: auto;
+          flex: 1
+      }
+
+      textarea {
+          width: 100%;
+          height: 260px;
+          padding: 8px;
+          font-family: SFMono-Regular, Consolas, Menlo, monospace;
+          font-size: .78rem;
+          background: #f7f7f8;
+          border: 1px solid #d1d5db;
+          border-radius: 4px
+      }
+
+      .code-hint {
+          background: #e0e7ff;
+          padding: 12px;
+          border-radius: 6px;
+          font-size: .82rem;
+          margin-bottom: 12px;
+          color: #1e40af
+      }
+  </style>
+</head>
+
+<body>
+<div class="container"
+     x-data="grille()"
+     x-init="init()">
+
+  <h1>Rectangular Ventilation Grille Generator</h1>
+
+  <div class="grid grid-cols-2">
+    <!-- controls ------------------------------------------------------- -->
+    <div class="space-y-4">
+      <!-- coverage area card -->
+      <div class="card">
+        <h2>Hole Coverage Area</h2>
+        <div style="display:grid;gap:16px">
+          <div class="grid" style="grid-template-columns:1fr 1fr;gap:12px">
+            <div>
+              <label>Width (mm)</label>
+              <input type="number" x-model.number="holeAreaWidth" min="20" max="500" step="5"
+                     @input.debounce.300ms="updatePreview()">
+            </div>
+            <div>
+              <label>Height (mm)</label>
+              <input type="number" x-model.number="holeAreaHeight" min="20" max="500" step="5"
+                     @input.debounce.300ms="updatePreview()">
+            </div>
+          </div>
+
+          <p class="text-sm text-gray-600">
+            This is the area that will be filled with ventilation holes.
+          </p>
+
+          <div>
+            <label>Border Margin (mm)</label>
+            <input type="number" x-model.number="borderMargin" min="3" max="20" step="1"
+                   @input.debounce.300ms="updatePreview()">
+            <p class="text-xs text-gray-500 mt-1">
+              Extra material around the hole area for template strength.
+            </p>
+          </div>
+
+          <div class="bg-blue-50 p-3 rounded">
+            <p class="text-sm font-medium text-blue-900">
+              Template size: <span x-text="templateWidth"></span> × <span x-text="templateHeight"></span> mm
+            </p>
+            <p class="text-xs text-blue-700 mt-1">Total size including borders.</p>
+          </div>
+
+          <div>
+            <label>Template Thickness (mm)</label>
+            <input type="number" x-model.number="thickness" min="1" max="10" step="0.5">
+          </div>
+        </div>
+      </div>
+
+      <!-- pattern card -->
+      <div class="card">
+        <h2>Hole Pattern</h2>
+        <div style="display:grid;gap:16px">
+          <div>
+            <label>Pattern Type</label>
+            <select x-model="pattern" @change="updatePreview()">
+              <option value="grid">Grid</option>
+              <option value="honeycomb">Honeycomb</option>
+            </select>
+          </div>
+
+          <div>
+            <label>Ventilation Hole Size</label>
+            <div class="radio-group">
+              <label><input type="radio" value="metric" x-model="holeUnit" @change="refreshHoleSel()">Metric</label>
+              <label><input type="radio" value="imperial" x-model="holeUnit" @change="refreshHoleSel()">Imperial</label>
+            </div>
+            <select x-ref="holeSel" x-model.number="holeSize" @change="updatePreview()"></select>
+          </div>
+
+          <div>
+            <label>Hole Spacing Multiplier</label>
+            <input type="number" x-model.number="spacingMult" min="1.5" max="5" step="0.1"
+                   @input.debounce.300ms="updatePreview()">
+            <p class="text-xs text-gray-500 mt-1">
+              Target spacing: <span x-text="(holeSize*spacingMult).toFixed(1)"></span>&nbsp;mm
+            </p>
+            <p class="text-xs text-gray-500">2.0–2.5&nbsp;dense · 2.8&nbsp;balanced · ≥3.5&nbsp;sparse</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- generate button -->
+      <button id="generateBtn"
+              @click="scadText=generateScad();modalOpen=true">
+        <span data-icon="Download"></span>Generate OpenSCAD Code
+      </button>
+    </div>
+
+    <!-- preview -------------------------------------------------------- -->
+    <div class="card">
+      <h2>2D Preview (Top View)</h2>
+      <div class="flex" style="justify-content:center">
+        <svg width="300" height="300" x-ref="svg"></svg>
+      </div>
+      <div class="text-sm" style="margin-top:12px" x-html="legend"></div>
+    </div>
+  </div>
+
+  <!-- instructions -->
+  <div class="card" style="margin-top:24px;background:#ebf5ff">
+    <h3 style="margin:0 0 8px;font-weight:600;color:#0f3e8d">How to Use</h3>
+    <ol class="list-small" style="color:#0f3e8d">
+      <li>Define coverage dimensions and border margin.</li>
+      <li>Select grid or honeycomb pattern, hole size, and spacing.</li>
+      <li>Generate and copy the OpenSCAD code.</li>
+      <li>Render in OpenSCAD and export as STL.</li>
+      <li>3-D print and use the template as a drill guide.</li>
+    </ol>
+  </div>
+
+  <!-- tips -->
+  <div class="card" style="margin-top:24px;background:#fff7ed">
+    <h3 style="margin:0 0 8px;font-weight:600;color:#92400e">Tips</h3>
+    <ul class="text-sm" style="color:#92400e;line-height:1.35">
+      <li><strong>Coverage area</strong> bounds hole edges exactly.</li>
+      <li><strong>Spacing</strong> is adjusted automatically to fill the area.</li>
+      <li><strong>Honeycomb</strong> offers higher strength-to-airflow ratio.</li>
+    </ul>
+  </div>
+
+  <!-- modal ------------------------------------------------------------ -->
+  <div class="modal" x-show="modalOpen" x-cloak x-transition.opacity @click.self="modalOpen=false">
+    <div class="modal-box" x-transition.scale>
+      <div class="modal-header">
+        <h3 style="margin:0;font-size:1rem;font-weight:600">Generated OpenSCAD Code</h3>
+        <button class="close" @click="modalOpen=false"><span data-icon="X"></span></button>
+      </div>
+      <div class="modal-body">
+        <div class="code-hint">
+          <strong>Export to STL:</strong>
+          <ol class="list-small" style="margin-top:6px">
+            <li>Copy the code.</li>
+            <li>Open OpenSCAD.</li>
+            <li>Paste, press F6, export STL.</li>
+          </ol>
+        </div>
+
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
+          <label style="font-size:.85rem;font-weight:500">OpenSCAD Code</label>
+          <button class="copy-btn" @click="navigator.clipboard.writeText(scadText)">
+            <span data-icon="Copy"></span>&nbsp;Copy
+          </button>
+        </div>
+
+        <textarea x-model="scadText" readonly spellcheck="false"></textarea>
+        <p class="text-sm" style="margin-top:8px">
+          File name: <code style="background:#f1f2f4;padding:2px 4px;border-radius:4px"
+                           x-text="`vent_grille_${holeAreaWidth}x${holeAreaHeight}_${pattern}.scad`"></code>
+        </p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  function grille() {
+    return {
+      /* --- lookup tables ---------------------------------------------- */
+      drills: {
+        metric: [
+          {label: "3 mm", value: 3}, {label: "3.5 mm", value: 3.5}, {label: "4 mm", value: 4},
+          {label: "4.5 mm", value: 4.5}, {label: "5 mm", value: 5}, {label: "5.5 mm", value: 5.5},
+          {label: "6 mm", value: 6}, {label: "6.5 mm", value: 6.5}, {label: "7 mm", value: 7},
+          {label: "8 mm", value: 8}, {label: "9 mm", value: 9}, {label: "10 mm", value: 10},
+          {label: "12 mm", value: 12}
+        ],
+        imperial: [
+          {label: '1/8″', value: 3.175}, {label: '5/32″', value: 3.969}, {label: '3/16″', value: 4.763},
+          {label: '7/32″', value: 5.556}, {label: '1/4″', value: 6.35}, {label: '5/16″', value: 7.938},
+          {label: '3/8″', value: 9.525}, {label: '7/16″', value: 11.113}, {label: '1/2″', value: 12.7}
+        ]
+      },
+
+      /* --- reactive state --------------------------------------------- */
+      holeAreaWidth: 100,
+      holeAreaHeight: 80,
+      thickness: 2,
+      borderMargin: 8,
+      pattern: "grid",
+      holeSize: 5,
+      spacingMult: 2.8,
+      holeUnit: "metric",
+
+      modalOpen: false,
+      scadText: "",
+      legend: "",
+
+      /* --- computed props --------------------------------------------- */
+      get templateWidth() {
+        return this.holeAreaWidth + 2 * this.borderMargin
+      },
+      get templateHeight() {
+        return this.holeAreaHeight + 2 * this.borderMargin
+      },
+
+      /* --- lifecycle --------------------------------------------------- */
+      init() {
+        this.refreshHoleSel();
+        this.updatePreview();
+        renderIcons();
+      },
+
+      /* --- helpers ----------------------------------------------------- */
+      refreshHoleSel() {
+        const sel = this.$refs.holeSel;
+        sel.innerHTML = this.drills[this.holeUnit].map(d =>
+            `<option value="${d.value}">${d.label}${this.holeUnit === 'imperial'
+                                                    ? ` (${d.value.toFixed(2)} mm)`
+                                                    : ''}</option>`
+        ).join("");
+        this.holeSize = parseFloat(sel.value);
+        this.updatePreview();
+      },
+
+      calcHoles() {
+        const holes = [];
+        const r = this.holeSize / 2;
+        const targetSpacing = this.holeSize * this.spacingMult;
+
+        if (this.pattern === "grid") {
+          const availW = this.holeAreaWidth - this.holeSize;
+          const availH = this.holeAreaHeight - this.holeSize;
+          const cols = Math.max(2, Math.round(availW / targetSpacing) + 1);
+          const rows = Math.max(2, Math.round(availH / targetSpacing) + 1);
+          const dx = availW / (cols - 1);
+          const dy = availH / (rows - 1);
+          const x0 = -this.holeAreaWidth / 2 + r;
+          const y0 = -this.holeAreaHeight / 2 + r;
+          for (let i = 0; i < rows; i++) for (let j = 0; j < cols; j++) {
+            holes.push({x: x0 + j * dx, y: y0 + i * dy});
+          }
+        } else { /* honeycomb */
+          const availW = this.holeAreaWidth - this.holeSize;
+          const availH = this.holeAreaHeight - this.holeSize;
+          const hexRatio = Math.sqrt(3) / 2;
+          const targetRowH = targetSpacing * hexRatio;
+          const rows = Math.max(2, Math.round(availH / targetRowH) + 1);
+          const dy = availH / (rows - 1);
+          const cols = Math.max(2, Math.round(availW / targetSpacing) + 1);
+          const dx = availW / (cols - 1);
+          const x0 = -this.holeAreaWidth / 2 + r;
+          const y0 = -this.holeAreaHeight / 2 + r;
+          for (let row = 0; row < rows; row++) {
+            const y = y0 + row * dy;
+            const offset = row % 2 ? dx / 2 : 0;
+            const rowCols = (offset > 0 && x0 + (cols - 1) * dx + offset > this.holeAreaWidth / 2 - r)
+                            ? cols - 1
+                            : cols;
+            for (let col = 0; col < rowCols; col++) {
+              holes.push({x: x0 + col * dx + offset, y});
+            }
+          }
+        }
+        return holes;
+      },
+
+      updatePreview() {
+        const holes = this.calcHoles();
+        const svg = this.$refs.svg;
+        const svgNS = "http://www.w3.org/2000/svg";
+        svg.innerHTML = "";
+        const maxDim = Math.max(this.templateWidth, this.templateHeight);
+        const scale = 280 / maxDim;
+        const g = document.createElementNS(svgNS, "g");
+        g.setAttribute("transform", `translate(150 150) scale(${scale})`);
+        svg.appendChild(g);
+
+        const rect = (obj) => {
+          const e = document.createElementNS(svgNS, "rect");
+          for (const k in obj) e.setAttribute(k, obj[k]);
+          g.appendChild(e);
+        };
+        const circle = (obj) => {
+          const e = document.createElementNS(svgNS, "circle");
+          for (const k in obj) e.setAttribute(k, obj[k]);
+          g.appendChild(e);
+        };
+
+        rect({
+          x: -this.templateWidth / 2, y: -this.templateHeight / 2,
+          width: this.templateWidth, height: this.templateHeight,
+          fill: "#e5e7eb", stroke: "#374151", "stroke-width": .5
+        });
+        rect({
+          x: -this.holeAreaWidth / 2, y: -this.holeAreaHeight / 2,
+          width: this.holeAreaWidth, height: this.holeAreaHeight,
+          fill: "none", stroke: "#10b981", "stroke-width": .5, "stroke-dasharray": "2 2"
+        });
+        holes.forEach(h => circle({
+          cx: h.x, cy: h.y, r: this.holeSize / 2,
+          fill: "#fff", stroke: "#374151", "stroke-width": .3
+        }));
+
+        /* legend -------------------------------------------------------- */
+        const label = a => a.find(d => d.value === this.holeSize)?.label || `${this.holeSize} mm`;
+        let actual = null;
+        if (holes.length >= 2) {
+          if (this.pattern === "grid") {
+            actual = Math.abs(holes[1].x - holes[0].x);
+          } else {
+            const rowY = holes[0].y;
+            const row = holes.filter(h => Math.abs(h.y - rowY) < .1)
+                .sort((a, b) => a.x - b.x);
+            if (row.length >= 2) actual = Math.abs(row[1].x - row[0].x);
+          }
+        }
+        this.legend =
+            `&#8226; Gray area — template (${this.templateWidth} × ${this.templateHeight} mm)<br>` +
+            `&#8226; Green dashed box — coverage (${this.holeAreaWidth} × ${this.holeAreaHeight} mm)<br>` +
+            `&#8226; Circles — holes (${label(this.drills[this.holeUnit])})<br>` +
+            (actual
+             ? `&#8226; Actual spacing : ${actual.toFixed(1)} mm (${(actual / this.holeSize).toFixed(2)}× Ø)<br>`
+             : "") +
+            `<span style="font-weight:600">Total holes: ${holes.length}</span>`;
+      },
+
+      generateScad() {
+        const holes = this.calcHoles();
+        let code = `// Rectangular Ventilation Grille Template\n`;
+        code += `// Hole coverage: ${this.holeAreaWidth} × ${this.holeAreaHeight} mm\n`;
+        code += `// Template: ${this.templateWidth} × ${this.templateHeight} mm\n`;
+        code += `// Pattern: ${this.pattern}\n`;
+        code += `// Spacing multiplier: ${this.spacingMult}\n\n`;
+        code += `$fn=32;\n\ndifference(){\n`;
+        code += `  translate([0,0,${this.thickness / 2}]) cube([${this.templateWidth},${this.templateHeight},${this.thickness}],center=true);\n\n`;
+        holes.forEach(h => {
+          code += `  translate([${h.x.toFixed(2)},${h.y.toFixed(2)},-1]) cylinder(h=${this.thickness + 2},r=${this.holeSize / 2});\n`;
+        });
+        code += "}\n";
+        return code;
+      }
+    }
+  }
+
+  /* render lucide icons --------------------------------------------------- */
+  function renderIcons(root = document) {
+    root.querySelectorAll("[data-icon]").forEach(el => {
+      const Icon = window.icons?.[el.dataset.icon];
+      if (Icon) el.replaceWith(Icon.toSVG({width: 16, height: 16, strokeWidth: 1.6}));
+    });
+  }
+</script>
+</body>
+</html>
