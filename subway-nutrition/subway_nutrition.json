@@ -1368,7 +1368,7 @@
     },
     {
       "Category": "Make any Sandwich into a Wrap Limited Time Offer/Regional Wrap Values include wrap, select fresh vegetables and footlong meat portion",
-      "Item": NaN,
+      "Item": null,
       "Serving Size (g)": 226.0,
       "Calories": 710.0,
       "Total Fat (g)": 41.0,
@@ -3328,7 +3328,7 @@
     },
     {
       "Category": "Amount on 6\" sandwich or Wrap. Double values for footlong nutrition information (one footlong=two 6\" servings). Double Sandwich Condiments and Toppings sauce values for salad dressing portion",
-      "Item": NaN,
+      "Item": null,
       "Serving Size (g)": 11.0,
       "Calories": 70.0,
       "Total Fat (g)": 5.0,
