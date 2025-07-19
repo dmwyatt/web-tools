@@ -87,9 +87,20 @@ function setupEventListeners() {
     buildModeBtn.addEventListener('click', () => switchMode('build'));
     clearAllBtn.addEventListener('click', clearAllIngredients);
     
-    // Search functionality
-    ingredientSearchInput.addEventListener('input', debounce(handleIngredientSearch, 200));
-    clearSearchBtn.addEventListener('click', clearIngredientSearch);
+    // Search functionality - add null checks
+    if (ingredientSearchInput) {
+        ingredientSearchInput.addEventListener('input', debounce(handleIngredientSearch, 200));
+        console.log('Added ingredient search event listener');
+    } else {
+        console.error('ingredientSearchInput element not found');
+    }
+    
+    if (clearSearchBtn) {
+        clearSearchBtn.addEventListener('click', clearIngredientSearch);
+        console.log('Added clear search event listener');
+    } else {
+        console.error('clearSearchBtn element not found');
+    }
 }
 
 // Debounce function to limit search frequency
@@ -493,7 +504,9 @@ function switchMode(mode) {
 
 // Handle ingredient search
 function handleIngredientSearch() {
+    console.log('handleIngredientSearch called');
     const searchTerm = ingredientSearchInput.value.toLowerCase().trim();
+    console.log('Search term:', searchTerm);
     
     // Show/hide clear button
     if (searchTerm) {
@@ -507,10 +520,13 @@ function handleIngredientSearch() {
 
 // Filter ingredients based on search term
 function filterIngredients(searchTerm) {
+    console.log('filterIngredients called with term:', searchTerm);
     const allCategories = document.querySelectorAll('.ingredient-category');
+    console.log('Found categories:', allCategories.length);
     
     allCategories.forEach(category => {
         const options = category.querySelectorAll('.ingredient-option');
+        console.log('Category has options:', options.length);
         let hasVisibleOptions = false;
         
         options.forEach(option => {
