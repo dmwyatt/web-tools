@@ -317,11 +317,62 @@ footer p {
     display: block;
 }
 
+/* Ingredient Search */
+.ingredient-search {
+    position: relative;
+    margin: 2rem 0 1rem 0;
+}
+
+.ingredient-search input {
+    width: 100%;
+    padding: 12px 40px 12px 16px;
+    border: 2px solid #e9ecef;
+    border-radius: 25px;
+    font-size: 16px;
+    transition: border-color 0.3s, box-shadow 0.3s;
+}
+
+.ingredient-search input:focus {
+    outline: none;
+    border-color: #00873b;
+    box-shadow: 0 0 0 3px rgba(0, 135, 59, 0.1);
+}
+
+.clear-search-btn {
+    position: absolute;
+    right: 8px;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 28px;
+    height: 28px;
+    border: none;
+    background: #dc3545;
+    color: white;
+    border-radius: 50%;
+    cursor: pointer;
+    font-size: 16px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background-color 0.3s;
+    opacity: 0;
+    pointer-events: none;
+}
+
+.clear-search-btn.visible {
+    opacity: 1;
+    pointer-events: auto;
+}
+
+.clear-search-btn:hover {
+    background: #c82333;
+}
+
 /* Sandwich Builder */
 .sandwich-builder {
     display: flex;
     gap: 2rem;
-    margin: 2rem 0;
+    margin: 1rem 0 2rem 0;
 }
 
 .builder-left {
@@ -429,6 +480,14 @@ footer p {
 
 .ingredient-option:not(.selected) .add-btn::before {
     content: "+";
+}
+
+.ingredient-option.hidden {
+    display: none;
+}
+
+.ingredient-category.hidden {
+    display: none;
 }
 
 /* Custom Sandwich Summary */

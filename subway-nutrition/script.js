@@ -35,6 +35,8 @@ const condimentOptions = document.getElementById('condimentOptions');
 const selectedIngredientsDiv = document.getElementById('selectedIngredients');
 const totalNutritionDiv = document.getElementById('totalNutrition');
 const clearAllBtn = document.getElementById('clearAll');
+const ingredientSearchInput = document.getElementById('ingredientSearch');
+const clearSearchBtn = document.getElementById('clearSearch');
 
 // Initialize the app
 document.addEventListener('DOMContentLoaded', async () => {
@@ -84,6 +86,10 @@ function setupEventListeners() {
     browseModeBtn.addEventListener('click', () => switchMode('browse'));
     buildModeBtn.addEventListener('click', () => switchMode('build'));
     clearAllBtn.addEventListener('click', clearAllIngredients);
+    
+    // Search functionality
+    ingredientSearchInput.addEventListener('input', debounce(handleIngredientSearch, 200));
+    clearSearchBtn.addEventListener('click', clearIngredientSearch);
 }
 
 // Debounce function to limit search frequency
@@ -485,6 +491,60 @@ function switchMode(mode) {
     }
 }
 
+// Handle ingredient search
+function handleIngredientSearch() {
+    const searchTerm = ingredientSearchInput.value.toLowerCase().trim();
+    
+    // Show/hide clear button
+    if (searchTerm) {
+        clearSearchBtn.classList.add('visible');
+    } else {
+        clearSearchBtn.classList.remove('visible');
+    }
+    
+    filterIngredients(searchTerm);
+}
+
+// Filter ingredients based on search term
+function filterIngredients(searchTerm) {
+    const allCategories = document.querySelectorAll('.ingredient-category');
+    
+    allCategories.forEach(category => {
+        const options = category.querySelectorAll('.ingredient-option');
+        let hasVisibleOptions = false;
+        
+        options.forEach(option => {
+            const itemData = JSON.parse(option.dataset.item);
+            const itemName = itemData.Item.toLowerCase();
+            
+            // Check if search term matches item name
+            const isMatch = !searchTerm || itemName.includes(searchTerm);
+            
+            if (isMatch) {
+                option.classList.remove('hidden');
+                hasVisibleOptions = true;
+            } else {
+                option.classList.add('hidden');
+            }
+        });
+        
+        // Hide category if no visible options
+        if (!hasVisibleOptions && searchTerm) {
+            category.classList.add('hidden');
+        } else {
+            category.classList.remove('hidden');
+        }
+    });
+}
+
+// Clear ingredient search
+function clearIngredientSearch() {
+    ingredientSearchInput.value = '';
+    clearSearchBtn.classList.remove('visible');
+    filterIngredients('');
+    ingredientSearchInput.focus();
+}
+
 // Export functions for potential future use
 window.SubwayNutritionApp = {
     loadNutritionData,
@@ -493,5 +553,6 @@ window.SubwayNutritionApp = {
     toggleIngredient,
     removeIngredient,
     clearAllIngredients,
-    switchMode
+    switchMode,
+    clearIngredientSearch
 };
