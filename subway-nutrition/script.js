@@ -131,6 +131,13 @@ function formatNutritionValue(value) {
     return value.toString();
 }
 
+// HTML escape function to prevent attribute injection
+function escapeHtml(text) {
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
+}
+
 // Hide loading spinner
 function hideLoading() {
     loadingSpinner.style.display = 'none';
@@ -227,7 +234,7 @@ function populateCategory(type, items, container) {
                 </div>
             </div>
             <div class="ingredient-actions">
-                <button class="info-btn" data-item-name="${item.Item}">i</button>
+                <button class="info-btn" data-item-name="${escapeHtml(item.Item)}">i</button>
                 <button class="add-btn" onclick="toggleIngredient(this)"></button>
             </div>
         `;
@@ -275,7 +282,7 @@ function updateSelectedIngredients() {
     selectedIngredientsDiv.innerHTML = selectedIngredients.map(ingredient => `
         <div class="selected-ingredient">
             <span class="selected-ingredient-name">${ingredient.Item}</span>
-            <button class="remove-ingredient" onclick="removeIngredient('${ingredient.Item}')" title="Remove ingredient">×</button>
+            <button class="remove-ingredient" onclick="removeIngredient('${escapeHtml(ingredient.Item)}')" title="Remove ingredient">×</button>
         </div>
     `).join('');
 }
