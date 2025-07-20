@@ -573,6 +573,34 @@
                     console.log('Alpine nutrition store initialized');
                     // Auto-load data on initialization
                     this.loadNutritionData();
+                    
+                    // Setup keyboard navigation
+                    this.setupKeyboardNavigation();
+                },
+                
+                /**
+                 * Setup keyboard navigation event listeners
+                 */
+                setupKeyboardNavigation() {
+                    document.addEventListener('keydown', (e) => {
+                        // Focus search on Ctrl+F or Cmd+F
+                        if ((e.ctrlKey || e.metaKey) && e.key === 'f') {
+                            e.preventDefault();
+                            const searchInput = document.getElementById('ingredientSearch');
+                            if (searchInput) {
+                                searchInput.focus();
+                            }
+                        }
+                        
+                        // Clear filters on Escape if modal is not open
+                        if (e.key === 'Escape') {
+                            if (this.modalOpen) {
+                                this.closeNutritionModal();
+                            } else {
+                                this.clearSearch();
+                            }
+                        }
+                    });
                 }
             });
         });
