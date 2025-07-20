@@ -101,3 +101,6 @@ web-tools/
 - Main branch: `main` (default branch for PRs and deployments)
 - Recent commits show focus on line ending standardization
 - Standard git workflow: commit to main → auto-deploy to GitHub Pages
+
+## Development Tips
+- remember to check if the local python http server is already running, and if it is, if it's ours (serving our files)
