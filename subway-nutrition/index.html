@@ -10,19 +10,19 @@
     <header>
         <div class="container">
             <h1>🥪 Subway Nutrition Guide</h1>
-            <p>Explore nutritional information for all Subway menu items</p>
+            <p>Build custom sandwiches and track nutritional information</p>
         </div>
     </header>
 
     <main class="container">
         <!-- Mode Toggle -->
         <div class="mode-toggle">
-            <button id="browseMode" class="mode-btn active">Browse Menu</button>
-            <button id="buildMode" class="mode-btn">Build Custom Sandwich</button>
+            <button id="buildMode" class="mode-btn active">Build Custom Sandwich</button>
+            <button id="browseMode" class="mode-btn">Browse Menu</button>
         </div>
 
         <!-- Browse Mode -->
-        <div id="browseSection" class="mode-section active">
+        <div id="browseSection" class="mode-section">
             <div class="controls">
                 <div class="search-filter">
                     <input type="text" id="searchInput" placeholder="Search menu items...">
@@ -52,7 +52,7 @@
         </div>
 
         <!-- Build Custom Sandwich Mode -->
-        <div id="buildSection" class="mode-section">
+        <div id="buildSection" class="mode-section active">
             <div class="ingredient-search">
                 <input type="text" id="ingredientSearch" placeholder="Search ingredients (e.g. turkey, mayo, lettuce)..." />
                 <button id="clearSearch" class="clear-search-btn" title="Clear search">×</button>
