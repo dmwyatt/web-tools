@@ -531,7 +531,7 @@ function filterIngredients(searchTerm) {
         
         options.forEach(option => {
             const itemData = JSON.parse(option.dataset.item);
-            const itemName = itemData.Item.toLowerCase();
+            const itemName = itemData.Item ? itemData.Item.toLowerCase() : '';
             
             // Check if search term matches item name
             const isMatch = !searchTerm || itemName.includes(searchTerm);
