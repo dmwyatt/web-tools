@@ -1,0 +1,16 @@
+{
+  "name": "subway-nutrition-tests",
+  "version": "1.0.0",
+  "description": "E2E tests for Subway Nutrition Guide",
+  "scripts": {
+    "test": "playwright test",
+    "test:local": "BASE_URL=http://localhost:8000/subway-nutrition/ playwright test --project=chromium",
+    "test:live": "BASE_URL=https://dmwyatt.github.io/web-tools/subway-nutrition/ playwright test --project=chromium",
+    "test:headed": "playwright test --headed",
+    "test:debug": "playwright test --debug",
+    "install-browsers": "playwright install"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.40.0"
+  }
+}

@@ -20,6 +20,10 @@ web-tools/
 │   ├── index.html                              # Main HTML structure
 │   ├── script.js                               # External JavaScript file
 │   ├── styles.css                              # External CSS file
+│   ├── package.json                            # npm dependencies (testing only)
+│   ├── playwright.config.js                    # E2E test configuration
+│   ├── tests/                                  # E2E test files
+│   │   └── e2e.spec.js                         # Comprehensive test suite
 │   └── data/                                   # JSON data files and Python build script
 │       ├── *.json                              # Nutrition data files
 │       ├── master-nutrition.json               # Combined data file
@@ -33,6 +37,7 @@ web-tools/
   - Alpine.js v3.14.0 (fan-grille tool)
   - Chart.js (ford-tow-calc)
 - **Data**: JSON files for structured data (subway nutrition)
+- **Testing**: Playwright (E2E testing for subway-nutrition tool)
 - **Deployment**: GitHub Pages (automatic on push to main)
 
 ## Development Patterns
@@ -49,16 +54,42 @@ web-tools/
 - Prefer self-contained HTML files over multiple file structures
 - Only separate CSS/JS when complexity demands it (like subway-nutrition)
 
-## Testing Notes
+## Testing Infrastructure
+
+### Manual Testing
 - **Local Testing**: Most tools work locally by opening index.html in browser
 - **CORS Issues**: Subway Nutrition tool requires server due to JSON data loading
 - **GitHub Pages Testing**: Use live URLs from README.md for tools with CORS issues
-- **Playwright MCP Testing**: Can test tools using Playwright MCP browser tools:
-  1. Commit and push changes to main branch
-  2. Wait 60 seconds for GitHub Pages deployment
-  3. Use `mcp__playwright__browser_navigate` to load the live tool URL
-  4. Use other Playwright MCP tools for interactive testing
 - **Deployment Timing**: GitHub Pages updates take 30-60 seconds after pushing
+
+### Automated Testing (Subway Nutrition)
+- **Framework**: Playwright E2E testing with comprehensive test coverage
+- **Test Execution**:
+  - `npm run test:live` - Fast testing against GitHub Pages (chromium only)
+  - `npm run test:local` - Testing against local dev server (chromium only)  
+  - `npm test` - Full cross-browser testing (chromium, firefox, webkit)
+  - `npm run test:headed` - Visual testing with browser UI
+  - `npm run test:debug` - Interactive debugging mode
+
+- **Test Coverage**: 10 comprehensive tests covering:
+  - App loading and component display
+  - Ingredient selection and removal
+  - Nutrition calculation accuracy
+  - Search and filtering functionality
+  - Modal functionality and keyboard shortcuts
+  - Edge cases and error handling
+
+- **Development Workflow**: 
+  1. Run tests before making changes to establish baseline
+  2. Run `npm run test:live` during development for fast feedback
+  3. Run full cross-browser tests before major releases
+  
+- **Test Infrastructure Setup**: 
+  ```bash
+  cd subway-nutrition/
+  npm install          # Install test dependencies
+  npm run test:live    # Run tests against live GitHub Pages version
+  ```
 
 ## Data Management
 - JSON data files stored in tool-specific data/ directories
