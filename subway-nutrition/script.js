@@ -228,7 +228,13 @@ function populateCategory(type, items, container) {
 
 // Toggle ingredient selection
 function toggleIngredient(button) {
+    console.log('toggleIngredient called with button:', button);
     const optionDiv = button.parentElement.parentElement;
+    console.log('optionDiv:', optionDiv);
+    console.log('optionDiv.dataset:', optionDiv.dataset);
+    console.log('optionDiv.dataset.item:', optionDiv.dataset.item);
+    console.log('Type of optionDiv.dataset.item:', typeof optionDiv.dataset.item);
+    
     const isSelected = optionDiv.classList.contains('selected');
     const itemData = JSON.parse(optionDiv.dataset.item);
     
