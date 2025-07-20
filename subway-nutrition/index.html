@@ -25,29 +25,149 @@
             <div class="sandwich-builder">
                 <div class="builder-left">
                     <div class="ingredient-categories">
-                        <div class="ingredient-category">
+                        <div class="ingredient-category" x-data>
                             <h3>🍞 Bread</h3>
-                            <div id="breadOptions" class="ingredient-options"></div>
+                            <div id="breadOptions" class="ingredient-options">
+                                <template x-for="item in $store.nutritionApp.ingredients.breads" :key="item.Item">
+                                    <div class="ingredient-option" 
+                                         :data-type="'bread'" 
+                                         :data-item="JSON.stringify(item)"
+                                         :class="{ 'selected': $store.nutritionApp.selectedIngredients.some(ing => ing.Item === item.Item) }">
+                                        <div class="ingredient-info">
+                                            <div class="ingredient-name" x-text="item.Item"></div>
+                                            <div class="ingredient-nutrition">
+                                                <span x-text="item.Calories || '-'"></span> cal, 
+                                                <span x-text="item['Total Fat (g)'] || '-'"></span>g fat, 
+                                                <span x-text="item['Sodium (mg)'] || '-'"></span>mg sodium
+                                            </div>
+                                        </div>
+                                        <div class="ingredient-actions">
+                                            <button class="info-btn" 
+                                                    :data-item-name="item.Item" 
+                                                    x-text="'i'"
+                                                    @click="showNutritionDetails(item.Item)"></button>
+                                            <button class="add-btn" 
+                                                    @click="$store.nutritionApp.toggleIngredient($el.parentElement.parentElement)"></button>
+                                        </div>
+                                    </div>
+                                </template>
+                            </div>
                         </div>
                         
-                        <div class="ingredient-category">
+                        <div class="ingredient-category" x-data>
                             <h3>🥩 Protein</h3>
-                            <div id="proteinOptions" class="ingredient-options"></div>
+                            <div id="proteinOptions" class="ingredient-options">
+                                <template x-for="item in $store.nutritionApp.ingredients.proteins" :key="item.Item">
+                                    <div class="ingredient-option" 
+                                         :data-type="'protein'" 
+                                         :data-item="JSON.stringify(item)"
+                                         :class="{ 'selected': $store.nutritionApp.selectedIngredients.some(ing => ing.Item === item.Item) }">
+                                        <div class="ingredient-info">
+                                            <div class="ingredient-name" x-text="item.Item"></div>
+                                            <div class="ingredient-nutrition">
+                                                <span x-text="item.Calories || '-'"></span> cal, 
+                                                <span x-text="item['Total Fat (g)'] || '-'"></span>g fat, 
+                                                <span x-text="item['Sodium (mg)'] || '-'"></span>mg sodium
+                                            </div>
+                                        </div>
+                                        <div class="ingredient-actions">
+                                            <button class="info-btn" 
+                                                    :data-item-name="item.Item" 
+                                                    x-text="'i'"
+                                                    @click="showNutritionDetails(item.Item)"></button>
+                                            <button class="add-btn" 
+                                                    @click="$store.nutritionApp.toggleIngredient($el.parentElement.parentElement)"></button>
+                                        </div>
+                                    </div>
+                                </template>
+                            </div>
                         </div>
                         
-                        <div class="ingredient-category">
+                        <div class="ingredient-category" x-data>
                             <h3>🧀 Cheese</h3>
-                            <div id="cheeseOptions" class="ingredient-options"></div>
+                            <div id="cheeseOptions" class="ingredient-options">
+                                <template x-for="item in $store.nutritionApp.ingredients.cheeses" :key="item.Item">
+                                    <div class="ingredient-option" 
+                                         :data-type="'cheese'" 
+                                         :data-item="JSON.stringify(item)"
+                                         :class="{ 'selected': $store.nutritionApp.selectedIngredients.some(ing => ing.Item === item.Item) }">
+                                        <div class="ingredient-info">
+                                            <div class="ingredient-name" x-text="item.Item"></div>
+                                            <div class="ingredient-nutrition">
+                                                <span x-text="item.Calories || '-'"></span> cal, 
+                                                <span x-text="item['Total Fat (g)'] || '-'"></span>g fat, 
+                                                <span x-text="item['Sodium (mg)'] || '-'"></span>mg sodium
+                                            </div>
+                                        </div>
+                                        <div class="ingredient-actions">
+                                            <button class="info-btn" 
+                                                    :data-item-name="item.Item" 
+                                                    x-text="'i'"
+                                                    @click="showNutritionDetails(item.Item)"></button>
+                                            <button class="add-btn" 
+                                                    @click="$store.nutritionApp.toggleIngredient($el.parentElement.parentElement)"></button>
+                                        </div>
+                                    </div>
+                                </template>
+                            </div>
                         </div>
                         
-                        <div class="ingredient-category">
+                        <div class="ingredient-category" x-data>
                             <h3>🥬 Vegetables</h3>
-                            <div id="vegetableOptions" class="ingredient-options"></div>
+                            <div id="vegetableOptions" class="ingredient-options">
+                                <template x-for="item in $store.nutritionApp.ingredients.vegetables" :key="item.Item">
+                                    <div class="ingredient-option" 
+                                         :data-type="'vegetable'" 
+                                         :data-item="JSON.stringify(item)"
+                                         :class="{ 'selected': $store.nutritionApp.selectedIngredients.some(ing => ing.Item === item.Item) }">
+                                        <div class="ingredient-info">
+                                            <div class="ingredient-name" x-text="item.Item"></div>
+                                            <div class="ingredient-nutrition">
+                                                <span x-text="item.Calories || '-'"></span> cal, 
+                                                <span x-text="item['Total Fat (g)'] || '-'"></span>g fat, 
+                                                <span x-text="item['Sodium (mg)'] || '-'"></span>mg sodium
+                                            </div>
+                                        </div>
+                                        <div class="ingredient-actions">
+                                            <button class="info-btn" 
+                                                    :data-item-name="item.Item" 
+                                                    x-text="'i'"
+                                                    @click="showNutritionDetails(item.Item)"></button>
+                                            <button class="add-btn" 
+                                                    @click="$store.nutritionApp.toggleIngredient($el.parentElement.parentElement)"></button>
+                                        </div>
+                                    </div>
+                                </template>
+                            </div>
                         </div>
                         
-                        <div class="ingredient-category">
+                        <div class="ingredient-category" x-data>
                             <h3>🥄 Condiments & Seasonings</h3>
-                            <div id="condimentOptions" class="ingredient-options"></div>
+                            <div id="condimentOptions" class="ingredient-options">
+                                <template x-for="item in $store.nutritionApp.ingredients.condiments" :key="item.Item">
+                                    <div class="ingredient-option" 
+                                         :data-type="'condiment'" 
+                                         :data-item="JSON.stringify(item)"
+                                         :class="{ 'selected': $store.nutritionApp.selectedIngredients.some(ing => ing.Item === item.Item) }">
+                                        <div class="ingredient-info">
+                                            <div class="ingredient-name" x-text="item.Item"></div>
+                                            <div class="ingredient-nutrition">
+                                                <span x-text="item.Calories || '-'"></span> cal, 
+                                                <span x-text="item['Total Fat (g)'] || '-'"></span>g fat, 
+                                                <span x-text="item['Sodium (mg)'] || '-'"></span>mg sodium
+                                            </div>
+                                        </div>
+                                        <div class="ingredient-actions">
+                                            <button class="info-btn" 
+                                                    :data-item-name="item.Item" 
+                                                    x-text="'i'"
+                                                    @click="showNutritionDetails(item.Item)"></button>
+                                            <button class="add-btn" 
+                                                    @click="$store.nutritionApp.toggleIngredient($el.parentElement.parentElement)"></button>
+                                        </div>
+                                    </div>
+                                </template>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -55,35 +175,45 @@
                 <div class="builder-right">
                     <div class="custom-sandwich-summary">
                         <h3>Your Custom Sandwich</h3>
-                        <div id="selectedIngredients" class="selected-ingredients">
-                            <p class="placeholder">Select ingredients to build your sandwich</p>
+                        <div id="selectedIngredients" class="selected-ingredients" x-data>
+                            <template x-if="$store.nutritionApp.selectedIngredients.length === 0">
+                                <p class="placeholder">Select ingredients to build your sandwich</p>
+                            </template>
+                            <template x-for="ingredient in $store.nutritionApp.selectedIngredients" :key="ingredient.Item">
+                                <div class="selected-ingredient">
+                                    <span class="selected-ingredient-name" x-text="ingredient.Item"></span>
+                                    <button class="remove-ingredient" 
+                                            @click="$store.nutritionApp.removeIngredient(ingredient.Item)" 
+                                            title="Remove ingredient">×</button>
+                                </div>
+                            </template>
                         </div>
                         
-                        <div class="clear-all">
-                            <button id="clearAll" class="clear-btn">Clear All</button>
+                        <div class="clear-all" x-data>
+                            <button id="clearAll" class="clear-btn" @click="$store.nutritionApp.clearAllIngredients()">Clear All</button>
                         </div>
                         
-                        <div class="nutrition-summary">
+                        <div class="nutrition-summary" x-data>
                             <h4>Total Nutrition</h4>
                             <div id="totalNutrition" class="total-nutrition">
                                 <div class="nutrition-item">
-                                    <span class="nutrition-value">0</span>
+                                    <span class="nutrition-value" x-text="$store.nutritionApp.formatNutritionValue($store.nutritionApp.nutritionTotals['Calories'])">0</span>
                                     <div class="nutrition-label">Calories</div>
                                 </div>
                                 <div class="nutrition-item">
-                                    <span class="nutrition-value">0</span>
+                                    <span class="nutrition-value" x-text="$store.nutritionApp.formatNutritionValue($store.nutritionApp.nutritionTotals['Total Fat (g)'])">0</span>
                                     <div class="nutrition-label">Fat (g)</div>
                                 </div>
                                 <div class="nutrition-item">
-                                    <span class="nutrition-value">0</span>
+                                    <span class="nutrition-value" x-text="$store.nutritionApp.formatNutritionValue($store.nutritionApp.nutritionTotals['Sodium (mg)'])">0</span>
                                     <div class="nutrition-label">Sodium (mg)</div>
                                 </div>
                                 <div class="nutrition-item">
-                                    <span class="nutrition-value">0</span>
+                                    <span class="nutrition-value" x-text="$store.nutritionApp.formatNutritionValue($store.nutritionApp.nutritionTotals['Carbohydrate (g)'])">0</span>
                                     <div class="nutrition-label">Carbs (g)</div>
                                 </div>
                                 <div class="nutrition-item">
-                                    <span class="nutrition-value">0</span>
+                                    <span class="nutrition-value" x-text="$store.nutritionApp.formatNutritionValue($store.nutritionApp.nutritionTotals['Protein (g)'])">0</span>
                                     <div class="nutrition-label">Protein (g)</div>
                                 </div>
                             </div>
@@ -92,47 +222,47 @@
                                 <summary style="cursor: pointer; font-weight: 600; color: #00873b;">More Nutrition Info</summary>
                                 <div id="additionalNutrition" class="total-nutrition" style="margin-top: 0.75rem;">
                                     <div class="nutrition-item">
-                                        <span class="nutrition-value">0</span>
+                                        <span class="nutrition-value" x-text="$store.nutritionApp.formatNutritionValue($store.nutritionApp.nutritionTotals['Serving Size (g)'])">0</span>
                                         <div class="nutrition-label">Serving (g)</div>
                                     </div>
                                     <div class="nutrition-item">
-                                        <span class="nutrition-value">0</span>
+                                        <span class="nutrition-value" x-text="$store.nutritionApp.formatNutritionValue($store.nutritionApp.nutritionTotals['Sat. Fat (g)'])">0</span>
                                         <div class="nutrition-label">Sat Fat (g)</div>
                                     </div>
                                     <div class="nutrition-item">
-                                        <span class="nutrition-value">0</span>
+                                        <span class="nutrition-value" x-text="$store.nutritionApp.formatNutritionValue($store.nutritionApp.nutritionTotals['Trans Fat (g)*'])">0</span>
                                         <div class="nutrition-label">Trans Fat (g)</div>
                                     </div>
                                     <div class="nutrition-item">
-                                        <span class="nutrition-value">0</span>
+                                        <span class="nutrition-value" x-text="$store.nutritionApp.formatNutritionValue($store.nutritionApp.nutritionTotals['Chol. (mg)'])">0</span>
                                         <div class="nutrition-label">Cholesterol (mg)</div>
                                     </div>
                                     <div class="nutrition-item">
-                                        <span class="nutrition-value">0</span>
+                                        <span class="nutrition-value" x-text="$store.nutritionApp.formatNutritionValue($store.nutritionApp.nutritionTotals['Dietary Fiber (g)'])">0</span>
                                         <div class="nutrition-label">Fiber (g)</div>
                                     </div>
                                     <div class="nutrition-item">
-                                        <span class="nutrition-value">0</span>
+                                        <span class="nutrition-value" x-text="$store.nutritionApp.formatNutritionValue($store.nutritionApp.nutritionTotals['Sugars (g)'])">0</span>
                                         <div class="nutrition-label">Sugars (g)</div>
                                     </div>
                                     <div class="nutrition-item">
-                                        <span class="nutrition-value">0</span>
+                                        <span class="nutrition-value" x-text="$store.nutritionApp.formatNutritionValue($store.nutritionApp.nutritionTotals['Added Sugars (g)'])">0</span>
                                         <div class="nutrition-label">Added Sugars (g)</div>
                                     </div>
                                     <div class="nutrition-item">
-                                        <span class="nutrition-value">0</span>
+                                        <span class="nutrition-value" x-text="$store.nutritionApp.formatNutritionValue($store.nutritionApp.nutritionTotals['Vitamin A % DV'])">0</span>
                                         <div class="nutrition-label">Vit A (%DV)</div>
                                     </div>
                                     <div class="nutrition-item">
-                                        <span class="nutrition-value">0</span>
+                                        <span class="nutrition-value" x-text="$store.nutritionApp.formatNutritionValue($store.nutritionApp.nutritionTotals['Vitamin C % DV'])">0</span>
                                         <div class="nutrition-label">Vit C (%DV)</div>
                                     </div>
                                     <div class="nutrition-item">
-                                        <span class="nutrition-value">0</span>
+                                        <span class="nutrition-value" x-text="$store.nutritionApp.formatNutritionValue($store.nutritionApp.nutritionTotals['Calcium % DV'])">0</span>
                                         <div class="nutrition-label">Calcium (%DV)</div>
                                     </div>
                                     <div class="nutrition-item">
-                                        <span class="nutrition-value">0</span>
+                                        <span class="nutrition-value" x-text="$store.nutritionApp.formatNutritionValue($store.nutritionApp.nutritionTotals['Iron % DV'])">0</span>
                                         <div class="nutrition-label">Iron (%DV)</div>
                                     </div>
                                 </div>
@@ -143,7 +273,7 @@
             </div>
         </div>
 
-        <div id="loadingSpinner" class="loading">Loading nutrition data...</div>
+        <div id="loadingSpinner" class="loading" x-data x-show="$store.nutritionApp.loading" x-text="$store.nutritionApp.error ? $store.nutritionApp.error : 'Loading nutrition data...'">Loading nutrition data...</div>
         <!-- Nutrition Details Modal -->
         <div id="nutritionModal" class="modal">
             <div class="modal-content">
@@ -161,13 +291,180 @@
     </main>
 
     <footer>
-        <div class="container">
-            <p>Data generated: <span id="dataDate"></span> | Nutritional information provided by Subway</p>
+        <div class="container" x-data>
+            <p>Data generated: <span x-text="$store.nutritionApp.dataDate">Recent</span> | Nutritional information provided by Subway</p>
         </div>
     </footer>
 
     <!-- Alpine.js -->
     <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.14.0/dist/cdn.min.js"></script>
+    
+    <!-- Alpine.js Store -->
+    <script>
+        document.addEventListener('alpine:init', () => {
+            Alpine.store('nutritionApp', {
+                // Data state
+                nutritionData: [],
+                ingredients: {
+                    breads: [],
+                    proteins: [],
+                    cheeses: [],
+                    vegetables: [],
+                    condiments: []
+                },
+                selectedIngredients: [],
+                
+                // UI state
+                loading: true,
+                error: null,
+                dataDate: 'Recent',
+                
+                // Data loading methods
+                async loadNutritionData() {
+                    try {
+                        this.loading = true;
+                        this.error = null;
+                        
+                        const response = await fetch('data/master-nutrition.json');
+                        if (!response.ok) {
+                            throw new Error('Failed to fetch nutrition data');
+                        }
+                        const data = await response.json();
+                        this.nutritionData = data;
+                        
+                        // Process ingredients for sandwich builder
+                        this.processIngredients();
+                        
+                        this.loading = false;
+                        console.log('Alpine store: Nutrition data loaded successfully');
+                    } catch (error) {
+                        this.error = 'Could not load nutrition data: ' + error.message;
+                        this.loading = false;
+                        console.error('Alpine store: Error loading nutrition data:', error);
+                        throw error;
+                    }
+                },
+                
+                processIngredients() {
+                    // Define category mappings based on the data structure
+                    const categoryMappings = {
+                        breads: ['bread'],
+                        proteins: ['protein'],
+                        cheeses: ['cheese'],
+                        vegetables: ['veggies'],
+                        condiments: ['condiments', 'seasonings']
+                    };
+                    
+                    // Clear existing ingredients
+                    Object.keys(this.ingredients).forEach(key => {
+                        this.ingredients[key] = [];
+                    });
+                    
+                    // Process each nutrition item
+                    this.nutritionData.forEach(item => {
+                        // Skip items with null or empty Item names (header/metadata entries)
+                        if (!item.Item) {
+                            return;
+                        }
+                        
+                        // Categorize ingredients based on category mappings
+                        for (const [ingredientType, categories] of Object.entries(categoryMappings)) {
+                            if (categories.includes(item.category)) {
+                                this.ingredients[ingredientType].push(item);
+                                break;
+                            }
+                        }
+                    });
+                    
+                    console.log('Alpine store: Ingredients processed successfully');
+                },
+                
+                // Ingredient selection methods
+                toggleIngredient(optionElement) {
+                    const itemData = JSON.parse(optionElement.dataset.item);
+                    const isSelected = this.selectedIngredients.some(ing => ing.Item === itemData.Item);
+                    
+                    if (isSelected) {
+                        // Remove ingredient
+                        this.selectedIngredients = this.selectedIngredients.filter(ingredient => 
+                            ingredient.Item !== itemData.Item
+                        );
+                    } else {
+                        // Add ingredient
+                        this.selectedIngredients.push(itemData);
+                    }
+                    
+                    console.log('Alpine store: Ingredient toggled:', itemData.Item);
+                },
+                
+                removeIngredient(itemName) {
+                    this.selectedIngredients = this.selectedIngredients.filter(ingredient => 
+                        ingredient.Item !== itemName
+                    );
+                    
+                    console.log('Alpine store: Ingredient removed:', itemName);
+                },
+                
+                clearAllIngredients() {
+                    this.selectedIngredients = [];
+                    
+                    console.log('Alpine store: All ingredients cleared');
+                },
+                
+                // Nutrition calculation computed properties
+                get nutritionTotals() {
+                    const totals = {
+                        'Calories': 0,
+                        'Total Fat (g)': 0,
+                        'Sodium (mg)': 0,
+                        'Carbohydrate (g)': 0,
+                        'Protein (g)': 0,
+                        'Serving Size (g)': 0,
+                        'Sat. Fat (g)': 0,
+                        'Trans Fat (g)*': 0,
+                        'Chol. (mg)': 0,
+                        'Dietary Fiber (g)': 0,
+                        'Sugars (g)': 0,
+                        'Added Sugars (g)': 0,
+                        'Vitamin A % DV': 0,
+                        'Vitamin C % DV': 0,
+                        'Calcium % DV': 0,
+                        'Iron % DV': 0
+                    };
+                    
+                    this.selectedIngredients.forEach(ingredient => {
+                        Object.keys(totals).forEach(nutrient => {
+                            const value = parseFloat(ingredient[nutrient]) || 0;
+                            totals[nutrient] += value;
+                        });
+                    });
+                    
+                    return totals;
+                },
+                
+                // Helper method to format nutrition values
+                formatNutritionValue(value) {
+                    if (value === null || value === undefined || value === '') {
+                        return '-';
+                    }
+                    
+                    if (typeof value === 'number') {
+                        // Round to 1 decimal place and remove trailing zeros
+                        return parseFloat(value.toFixed(1)).toString();
+                    }
+                    
+                    return value.toString();
+                },
+                
+                init() {
+                    console.log('Alpine nutrition store initialized');
+                    // Auto-load data on initialization
+                    this.loadNutritionData();
+                }
+            });
+        });
+    </script>
+    
     <script src="script.js"></script>
 </body>
 </html>
