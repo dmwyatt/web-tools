@@ -55,18 +55,16 @@ document.addEventListener('DOMContentLoaded', async () => {
 // Load nutrition data from JSON file
 async function loadNutritionData() {
     try {
-        const response = await fetch('subway_nutrition.json');
+        const response = await fetch('data/master-nutrition.json');
         if (!response.ok) {
             throw new Error('Failed to fetch nutrition data');
         }
         const data = await response.json();
-        nutritionData = data.items;
+        nutritionData = data;
         filteredData = [...nutritionData];
         
         // Set the data generation date
-        if (data.generated) {
-            dataDate.textContent = data.generated;
-        }
+        dataDate.textContent = 'Recent';
         
         // Process ingredients for sandwich builder
         processIngredients();
@@ -118,7 +116,7 @@ function debounce(func, wait) {
 
 // Populate category filter dropdown
 function populateCategoryFilter() {
-    const categories = [...new Set(nutritionData.map(item => item.Category))].sort();
+    const categories = [...new Set(nutritionData.map(item => item.category))].sort();
     
     categories.forEach(category => {
         const option = document.createElement('option');
@@ -158,13 +156,13 @@ function filterAndDisplay() {
     const searchTerm = searchInput.value.toLowerCase().trim();
     let filtered = nutritionData.filter(item => 
         item.Item.toLowerCase().includes(searchTerm) ||
-        item.Category.toLowerCase().includes(searchTerm)
+        item.category.toLowerCase().includes(searchTerm)
     );
 
     // Apply category filter
     const selectedCategory = categoryFilter.value;
     if (selectedCategory) {
-        filtered = filtered.filter(item => item.Category === selectedCategory);
+        filtered = filtered.filter(item => item.category === selectedCategory);
     }
 
     // Sort the data
@@ -220,25 +218,27 @@ function createMenuItemElement(item, index) {
         { key: 'Calories', label: 'Calories', class: 'calories' },
         { key: 'Total Fat (g)', label: 'Fat (g)', class: 'fat' },
         { key: 'Sodium (mg)', label: 'Sodium (mg)', class: 'sodium' },
-        { key: 'Carbohydrates (g)', label: 'Carbs (g)', class: 'carbs' },
+        { key: 'Carbohydrate (g)', label: 'Carbs (g)', class: 'carbs' },
         { key: 'Protein (g)', label: 'Protein (g)', class: 'protein' }
     ];
 
     // Additional nutrition facts
     const additionalNutrition = [
-        { key: 'Saturated Fat (g)', label: 'Sat Fat (g)' },
-        { key: 'Cholesterol (mg)', label: 'Cholesterol (mg)' },
+        { key: 'Sat. Fat (g)', label: 'Sat Fat (g)' },
+        { key: 'Trans Fat (g)*', label: 'Trans Fat (g)' },
+        { key: 'Chol. (mg)', label: 'Cholesterol (mg)' },
         { key: 'Dietary Fiber (g)', label: 'Fiber (g)' },
-        { key: 'Total Sugars (g)', label: 'Sugars (g)' },
-        { key: 'Vitamin D (%DV)', label: 'Vit D (%DV)' },
-        { key: 'Calcium (%DV)', label: 'Calcium (%DV)' },
-        { key: 'Iron (%DV)', label: 'Iron (%DV)' },
-        { key: 'Potassium (%DV)', label: 'Potassium (%DV)' }
+        { key: 'Sugars (g)', label: 'Sugars (g)' },
+        { key: 'Added Sugars (g)', label: 'Added Sugars (g)' },
+        { key: 'Vitamin A % DV', label: 'Vit A (%DV)' },
+        { key: 'Vitamin C % DV', label: 'Vit C (%DV)' },
+        { key: 'Calcium % DV', label: 'Calcium (%DV)' },
+        { key: 'Iron % DV', label: 'Iron (%DV)' }
     ];
 
     menuItem.innerHTML = `
         <h3>${item.Item}</h3>
-        <div class="category-badge">${item.Category}</div>
+        <div class="category-badge">${item.category}</div>
         
         <div class="nutrition-grid">
             ${keyNutrition.map(nutrient => `
@@ -316,20 +316,13 @@ function scrollToTop() {
 
 // Process ingredients from nutrition data
 function processIngredients() {
-    // Define category mappings based on the categories file
+    // Define category mappings based on the new data structure
     const categoryMappings = {
-        breads: ['Breads', 'Bread'],
-        proteins: [
-            'Individual Proteins',
-            'Chicken',
-            'Amount on 6" sandwich or Wrap'
-        ],
-        cheeses: ['Cheese'],
-        vegetables: ['Vegetables'],
-        condiments: [
-            'Seasonings and Spices',
-            'Amount on 6" sandwich or Wrap. Double values for footlong nutrition information (one footlong=two 6" servings). Double Sandwich Condiments and Toppings sauce values for salad dressing portion'
-        ]
+        breads: ['bread'],
+        proteins: ['protein'],
+        cheeses: ['cheese'],
+        vegetables: ['veggies'],
+        condiments: ['condiments', 'seasonings']
     };
     
     // Clear existing ingredients
@@ -346,10 +339,7 @@ function processIngredients() {
         
         // Categorize ingredients based on category mappings
         for (const [ingredientType, categories] of Object.entries(categoryMappings)) {
-            if (categories.some(category => 
-                item.Category.toLowerCase().includes(category.toLowerCase()) ||
-                category.toLowerCase().includes(item.Category.toLowerCase())
-            )) {
+            if (categories.includes(item.category)) {
                 ingredients[ingredientType].push(item);
                 break;
             }
@@ -470,7 +460,7 @@ function updateTotalNutrition() {
         'Calories': 0,
         'Total Fat (g)': 0,
         'Sodium (mg)': 0,
-        'Carbohydrates (g)': 0,
+        'Carbohydrate (g)': 0,
         'Protein (g)': 0
     };
     
@@ -484,7 +474,7 @@ function updateTotalNutrition() {
     // Update the display
     const nutritionItems = totalNutritionDiv.querySelectorAll('.nutrition-item');
     const labels = ['Calories', 'Fat (g)', 'Sodium (mg)', 'Carbs (g)', 'Protein (g)'];
-    const keys = ['Calories', 'Total Fat (g)', 'Sodium (mg)', 'Carbohydrates (g)', 'Protein (g)'];
+    const keys = ['Calories', 'Total Fat (g)', 'Sodium (mg)', 'Carbohydrate (g)', 'Protein (g)'];
     
     nutritionItems.forEach((item, index) => {
         const valueSpan = item.querySelector('.nutrition-value');
