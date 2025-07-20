@@ -3,6 +3,8 @@
   "version": "1.0.0",
   "description": "E2E tests for Subway Nutrition Guide",
   "scripts": {
+    "serve": "cd .. && python -m http.server 8000",
+    "serve:bg": "cd .. && nohup python -m http.server 8000 > /dev/null 2>&1 &",
     "test": "playwright test",
     "test:local": "BASE_URL=http://localhost:8000/subway-nutrition/ playwright test --project=chromium",
     "test:live": "BASE_URL=https://dmwyatt.github.io/web-tools/subway-nutrition/ playwright test --project=chromium",
