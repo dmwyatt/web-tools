@@ -339,6 +339,11 @@ function processIngredients() {
     
     // Process each nutrition item
     nutritionData.forEach(item => {
+        // Skip items with null or empty Item names (header/metadata entries)
+        if (!item.Item) {
+            return;
+        }
+        
         // Categorize ingredients based on category mappings
         for (const [ingredientType, categories] of Object.entries(categoryMappings)) {
             if (categories.some(category => 
