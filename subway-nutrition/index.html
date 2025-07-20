@@ -17,18 +17,23 @@
     <main class="container">
         <!-- Build Custom Sandwich -->
         <div id="buildSection" class="sandwich-builder-section">
-            <div class="ingredient-search">
-                <input type="text" id="ingredientSearch" placeholder="Search ingredients (e.g. turkey, mayo, lettuce)..." />
-                <button id="clearSearch" class="clear-search-btn" title="Clear search">×</button>
+            <div class="ingredient-search" x-data>
+                <input type="text" id="ingredientSearch" 
+                       placeholder="Search ingredients (e.g. turkey, mayo, lettuce)..." 
+                       x-model="$store.nutritionApp.searchTerm" />
+                <button id="clearSearch" class="clear-search-btn" title="Clear search"
+                        :class="{ 'visible': $store.nutritionApp.searchTerm.length > 0 }"
+                        @click="$store.nutritionApp.clearSearch()">×</button>
             </div>
             
             <div class="sandwich-builder">
                 <div class="builder-left">
                     <div class="ingredient-categories">
-                        <div class="ingredient-category" x-data>
+                        <div class="ingredient-category" x-data
+                             :class="{ 'hidden': $store.nutritionApp.searchTerm && $store.nutritionApp.filteredIngredients.breads.length === 0 }">
                             <h3>🍞 Bread</h3>
                             <div id="breadOptions" class="ingredient-options">
-                                <template x-for="item in $store.nutritionApp.ingredients.breads" :key="item.Item">
+                                <template x-for="item in $store.nutritionApp.filteredIngredients.breads" :key="item.Item">
                                     <div class="ingredient-option" 
                                          :data-type="'bread'" 
                                          :data-item="JSON.stringify(item)"
@@ -45,7 +50,7 @@
                                             <button class="info-btn" 
                                                     :data-item-name="item.Item" 
                                                     x-text="'i'"
-                                                    @click="showNutritionDetails(item.Item)"></button>
+                                                    @click="$store.nutritionApp.showNutritionDetails(item.Item)"></button>
                                             <button class="add-btn" 
                                                     @click="$store.nutritionApp.toggleIngredient($el.parentElement.parentElement)"></button>
                                         </div>
@@ -54,10 +59,11 @@
                             </div>
                         </div>
                         
-                        <div class="ingredient-category" x-data>
+                        <div class="ingredient-category" x-data
+                             :class="{ 'hidden': $store.nutritionApp.searchTerm && $store.nutritionApp.filteredIngredients.proteins.length === 0 }">
                             <h3>🥩 Protein</h3>
                             <div id="proteinOptions" class="ingredient-options">
-                                <template x-for="item in $store.nutritionApp.ingredients.proteins" :key="item.Item">
+                                <template x-for="item in $store.nutritionApp.filteredIngredients.proteins" :key="item.Item">
                                     <div class="ingredient-option" 
                                          :data-type="'protein'" 
                                          :data-item="JSON.stringify(item)"
@@ -74,7 +80,7 @@
                                             <button class="info-btn" 
                                                     :data-item-name="item.Item" 
                                                     x-text="'i'"
-                                                    @click="showNutritionDetails(item.Item)"></button>
+                                                    @click="$store.nutritionApp.showNutritionDetails(item.Item)"></button>
                                             <button class="add-btn" 
                                                     @click="$store.nutritionApp.toggleIngredient($el.parentElement.parentElement)"></button>
                                         </div>
@@ -83,10 +89,11 @@
                             </div>
                         </div>
                         
-                        <div class="ingredient-category" x-data>
+                        <div class="ingredient-category" x-data
+                             :class="{ 'hidden': $store.nutritionApp.searchTerm && $store.nutritionApp.filteredIngredients.cheeses.length === 0 }">
                             <h3>🧀 Cheese</h3>
                             <div id="cheeseOptions" class="ingredient-options">
-                                <template x-for="item in $store.nutritionApp.ingredients.cheeses" :key="item.Item">
+                                <template x-for="item in $store.nutritionApp.filteredIngredients.cheeses" :key="item.Item">
                                     <div class="ingredient-option" 
                                          :data-type="'cheese'" 
                                          :data-item="JSON.stringify(item)"
@@ -103,7 +110,7 @@
                                             <button class="info-btn" 
                                                     :data-item-name="item.Item" 
                                                     x-text="'i'"
-                                                    @click="showNutritionDetails(item.Item)"></button>
+                                                    @click="$store.nutritionApp.showNutritionDetails(item.Item)"></button>
                                             <button class="add-btn" 
                                                     @click="$store.nutritionApp.toggleIngredient($el.parentElement.parentElement)"></button>
                                         </div>
@@ -112,10 +119,11 @@
                             </div>
                         </div>
                         
-                        <div class="ingredient-category" x-data>
+                        <div class="ingredient-category" x-data
+                             :class="{ 'hidden': $store.nutritionApp.searchTerm && $store.nutritionApp.filteredIngredients.vegetables.length === 0 }">
                             <h3>🥬 Vegetables</h3>
                             <div id="vegetableOptions" class="ingredient-options">
-                                <template x-for="item in $store.nutritionApp.ingredients.vegetables" :key="item.Item">
+                                <template x-for="item in $store.nutritionApp.filteredIngredients.vegetables" :key="item.Item">
                                     <div class="ingredient-option" 
                                          :data-type="'vegetable'" 
                                          :data-item="JSON.stringify(item)"
@@ -132,7 +140,7 @@
                                             <button class="info-btn" 
                                                     :data-item-name="item.Item" 
                                                     x-text="'i'"
-                                                    @click="showNutritionDetails(item.Item)"></button>
+                                                    @click="$store.nutritionApp.showNutritionDetails(item.Item)"></button>
                                             <button class="add-btn" 
                                                     @click="$store.nutritionApp.toggleIngredient($el.parentElement.parentElement)"></button>
                                         </div>
@@ -141,10 +149,11 @@
                             </div>
                         </div>
                         
-                        <div class="ingredient-category" x-data>
+                        <div class="ingredient-category" x-data
+                             :class="{ 'hidden': $store.nutritionApp.searchTerm && $store.nutritionApp.filteredIngredients.condiments.length === 0 }">
                             <h3>🥄 Condiments & Seasonings</h3>
                             <div id="condimentOptions" class="ingredient-options">
-                                <template x-for="item in $store.nutritionApp.ingredients.condiments" :key="item.Item">
+                                <template x-for="item in $store.nutritionApp.filteredIngredients.condiments" :key="item.Item">
                                     <div class="ingredient-option" 
                                          :data-type="'condiment'" 
                                          :data-item="JSON.stringify(item)"
@@ -161,7 +170,7 @@
                                             <button class="info-btn" 
                                                     :data-item-name="item.Item" 
                                                     x-text="'i'"
-                                                    @click="showNutritionDetails(item.Item)"></button>
+                                                    @click="$store.nutritionApp.showNutritionDetails(item.Item)"></button>
                                             <button class="add-btn" 
                                                     @click="$store.nutritionApp.toggleIngredient($el.parentElement.parentElement)"></button>
                                         </div>
@@ -275,15 +284,23 @@
 
         <div id="loadingSpinner" class="loading" x-data x-show="$store.nutritionApp.loading" x-text="$store.nutritionApp.error ? $store.nutritionApp.error : 'Loading nutrition data...'">Loading nutrition data...</div>
         <!-- Nutrition Details Modal -->
-        <div id="nutritionModal" class="modal">
+        <div id="nutritionModal" class="modal" x-data 
+             :class="{ 'show': $store.nutritionApp.modalOpen }"
+             @click="if ($event.target === $el) $store.nutritionApp.closeNutritionModal()">
             <div class="modal-content">
                 <div class="modal-header">
-                    <h3 id="modalItemName"></h3>
-                    <button class="modal-close" id="closeModal">&times;</button>
+                    <h3 id="modalItemName" x-text="$store.nutritionApp.modalItem ? $store.nutritionApp.modalItem.Item : ''"></h3>
+                    <button class="modal-close" id="closeModal" 
+                            @click="$store.nutritionApp.closeNutritionModal()">&times;</button>
                 </div>
                 <div class="modal-body">
                     <div class="modal-nutrition-grid" id="modalNutritionGrid">
-                        <!-- Detailed nutrition info will be populated here -->
+                        <template x-for="field in $store.nutritionApp.modalNutritionFields" :key="field.label">
+                            <div class="modal-nutrition-item">
+                                <span class="modal-nutrition-value" x-text="field.value"></span>
+                                <div class="modal-nutrition-label" x-text="field.label"></div>
+                            </div>
+                        </template>
                     </div>
                 </div>
             </div>
@@ -318,8 +335,17 @@
                 loading: true,
                 error: null,
                 dataDate: 'Recent',
+                searchTerm: '',
+                
+                // Modal state
+                modalOpen: false,
+                modalItem: null,
                 
                 // Data loading methods
+                /**
+                 * Load nutrition data from JSON file and process ingredients
+                 * @returns {Promise<void>}
+                 */
                 async loadNutritionData() {
                     try {
                         this.loading = true;
@@ -345,6 +371,9 @@
                     }
                 },
                 
+                /**
+                 * Process raw nutrition data into categorized ingredients
+                 */
                 processIngredients() {
                     // Define category mappings based on the data structure
                     const categoryMappings = {
@@ -380,6 +409,10 @@
                 },
                 
                 // Ingredient selection methods
+                /**
+                 * Toggle ingredient selection (add if not selected, remove if selected)
+                 * @param {HTMLElement} optionElement - The ingredient option element
+                 */
                 toggleIngredient(optionElement) {
                     const itemData = JSON.parse(optionElement.dataset.item);
                     const isSelected = this.selectedIngredients.some(ing => ing.Item === itemData.Item);
@@ -397,6 +430,10 @@
                     console.log('Alpine store: Ingredient toggled:', itemData.Item);
                 },
                 
+                /**
+                 * Remove an ingredient from selection
+                 * @param {string} itemName - Name of the ingredient to remove
+                 */
                 removeIngredient(itemName) {
                     this.selectedIngredients = this.selectedIngredients.filter(ingredient => 
                         ingredient.Item !== itemName
@@ -405,6 +442,9 @@
                     console.log('Alpine store: Ingredient removed:', itemName);
                 },
                 
+                /**
+                 * Clear all selected ingredients
+                 */
                 clearAllIngredients() {
                     this.selectedIngredients = [];
                     
@@ -442,6 +482,36 @@
                     return totals;
                 },
                 
+                // Search functionality computed properties
+                get filteredIngredients() {
+                    const searchTerm = this.searchTerm.toLowerCase().trim();
+                    
+                    if (!searchTerm) {
+                        // Return all ingredients if no search term
+                        return this.ingredients;
+                    }
+                    
+                    // Filter each category based on search term
+                    const filtered = {};
+                    Object.keys(this.ingredients).forEach(category => {
+                        filtered[category] = this.ingredients[category].filter(item => 
+                            item.Item && item.Item.toLowerCase().includes(searchTerm)
+                        );
+                    });
+                    
+                    return filtered;
+                },
+                
+                // Search methods
+                clearSearch() {
+                    this.searchTerm = '';
+                    // Focus the search input after clearing
+                    setTimeout(() => {
+                        const searchInput = document.getElementById('ingredientSearch');
+                        if (searchInput) searchInput.focus();
+                    }, 100);
+                },
+                
                 // Helper method to format nutrition values
                 formatNutritionValue(value) {
                     if (value === null || value === undefined || value === '') {
@@ -454,6 +524,49 @@
                     }
                     
                     return value.toString();
+                },
+                
+                // Modal methods
+                showNutritionDetails(itemName) {
+                    const item = this.nutritionData.find(data => data.Item === itemName);
+                    if (!item) return;
+                    
+                    this.modalItem = item;
+                    this.modalOpen = true;
+                },
+                
+                closeNutritionModal() {
+                    this.modalOpen = false;
+                    this.modalItem = null;
+                },
+                
+                // Computed property for modal nutrition fields
+                get modalNutritionFields() {
+                    if (!this.modalItem) return [];
+                    
+                    const fields = [
+                        { key: 'Serving Size (g)', label: 'Serving (g)' },
+                        { key: 'Calories', label: 'Calories' },
+                        { key: 'Total Fat (g)', label: 'Fat (g)' },
+                        { key: 'Sat. Fat (g)', label: 'Sat Fat (g)' },
+                        { key: 'Trans Fat (g)*', label: 'Trans Fat (g)' },
+                        { key: 'Chol. (mg)', label: 'Cholesterol (mg)' },
+                        { key: 'Sodium (mg)', label: 'Sodium (mg)' },
+                        { key: 'Carbohydrate (g)', label: 'Carbs (g)' },
+                        { key: 'Dietary Fiber (g)', label: 'Fiber (g)' },
+                        { key: 'Sugars (g)', label: 'Sugars (g)' },
+                        { key: 'Added Sugars (g)', label: 'Added Sugars (g)' },
+                        { key: 'Protein (g)', label: 'Protein (g)' },
+                        { key: 'Vitamin A % DV', label: 'Vit A (%DV)' },
+                        { key: 'Vitamin C % DV', label: 'Vit C (%DV)' },
+                        { key: 'Calcium % DV', label: 'Calcium (%DV)' },
+                        { key: 'Iron % DV', label: 'Iron (%DV)' }
+                    ];
+                    
+                    return fields.map(field => ({
+                        label: field.label,
+                        value: this.formatNutritionValue(this.modalItem[field.key] || 0)
+                    }));
                 },
                 
                 init() {
