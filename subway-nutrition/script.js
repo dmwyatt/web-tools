@@ -1,8 +1,5 @@
 // Global variables
 let nutritionData = [];
-let filteredData = [];
-let currentSortField = 'Item';
-let currentSortOrder = 'asc';
 let ingredients = {
     breads: [],
     proteins: [],
@@ -13,20 +10,15 @@ let ingredients = {
 let selectedIngredients = [];
 
 // DOM elements
-const searchInput = document.getElementById('searchInput');
-const categoryFilter = document.getElementById('categoryFilter');
-const sortBySelect = document.getElementById('sortBy');
-const sortOrderButton = document.getElementById('sortOrder');
-const menuGrid = document.getElementById('menuGrid');
-const itemCount = document.getElementById('itemCount');
 const loadingSpinner = document.getElementById('loadingSpinner');
 const dataDate = document.getElementById('dataDate');
 
 // New elements for sandwich builder
-const browseModeBtn = document.getElementById('browseMode');
-const buildModeBtn = document.getElementById('buildMode');
-const browseSection = document.getElementById('browseSection');
 const buildSection = document.getElementById('buildSection');
+const nutritionModal = document.getElementById('nutritionModal');
+const modalItemName = document.getElementById('modalItemName');
+const modalNutritionGrid = document.getElementById('modalNutritionGrid');
+const closeModalBtn = document.getElementById('closeModal');
 const breadOptions = document.getElementById('breadOptions');
 const proteinOptions = document.getElementById('proteinOptions');
 const cheeseOptions = document.getElementById('cheeseOptions');
@@ -43,8 +35,6 @@ document.addEventListener('DOMContentLoaded', async () => {
     try {
         await loadNutritionData();
         setupEventListeners();
-        populateCategoryFilter();
-        displayMenuItems();
         hideLoading();
     } catch (error) {
         console.error('Error initializing app:', error);
@@ -75,14 +65,17 @@ async function loadNutritionData() {
 
 // Setup event listeners
 function setupEventListeners() {
-    searchInput.addEventListener('input', debounce(handleSearch, 300));
-    categoryFilter.addEventListener('change', handleCategoryFilter);
-    sortBySelect.addEventListener('change', handleSort);
-    sortOrderButton.addEventListener('click', toggleSortOrder);
     
-    // Mode toggle listeners
-    browseModeBtn.addEventListener('click', () => switchMode('browse'));
-    buildModeBtn.addEventListener('click', () => switchMode('build'));
+    // Modal listeners
+    closeModalBtn.addEventListener('click', closeNutritionModal);
+    nutritionModal.addEventListener('click', (e) => {
+        if (e.target === nutritionModal) closeNutritionModal();
+    });
+    
+    // Keyboard listeners
+    document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape') closeNutritionModal();
+    });
     clearAllBtn.addEventListener('click', clearAllIngredients);
     
     // Search functionality - add null checks
@@ -114,160 +107,6 @@ function debounce(func, wait) {
     };
 }
 
-// Populate category filter dropdown
-function populateCategoryFilter() {
-    const categories = [...new Set(nutritionData.map(item => item.category))].sort();
-    
-    categories.forEach(category => {
-        const option = document.createElement('option');
-        option.value = category;
-        option.textContent = category;
-        categoryFilter.appendChild(option);
-    });
-}
-
-// Handle search input
-function handleSearch() {
-    const searchTerm = searchInput.value.toLowerCase().trim();
-    filterAndDisplay();
-}
-
-// Handle category filter
-function handleCategoryFilter() {
-    filterAndDisplay();
-}
-
-// Handle sorting
-function handleSort() {
-    currentSortField = sortBySelect.value;
-    filterAndDisplay();
-}
-
-// Toggle sort order
-function toggleSortOrder() {
-    currentSortOrder = currentSortOrder === 'asc' ? 'desc' : 'asc';
-    sortOrderButton.textContent = currentSortOrder === 'asc' ? '↑ Asc' : '↓ Desc';
-    filterAndDisplay();
-}
-
-// Filter and display menu items
-function filterAndDisplay() {
-    // Apply search filter
-    const searchTerm = searchInput.value.toLowerCase().trim();
-    let filtered = nutritionData.filter(item => 
-        item.Item.toLowerCase().includes(searchTerm) ||
-        item.category.toLowerCase().includes(searchTerm)
-    );
-
-    // Apply category filter
-    const selectedCategory = categoryFilter.value;
-    if (selectedCategory) {
-        filtered = filtered.filter(item => item.category === selectedCategory);
-    }
-
-    // Sort the data
-    filtered.sort((a, b) => {
-        let aValue = a[currentSortField];
-        let bValue = b[currentSortField];
-
-        // Handle string sorting
-        if (typeof aValue === 'string') {
-            aValue = aValue.toLowerCase();
-            bValue = bValue.toLowerCase();
-        }
-
-        // Handle number sorting
-        if (typeof aValue === 'number') {
-            return currentSortOrder === 'asc' ? aValue - bValue : bValue - aValue;
-        }
-
-        // Handle string sorting
-        if (currentSortOrder === 'asc') {
-            return aValue < bValue ? -1 : aValue > bValue ? 1 : 0;
-        } else {
-            return aValue > bValue ? -1 : aValue < bValue ? 1 : 0;
-        }
-    });
-
-    filteredData = filtered;
-    displayMenuItems();
-}
-
-// Display menu items
-function displayMenuItems() {
-    menuGrid.innerHTML = '';
-    
-    // Update item count
-    itemCount.textContent = `Showing ${filteredData.length} of ${nutritionData.length} items`;
-
-    // Create menu item cards
-    filteredData.forEach((item, index) => {
-        const menuItemElement = createMenuItemElement(item, index);
-        menuGrid.appendChild(menuItemElement);
-    });
-}
-
-// Create individual menu item element
-function createMenuItemElement(item, index) {
-    const menuItem = document.createElement('div');
-    menuItem.className = 'menu-item';
-    menuItem.style.animationDelay = `${index * 0.05}s`;
-
-    // Key nutrition facts to highlight
-    const keyNutrition = [
-        { key: 'Calories', label: 'Calories', class: 'calories' },
-        { key: 'Total Fat (g)', label: 'Fat (g)', class: 'fat' },
-        { key: 'Sodium (mg)', label: 'Sodium (mg)', class: 'sodium' },
-        { key: 'Carbohydrate (g)', label: 'Carbs (g)', class: 'carbs' },
-        { key: 'Protein (g)', label: 'Protein (g)', class: 'protein' }
-    ];
-
-    // Additional nutrition facts
-    const additionalNutrition = [
-        { key: 'Sat. Fat (g)', label: 'Sat Fat (g)' },
-        { key: 'Trans Fat (g)*', label: 'Trans Fat (g)' },
-        { key: 'Chol. (mg)', label: 'Cholesterol (mg)' },
-        { key: 'Dietary Fiber (g)', label: 'Fiber (g)' },
-        { key: 'Sugars (g)', label: 'Sugars (g)' },
-        { key: 'Added Sugars (g)', label: 'Added Sugars (g)' },
-        { key: 'Vitamin A % DV', label: 'Vit A (%DV)' },
-        { key: 'Vitamin C % DV', label: 'Vit C (%DV)' },
-        { key: 'Calcium % DV', label: 'Calcium (%DV)' },
-        { key: 'Iron % DV', label: 'Iron (%DV)' }
-    ];
-
-    menuItem.innerHTML = `
-        <h3>${item.Item}</h3>
-        <div class="category-badge">${item.category}</div>
-        
-        <div class="nutrition-grid">
-            ${keyNutrition.map(nutrient => `
-                <div class="nutrition-item ${nutrient.class}">
-                    <span class="nutrition-value">${formatNutritionValue(item[nutrient.key])}</span>
-                    <div class="nutrition-label">${nutrient.label}</div>
-                </div>
-            `).join('')}
-        </div>
-        
-        <details style="margin-top: 1rem;">
-            <summary style="cursor: pointer; font-weight: 600; color: #00873b;">More Nutrition Info</summary>
-            <div class="nutrition-grid" style="margin-top: 0.75rem;">
-                <div class="nutrition-item">
-                    <span class="nutrition-value">${formatNutritionValue(item['Serving Size (g)'])}</span>
-                    <div class="nutrition-label">Serving (g)</div>
-                </div>
-                ${additionalNutrition.map(nutrient => `
-                    <div class="nutrition-item">
-                        <span class="nutrition-value">${formatNutritionValue(item[nutrient.key])}</span>
-                        <div class="nutrition-label">${nutrient.label}</div>
-                    </div>
-                `).join('')}
-            </div>
-        </details>
-    `;
-
-    return menuItem;
-}
 
 // Format nutrition values
 function formatNutritionValue(value) {
@@ -378,7 +217,10 @@ function populateCategory(type, items, container) {
                     ${formatNutritionValue(item['Sodium (mg)'])}mg sodium
                 </div>
             </div>
-            <button class="add-btn" onclick="toggleIngredient(this)"></button>
+            <div class="ingredient-actions">
+                <button class="info-btn" onclick="showNutritionDetails('${item.Item.replace(/'/g, "\\'")}')">i</button>
+                <button class="add-btn" onclick="toggleIngredient(this)"></button>
+            </div>
         `;
         
         container.appendChild(optionDiv);
@@ -506,19 +348,49 @@ function updateTotalNutrition() {
     }
 }
 
-// Switch between browse and build modes
-function switchMode(mode) {
-    if (mode === 'browse') {
-        browseModeBtn.classList.add('active');
-        buildModeBtn.classList.remove('active');
-        browseSection.classList.add('active');
-        buildSection.classList.remove('active');
-    } else {
-        buildModeBtn.classList.add('active');
-        browseModeBtn.classList.remove('active');
-        buildSection.classList.add('active');
-        browseSection.classList.remove('active');
-    }
+// Show nutrition details modal
+function showNutritionDetails(itemName) {
+    const item = nutritionData.find(data => data.Item === itemName);
+    if (!item) return;
+    
+    modalItemName.textContent = item.Item;
+    
+    // Create nutrition grid
+    const nutritionFields = [
+        { key: 'Serving Size (g)', label: 'Serving (g)' },
+        { key: 'Calories', label: 'Calories' },
+        { key: 'Total Fat (g)', label: 'Fat (g)' },
+        { key: 'Sat. Fat (g)', label: 'Sat Fat (g)' },
+        { key: 'Trans Fat (g)*', label: 'Trans Fat (g)' },
+        { key: 'Chol. (mg)', label: 'Cholesterol (mg)' },
+        { key: 'Sodium (mg)', label: 'Sodium (mg)' },
+        { key: 'Carbohydrate (g)', label: 'Carbs (g)' },
+        { key: 'Dietary Fiber (g)', label: 'Fiber (g)' },
+        { key: 'Sugars (g)', label: 'Sugars (g)' },
+        { key: 'Added Sugars (g)', label: 'Added Sugars (g)' },
+        { key: 'Protein (g)', label: 'Protein (g)' },
+        { key: 'Vitamin A % DV', label: 'Vit A (%DV)' },
+        { key: 'Vitamin C % DV', label: 'Vit C (%DV)' },
+        { key: 'Calcium % DV', label: 'Calcium (%DV)' },
+        { key: 'Iron % DV', label: 'Iron (%DV)' }
+    ];
+    
+    modalNutritionGrid.innerHTML = nutritionFields.map(field => {
+        const value = item[field.key] || 0;
+        return `
+            <div class="modal-nutrition-item">
+                <span class="modal-nutrition-value">${formatNutritionValue(value)}</span>
+                <div class="modal-nutrition-label">${field.label}</div>
+            </div>
+        `;
+    }).join('');
+    
+    nutritionModal.classList.add('show');
+}
+
+// Close nutrition details modal
+function closeNutritionModal() {
+    nutritionModal.classList.remove('show');
 }
 
 // Handle ingredient search
@@ -583,11 +455,10 @@ function clearIngredientSearch() {
 // Export functions for potential future use
 window.SubwayNutritionApp = {
     loadNutritionData,
-    filterAndDisplay,
-    scrollToTop,
     toggleIngredient,
     removeIngredient,
     clearAllIngredients,
-    switchMode,
+    showNutritionDetails,
+    closeNutritionModal,
     clearIngredientSearch
 };

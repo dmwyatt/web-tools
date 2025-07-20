@@ -15,44 +15,8 @@
     </header>
 
     <main class="container">
-        <!-- Mode Toggle -->
-        <div class="mode-toggle">
-            <button id="buildMode" class="mode-btn active">Build Custom Sandwich</button>
-            <button id="browseMode" class="mode-btn">Browse Menu</button>
-        </div>
-
-        <!-- Browse Mode -->
-        <div id="browseSection" class="mode-section">
-            <div class="controls">
-                <div class="search-filter">
-                    <input type="text" id="searchInput" placeholder="Search menu items...">
-                    <select id="categoryFilter">
-                        <option value="">All Categories</option>
-                    </select>
-                </div>
-                <div class="sort-controls">
-                    <label for="sortBy">Sort by:</label>
-                    <select id="sortBy">
-                        <option value="Item">Name</option>
-                        <option value="Calories">Calories</option>
-                        <option value="Total Fat (g)">Total Fat</option>
-                        <option value="Sodium (mg)">Sodium</option>
-                        <option value="Protein (g)">Protein</option>
-                        <option value="Carbohydrate (g)">Carbs</option>
-                    </select>
-                    <button id="sortOrder" class="sort-btn">↑ Asc</button>
-                </div>
-            </div>
-
-            <div id="itemCount" class="item-count"></div>
-
-            <div id="menuGrid" class="menu-grid">
-                <!-- Menu items will be populated here -->
-            </div>
-        </div>
-
-        <!-- Build Custom Sandwich Mode -->
-        <div id="buildSection" class="mode-section active">
+        <!-- Build Custom Sandwich -->
+        <div id="buildSection" class="sandwich-builder-section">
             <div class="ingredient-search">
                 <input type="text" id="ingredientSearch" placeholder="Search ingredients (e.g. turkey, mayo, lettuce)..." />
                 <button id="clearSearch" class="clear-search-btn" title="Clear search">×</button>
@@ -180,6 +144,20 @@
         </div>
 
         <div id="loadingSpinner" class="loading">Loading nutrition data...</div>
+        <!-- Nutrition Details Modal -->
+        <div id="nutritionModal" class="modal">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h3 id="modalItemName"></h3>
+                    <button class="modal-close" id="closeModal">&times;</button>
+                </div>
+                <div class="modal-body">
+                    <div class="modal-nutrition-grid" id="modalNutritionGrid">
+                        <!-- Detailed nutrition info will be populated here -->
+                    </div>
+                </div>
+            </div>
+        </div>
     </main>
 
     <footer>
