@@ -51,7 +51,6 @@ async function loadNutritionData() {
         }
         const data = await response.json();
         nutritionData = data;
-        filteredData = [...nutritionData];
         
         // Set the data generation date
         dataDate.textContent = 'Recent';
@@ -132,19 +131,19 @@ function showError(message) {
     loadingSpinner.innerHTML = `<div style="color: #dc3545; font-weight: 600;">❌ ${message}</div>`;
 }
 
-// Add keyboard navigation support
+// Add keyboard navigation support for ingredient search
 document.addEventListener('keydown', (e) => {
     // Focus search on Ctrl+F or Cmd+F
     if ((e.ctrlKey || e.metaKey) && e.key === 'f') {
         e.preventDefault();
-        searchInput.focus();
+        if (ingredientSearchInput) {
+            ingredientSearchInput.focus();
+        }
     }
     
     // Clear filters on Escape
-    if (e.key === 'Escape') {
-        searchInput.value = '';
-        categoryFilter.value = '';
-        filterAndDisplay();
+    if (e.key === 'Escape' && ingredientSearchInput) {
+        clearIngredientSearch();
     }
 });
 
@@ -229,7 +228,7 @@ function populateCategory(type, items, container) {
 
 // Toggle ingredient selection
 function toggleIngredient(button) {
-    const optionDiv = button.parentElement;
+    const optionDiv = button.parentElement.parentElement;
     const isSelected = optionDiv.classList.contains('selected');
     const itemData = JSON.parse(optionDiv.dataset.item);
     
