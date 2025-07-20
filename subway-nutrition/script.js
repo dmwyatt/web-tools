@@ -11,7 +11,7 @@ let selectedIngredients = [];
 
 // DOM elements
 const loadingSpinner = document.getElementById('loadingSpinner');
-const dataDate = document.getElementById('dataDate');
+// Note: dataDate now handled by Alpine.js reactive binding
 
 // New elements for sandwich builder
 const buildSection = document.getElementById('buildSection');
@@ -35,10 +35,10 @@ document.addEventListener('DOMContentLoaded', async () => {
     try {
         await loadNutritionData();
         setupEventListeners();
-        hideLoading();
+        // Note: Loading state now handled by Alpine.js store
     } catch (error) {
         console.error('Error initializing app:', error);
-        showError('Failed to load nutrition data. Please try again later.');
+        // Note: Error display now handled by Alpine.js store
     }
 });
 
@@ -52,8 +52,7 @@ async function loadNutritionData() {
         const data = await response.json();
         nutritionData = data;
         
-        // Set the data generation date
-        dataDate.textContent = 'Recent';
+        // Note: Data date now handled by Alpine.js reactive binding
         
         // Process ingredients for sandwich builder
         processIngredients();
@@ -75,7 +74,7 @@ function setupEventListeners() {
     document.addEventListener('keydown', (e) => {
         if (e.key === 'Escape') closeNutritionModal();
     });
-    clearAllBtn.addEventListener('click', clearAllIngredients);
+    // Note: Clear all button now handled by Alpine.js @click directive
     
     // Search functionality - add null checks
     if (ingredientSearchInput) {
@@ -136,15 +135,7 @@ function escapeQuotes(text) {
     return text.replace(/"/g, '&quot;');
 }
 
-// Hide loading spinner
-function hideLoading() {
-    loadingSpinner.style.display = 'none';
-}
-
-// Show error message
-function showError(message) {
-    loadingSpinner.innerHTML = `<div style="color: #dc3545; font-weight: 600;">❌ ${message}</div>`;
-}
+// Note: Loading spinner and error display now handled by Alpine.js reactive system
 
 // Add keyboard navigation support for ingredient search
 document.addEventListener('keydown', (e) => {
@@ -199,175 +190,12 @@ function processIngredients() {
         }
     });
     
-    // Populate ingredient options
-    populateIngredientOptions();
+    // Note: Ingredient population now handled by Alpine.js templates
 }
 
-// Populate ingredient options in the UI
-function populateIngredientOptions() {
-    populateCategory('bread', ingredients.breads, breadOptions);
-    populateCategory('protein', ingredients.proteins, proteinOptions);
-    populateCategory('cheese', ingredients.cheeses, cheeseOptions);
-    populateCategory('vegetable', ingredients.vegetables, vegetableOptions);
-    populateCategory('condiment', ingredients.condiments, condimentOptions);
-}
+// Note: Ingredient selection logic now handled by Alpine.js store methods
 
-// Populate a specific ingredient category
-function populateCategory(type, items, container) {
-    container.innerHTML = '';
-    
-    items.forEach(item => {
-        const optionDiv = document.createElement('div');
-        optionDiv.className = 'ingredient-option';
-        optionDiv.dataset.type = type;
-        optionDiv.dataset.item = JSON.stringify(item);
-        
-        optionDiv.innerHTML = `
-            <div class="ingredient-info">
-                <div class="ingredient-name">${item.Item}</div>
-                <div class="ingredient-nutrition">
-                    ${formatNutritionValue(item.Calories)} cal, 
-                    ${formatNutritionValue(item['Total Fat (g)'])}g fat, 
-                    ${formatNutritionValue(item['Sodium (mg)'])}mg sodium
-                </div>
-            </div>
-            <div class="ingredient-actions">
-                <button class="info-btn" data-item-name="${escapeQuotes(item.Item)}">i</button>
-                <button class="add-btn" onclick="toggleIngredient(this)"></button>
-            </div>
-        `;
-        
-        container.appendChild(optionDiv);
-    });
-}
-
-// Toggle ingredient selection
-function toggleIngredient(button) {
-    const optionDiv = button.parentElement.parentElement;
-    const isSelected = optionDiv.classList.contains('selected');
-    
-    // Add null check for dataset.item
-    if (!optionDiv.dataset.item) {
-        console.error('No dataset.item found for ingredient:', optionDiv);
-        return;
-    }
-    
-    const itemData = JSON.parse(optionDiv.dataset.item);
-    
-    if (isSelected) {
-        // Remove ingredient
-        optionDiv.classList.remove('selected');
-        selectedIngredients = selectedIngredients.filter(ingredient => 
-            ingredient.Item !== itemData.Item
-        );
-    } else {
-        // Add ingredient
-        optionDiv.classList.add('selected');
-        selectedIngredients.push(itemData);
-    }
-    
-    updateSelectedIngredients();
-    updateTotalNutrition();
-}
-
-// Update selected ingredients display
-function updateSelectedIngredients() {
-    if (selectedIngredients.length === 0) {
-        selectedIngredientsDiv.innerHTML = '<p class="placeholder">Select ingredients to build your sandwich</p>';
-        return;
-    }
-    
-    selectedIngredientsDiv.innerHTML = selectedIngredients.map(ingredient => `
-        <div class="selected-ingredient">
-            <span class="selected-ingredient-name">${ingredient.Item}</span>
-            <button class="remove-ingredient" onclick="removeIngredient('${escapeQuotes(ingredient.Item)}')" title="Remove ingredient">×</button>
-        </div>
-    `).join('');
-}
-
-// Remove specific ingredient
-function removeIngredient(itemName) {
-    // Remove from selected ingredients
-    selectedIngredients = selectedIngredients.filter(ingredient => ingredient.Item !== itemName);
-    
-    // Update UI
-    const ingredientOptions = document.querySelectorAll('.ingredient-option');
-    ingredientOptions.forEach(option => {
-        const itemData = JSON.parse(option.dataset.item);
-        if (itemData.Item === itemName) {
-            option.classList.remove('selected');
-        }
-    });
-    
-    updateSelectedIngredients();
-    updateTotalNutrition();
-}
-
-// Clear all selected ingredients
-function clearAllIngredients() {
-    selectedIngredients = [];
-    
-    // Remove selected class from all options
-    const ingredientOptions = document.querySelectorAll('.ingredient-option');
-    ingredientOptions.forEach(option => {
-        option.classList.remove('selected');
-    });
-    
-    updateSelectedIngredients();
-    updateTotalNutrition();
-}
-
-// Update total nutrition display
-function updateTotalNutrition() {
-    const totals = {
-        'Calories': 0,
-        'Total Fat (g)': 0,
-        'Sodium (mg)': 0,
-        'Carbohydrate (g)': 0,
-        'Protein (g)': 0,
-        'Serving Size (g)': 0,
-        'Sat. Fat (g)': 0,
-        'Trans Fat (g)*': 0,
-        'Chol. (mg)': 0,
-        'Dietary Fiber (g)': 0,
-        'Sugars (g)': 0,
-        'Added Sugars (g)': 0,
-        'Vitamin A % DV': 0,
-        'Vitamin C % DV': 0,
-        'Calcium % DV': 0,
-        'Iron % DV': 0
-    };
-    
-    selectedIngredients.forEach(ingredient => {
-        Object.keys(totals).forEach(nutrient => {
-            const value = parseFloat(ingredient[nutrient]) || 0;
-            totals[nutrient] += value;
-        });
-    });
-    
-    // Update the main nutrition display
-    const nutritionItems = totalNutritionDiv.querySelectorAll('.nutrition-item');
-    const labels = ['Calories', 'Fat (g)', 'Sodium (mg)', 'Carbs (g)', 'Protein (g)'];
-    const keys = ['Calories', 'Total Fat (g)', 'Sodium (mg)', 'Carbohydrate (g)', 'Protein (g)'];
-    
-    nutritionItems.forEach((item, index) => {
-        const valueSpan = item.querySelector('.nutrition-value');
-        valueSpan.textContent = formatNutritionValue(totals[keys[index]]);
-    });
-    
-    // Update the additional nutrition display
-    const additionalNutritionDiv = document.getElementById('additionalNutrition');
-    if (additionalNutritionDiv) {
-        const additionalItems = additionalNutritionDiv.querySelectorAll('.nutrition-item');
-        const additionalLabels = ['Serving (g)', 'Sat Fat (g)', 'Trans Fat (g)', 'Cholesterol (mg)', 'Fiber (g)', 'Sugars (g)', 'Added Sugars (g)', 'Vit A (%DV)', 'Vit C (%DV)', 'Calcium (%DV)', 'Iron (%DV)'];
-        const additionalKeys = ['Serving Size (g)', 'Sat. Fat (g)', 'Trans Fat (g)*', 'Chol. (mg)', 'Dietary Fiber (g)', 'Sugars (g)', 'Added Sugars (g)', 'Vitamin A % DV', 'Vitamin C % DV', 'Calcium % DV', 'Iron % DV'];
-        
-        additionalItems.forEach((item, index) => {
-            const valueSpan = item.querySelector('.nutrition-value');
-            valueSpan.textContent = formatNutritionValue(totals[additionalKeys[index]]);
-        });
-    }
-}
+// Note: Nutrition calculation now handled by Alpine.js reactive computed properties
 
 // Show nutrition details modal
 function showNutritionDetails(itemName) {
@@ -476,9 +304,6 @@ function clearIngredientSearch() {
 // Export functions for potential future use
 window.SubwayNutritionApp = {
     loadNutritionData,
-    toggleIngredient,
-    removeIngredient,
-    clearAllIngredients,
     showNutritionDetails,
     closeNutritionModal,
     clearIngredientSearch
