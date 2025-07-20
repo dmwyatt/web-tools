@@ -461,7 +461,18 @@ function updateTotalNutrition() {
         'Total Fat (g)': 0,
         'Sodium (mg)': 0,
         'Carbohydrate (g)': 0,
-        'Protein (g)': 0
+        'Protein (g)': 0,
+        'Serving Size (g)': 0,
+        'Sat. Fat (g)': 0,
+        'Trans Fat (g)*': 0,
+        'Chol. (mg)': 0,
+        'Dietary Fiber (g)': 0,
+        'Sugars (g)': 0,
+        'Added Sugars (g)': 0,
+        'Vitamin A % DV': 0,
+        'Vitamin C % DV': 0,
+        'Calcium % DV': 0,
+        'Iron % DV': 0
     };
     
     selectedIngredients.forEach(ingredient => {
@@ -471,7 +482,7 @@ function updateTotalNutrition() {
         });
     });
     
-    // Update the display
+    // Update the main nutrition display
     const nutritionItems = totalNutritionDiv.querySelectorAll('.nutrition-item');
     const labels = ['Calories', 'Fat (g)', 'Sodium (mg)', 'Carbs (g)', 'Protein (g)'];
     const keys = ['Calories', 'Total Fat (g)', 'Sodium (mg)', 'Carbohydrate (g)', 'Protein (g)'];
@@ -480,6 +491,19 @@ function updateTotalNutrition() {
         const valueSpan = item.querySelector('.nutrition-value');
         valueSpan.textContent = formatNutritionValue(totals[keys[index]]);
     });
+    
+    // Update the additional nutrition display
+    const additionalNutritionDiv = document.getElementById('additionalNutrition');
+    if (additionalNutritionDiv) {
+        const additionalItems = additionalNutritionDiv.querySelectorAll('.nutrition-item');
+        const additionalLabels = ['Serving (g)', 'Sat Fat (g)', 'Trans Fat (g)', 'Cholesterol (mg)', 'Fiber (g)', 'Sugars (g)', 'Added Sugars (g)', 'Vit A (%DV)', 'Vit C (%DV)', 'Calcium (%DV)', 'Iron (%DV)'];
+        const additionalKeys = ['Serving Size (g)', 'Sat. Fat (g)', 'Trans Fat (g)*', 'Chol. (mg)', 'Dietary Fiber (g)', 'Sugars (g)', 'Added Sugars (g)', 'Vitamin A % DV', 'Vitamin C % DV', 'Calcium % DV', 'Iron % DV'];
+        
+        additionalItems.forEach((item, index) => {
+            const valueSpan = item.querySelector('.nutrition-value');
+            valueSpan.textContent = formatNutritionValue(totals[additionalKeys[index]]);
+        });
+    }
 }
 
 // Switch between browse and build modes
