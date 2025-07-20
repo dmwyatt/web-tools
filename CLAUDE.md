@@ -104,3 +104,4 @@ web-tools/
 
 ## Development Tips
 - remember to check if the local python http server is already running, and if it is, if it's ours (serving our files)
+- remember to check for available npm scripts
