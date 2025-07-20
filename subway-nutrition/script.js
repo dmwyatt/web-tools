@@ -91,6 +91,16 @@ function setupEventListeners() {
     } else {
         console.error('clearSearchBtn element not found');
     }
+    
+    // Event delegation for info buttons
+    document.addEventListener('click', (e) => {
+        if (e.target.classList.contains('info-btn')) {
+            const itemName = e.target.dataset.itemName;
+            if (itemName) {
+                showNutritionDetails(itemName);
+            }
+        }
+    });
 }
 
 // Debounce function to limit search frequency
@@ -217,7 +227,7 @@ function populateCategory(type, items, container) {
                 </div>
             </div>
             <div class="ingredient-actions">
-                <button class="info-btn" onclick="showNutritionDetails('${item.Item.replace(/'/g, "\\'")}')">i</button>
+                <button class="info-btn" data-item-name="${item.Item}">i</button>
                 <button class="add-btn" onclick="toggleIngredient(this)"></button>
             </div>
         `;
