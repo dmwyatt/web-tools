@@ -197,4 +197,56 @@ test.describe('Subway Nutrition Guide', () => {
     const categoriesAfterClear = await page.locator('.ingredient-category:not(.hidden)').count();
     expect(categoriesAfterClear).toBeGreaterThan(0);
   });
+
+  test('should prevent multiple bread selections', async ({ page }) => {
+    // Get the first three bread options
+    const firstBread = page.locator('#breadOptions .add-btn').first();
+    const secondBread = page.locator('#breadOptions .add-btn').nth(1);
+    const thirdBread = page.locator('#breadOptions .add-btn').nth(2);
+    
+    // Select first bread
+    await firstBread.click();
+    
+    // Verify first bread is selected
+    await expect(page.locator('#selectedIngredients .selected-ingredient')).toHaveCount(1);
+    
+    // Select second bread
+    await secondBread.click();
+    
+    // Verify only one bread is selected (second bread should replace first)
+    await expect(page.locator('#selectedIngredients .selected-ingredient')).toHaveCount(1);
+    
+    // Verify that the first bread is no longer selected in the UI
+    const firstBreadOption = page.locator('#breadOptions .ingredient-option').first();
+    await expect(firstBreadOption).not.toHaveClass(/selected/);
+    
+    // Verify that the second bread is selected in the UI
+    const secondBreadOption = page.locator('#breadOptions .ingredient-option').nth(1);
+    await expect(secondBreadOption).toHaveClass(/selected/);
+    
+    // Select third bread - should replace second bread
+    await thirdBread.click();
+    
+    // Still should only have 1 bread selected
+    await expect(page.locator('#selectedIngredients .selected-ingredient')).toHaveCount(1);
+    
+    // Verify second bread is no longer selected, third bread is selected
+    await expect(secondBreadOption).not.toHaveClass(/selected/);
+    const thirdBreadOption = page.locator('#breadOptions .ingredient-option').nth(2);
+    await expect(thirdBreadOption).toHaveClass(/selected/);
+    
+    // Click on the currently selected (third) bread - should deselect it
+    await thirdBread.click();
+    
+    // Should have no breads selected
+    await expect(page.locator('#selectedIngredients .selected-ingredient')).toHaveCount(0);
+    await expect(thirdBreadOption).not.toHaveClass(/selected/);
+    
+    // Test with non-bread ingredients to ensure they still allow multiple selections
+    await page.locator('#proteinOptions .add-btn').first().click();
+    await page.locator('#proteinOptions .add-btn').nth(1).click();
+    
+    // Should now have 2 proteins = 2 total
+    await expect(page.locator('#selectedIngredients .selected-ingredient')).toHaveCount(2);
+  });
 });

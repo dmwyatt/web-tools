@@ -416,15 +416,29 @@
                 toggleIngredient(optionElement) {
                     const itemData = JSON.parse(optionElement.dataset.item);
                     const isSelected = this.selectedIngredients.some(ing => ing.Item === itemData.Item);
+                    const isBread = itemData.category === 'bread';
                     
-                    if (isSelected) {
-                        // Remove ingredient
+                    if (isBread) {
+                        // For bread: always clear all breads first, then add this one if it wasn't selected
                         this.selectedIngredients = this.selectedIngredients.filter(ingredient => 
-                            ingredient.Item !== itemData.Item
+                            ingredient.category !== 'bread'
                         );
+                        
+                        // Add this bread only if it wasn't previously selected
+                        if (!isSelected) {
+                            this.selectedIngredients.push(itemData);
+                        }
                     } else {
-                        // Add ingredient
-                        this.selectedIngredients.push(itemData);
+                        // For non-bread: use normal toggle behavior
+                        if (isSelected) {
+                            // Remove ingredient
+                            this.selectedIngredients = this.selectedIngredients.filter(ingredient => 
+                                ingredient.Item !== itemData.Item
+                            );
+                        } else {
+                            // Add ingredient
+                            this.selectedIngredients.push(itemData);
+                        }
                     }
                     
                     console.log('Alpine store: Ingredient toggled:', itemData.Item);
