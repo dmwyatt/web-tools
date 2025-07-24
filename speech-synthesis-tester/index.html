@@ -179,6 +179,13 @@ Hello, this is a test of the speech synthesis API!</textarea
       </div>
 
       <div class="form-group">
+        <label for="languageFilter">Filter by language:</label>
+        <select id="languageFilter">
+          <option value="">All languages</option>
+        </select>
+      </div>
+
+      <div class="form-group">
         <label for="voiceSelect">Voice:</label>
         <select id="voiceSelect">
           <option value="">Loading voices...</option>
@@ -240,6 +247,7 @@ Hello, this is a test of the speech synthesis API!</textarea
 
       // DOM elements
       const textInput = document.getElementById("textInput");
+      const languageFilter = document.getElementById("languageFilter");
       const voiceSelect = document.getElementById("voiceSelect");
       const rateRange = document.getElementById("rateRange");
       const pitchRange = document.getElementById("pitchRange");
@@ -254,7 +262,6 @@ Hello, this is a test of the speech synthesis API!</textarea
       // Load available voices
       function loadVoices() {
         voices = speechSynthesis.getVoices();
-        voiceSelect.innerHTML = "";
 
         if (voices.length === 0) {
           voiceSelect.innerHTML =
@@ -262,16 +269,53 @@ Hello, this is a test of the speech synthesis API!</textarea
           return;
         }
 
+        // Populate language filter
+        populateLanguageFilter();
+
+        // Populate voice selector based on current filter
+        filterVoices();
+      }
+
+      // Populate language filter dropdown
+      function populateLanguageFilter() {
+        // Get unique language codes
+        const languages = [
+          ...new Set(voices.map((voice) => voice.lang)),
+        ].sort();
+
+        // Clear and repopulate language filter
+        languageFilter.innerHTML = '<option value="">All languages</option>';
+
+        languages.forEach((lang) => {
+          const option = document.createElement("option");
+          option.value = lang;
+          option.textContent = lang;
+          languageFilter.appendChild(option);
+        });
+      }
+
+      // Filter voices based on selected language
+      function filterVoices() {
+        const selectedLanguage = languageFilter.value;
+        const filteredVoices = selectedLanguage
+          ? voices.filter((voice) => voice.lang === selectedLanguage)
+          : voices;
+
+        // Clear voice selector
+        voiceSelect.innerHTML = "";
+
         // Add default option
         const defaultOption = document.createElement("option");
         defaultOption.value = "";
         defaultOption.textContent = "Default voice";
         voiceSelect.appendChild(defaultOption);
 
-        // Add all available voices
-        voices.forEach((voice, index) => {
+        // Add filtered voices
+        filteredVoices.forEach((voice, originalIndex) => {
           const option = document.createElement("option");
-          option.value = index;
+          // Use original index in voices array for consistency
+          const voiceIndex = voices.indexOf(voice);
+          option.value = voiceIndex;
           option.textContent = `${voice.name} (${voice.lang})`;
           voiceSelect.appendChild(option);
         });
@@ -348,6 +392,9 @@ Hello, this is a test of the speech synthesis API!</textarea
       // Event listeners
       speakBtn.addEventListener("click", speak);
       stopBtn.addEventListener("click", stop);
+
+      // Filter voices when language selection changes
+      languageFilter.addEventListener("change", filterVoices);
 
       // Update range displays when values change
       rateRange.addEventListener("input", updateRangeValues);
