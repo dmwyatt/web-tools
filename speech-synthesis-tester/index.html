@@ -301,16 +301,25 @@ Hello, this is a test of the speech synthesis API!</textarea
           ? voices.filter((voice) => voice.lang === selectedLanguage)
           : voices;
 
+        // Remember current selection
+        const currentSelection = voiceSelect.value;
+        const currentVoice = currentSelection ? voices[currentSelection] : null;
+
         // Clear voice selector
         voiceSelect.innerHTML = "";
 
-        // Add default option
-        const defaultOption = document.createElement("option");
-        defaultOption.value = "";
-        defaultOption.textContent = "Default voice";
-        voiceSelect.appendChild(defaultOption);
+        // Add default option only when showing all languages
+        if (!selectedLanguage) {
+          const defaultOption = document.createElement("option");
+          defaultOption.value = "";
+          defaultOption.textContent = "Default voice";
+          voiceSelect.appendChild(defaultOption);
+        }
 
         // Add filtered voices
+        let selectionPreserved = false;
+        let firstVoiceIndex = null;
+
         filteredVoices.forEach((voice, originalIndex) => {
           const option = document.createElement("option");
           // Use original index in voices array for consistency
@@ -318,7 +327,28 @@ Hello, this is a test of the speech synthesis API!</textarea
           option.value = voiceIndex;
           option.textContent = `${voice.name} (${voice.lang})`;
           voiceSelect.appendChild(option);
+
+          // Track first voice for potential auto-selection
+          if (firstVoiceIndex === null) {
+            firstVoiceIndex = voiceIndex;
+          }
+
+          // Check if current selection should be preserved
+          if (currentVoice && voice === currentVoice) {
+            option.selected = true;
+            selectionPreserved = true;
+          }
         });
+
+        // If we couldn't preserve selection and we're filtering by language,
+        // auto-select the first voice in that language
+        if (
+          !selectionPreserved &&
+          selectedLanguage &&
+          firstVoiceIndex !== null
+        ) {
+          voiceSelect.value = firstVoiceIndex;
+        }
       }
 
       // Update range value displays
