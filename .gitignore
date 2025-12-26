@@ -3,3 +3,6 @@
 
 # Test results
 test-results/
+
+# Claude AI context
+.claude/
