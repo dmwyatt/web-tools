@@ -464,7 +464,7 @@
         <optgroup label="System Fonts" id="system-fonts-group" style="display: none;"></optgroup>
       </select>
     </div>
-    <div class="control-group">
+    <div class="control-group" id="custom-font-group">
       <label for="custom-font">Custom Font</label>
       <input type="text" id="custom-font" placeholder="Type font name..." />
     </div>
@@ -924,6 +924,10 @@
         
         systemFontsGroup.style.display = '';
         loadFontsGroup.style.display = 'none';
+        
+        // Hide custom font input since system fonts are now available
+        document.getElementById('custom-font-group').style.display = 'none';
+        customFontInput.value = '';  // Clear any custom font
         
       } catch (err) {
         console.error('Failed to load fonts:', err);
