@@ -389,6 +389,47 @@
       padding-top: 0;
       border-top: none;
     }
+    
+    .metrics-toggle {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 12px;
+      font-size: 0.75rem;
+      width: 100%;
+    }
+    
+    .metrics-toggle label {
+      color: #888;
+      text-transform: none;
+      letter-spacing: normal;
+    }
+    
+    .toggle-switch {
+      display: inline-flex;
+      background: #1e1e3a;
+      border-radius: 4px;
+      padding: 2px;
+    }
+    
+    .toggle-switch input[type="radio"] {
+      position: absolute;
+      opacity: 0;
+      pointer-events: none;
+    }
+    
+    .toggle-option {
+      padding: 4px 10px;
+      border-radius: 3px;
+      cursor: pointer;
+      color: #888;
+      transition: all 0.15s;
+    }
+    
+    .toggle-switch input[type="radio"]:checked + .toggle-option {
+      background: #6366f1;
+      color: #fff;
+    }
   </style>
 </head>
 <body>
@@ -428,6 +469,16 @@
       <input type="range" id="font-size" min="12" max="200" value="120" />
       <input type="number" id="font-size-number" min="12" max="400" value="120" />
       <span class="unit">px</span>
+    </div>
+  </div>
+  
+  <div class="metrics-toggle" style="margin-bottom: 12px;">
+    <label>Pixel-scan source:</label>
+    <div class="toggle-switch">
+      <input type="radio" name="scan-source" id="scan-source-ref" value="reference" checked>
+      <label class="toggle-option" for="scan-source-ref">Reference chars</label>
+      <input type="radio" name="scan-source" id="scan-source-sample" value="sample">
+      <label class="toggle-option" for="scan-source-sample">Sample text</label>
     </div>
   </div>
   
@@ -471,9 +522,19 @@
   </div>
   
   <div class="metrics-comparison">
+    <div class="metrics-toggle">
+      <label>TextMetrics source:</label>
+      <div class="toggle-switch">
+        <input type="radio" name="tm-source" id="tm-source-ref" value="reference" checked>
+        <label class="toggle-option" for="tm-source-ref">Reference chars (Å, p)</label>
+        <input type="radio" name="tm-source" id="tm-source-sample" value="sample">
+        <label class="toggle-option" for="tm-source-sample">Sample text</label>
+      </div>
+    </div>
+    
     <div class="metrics-panel">
       <h3>Pixel-Scanned <span class="badge measured">Measured</span></h3>
-      <p class="description">Actual pixel bounds of rendered reference glyphs.</p>
+      <p class="description" id="scan-desc">Actual pixel bounds of rendered reference glyphs.</p>
       <div class="metrics-list">
         <div class="metric-row"><span class="label">x-Height</span> <span class="value" id="measured-x-height">—</span></div>
         <div class="metric-row"><span class="label">Cap Height</span> <span class="value" id="measured-cap-height">—</span></div>
@@ -493,7 +554,7 @@
     
     <div class="metrics-panel">
       <h3>Actual Bounding Box <span class="badge declared">TextMetrics</span></h3>
-      <p class="description">Bounds for the specific sample text rendered above.</p>
+      <p class="description" id="tm-actual-desc">Bounds for reference characters (Å, p).</p>
       <div class="metrics-list">
         <div class="metric-row"><span class="label">Ascent</span> <span class="value" id="tm-actual-ascent">—</span></div>
         <div class="metric-row"><span class="label">Descent</span> <span class="value" id="tm-actual-descent">—</span></div>
@@ -605,17 +666,21 @@
       return { top, bottom };
     }
     
-    function measureChar(char, font, fontSize, canvasBaseline) {
+    function measureChar(text, font, fontSize, canvasBaseline) {
       // Create temp canvas and draw at same baseline we'll use for main text
       const tempCanvas = document.createElement('canvas');
-      tempCanvas.width = 150;
-      tempCanvas.height = paddingY * 2 + fontSize;
+      // Size canvas to fit the text
       const tempCtx = tempCanvas.getContext('2d');
+      tempCtx.font = `${fontSize}px ${font}`;
+      const textWidth = tempCtx.measureText(text).width;
+      tempCanvas.width = Math.max(150, textWidth + 20);
+      tempCanvas.height = paddingY * 2 + fontSize;
       
+      // Re-set font after resize (canvas resize clears context state)
       tempCtx.font = `${fontSize}px ${font}`;
       tempCtx.textBaseline = 'alphabetic';
       tempCtx.fillStyle = 'white';
-      tempCtx.fillText(char, 10, canvasBaseline);
+      tempCtx.fillText(text, 10, canvasBaseline);
       
       return getVerticalBounds(tempCtx, tempCanvas.width, tempCanvas.height);
     }
@@ -628,18 +693,33 @@
       // Fixed baseline position in our canvas coordinate system
       const canvasBaseline = paddingY + fontSize * 0.75;
       
-      // Measure reference characters drawn at same baseline
+      // Check which source to use for pixel-scanning
+      const useSampleForScan = document.getElementById('scan-source-sample').checked;
+      
+      // Always measure reference characters for x-height and cap-height (they're definitional)
       const xBounds = measureChar('x', font, fontSize, canvasBaseline);
       const hBounds = measureChar('H', font, fontSize, canvasBaseline);
-      const accentBounds = measureChar('Å', font, fontSize, canvasBaseline);
-      const pBounds = measureChar('p', font, fontSize, canvasBaseline);
+      
+      // For ascent/descent, use either reference chars or sample text
+      let ascentBounds, descentBounds;
+      if (useSampleForScan) {
+        // Measure the actual sample text
+        const sampleBounds = measureChar(text, font, fontSize, canvasBaseline);
+        ascentBounds = sampleBounds;
+        descentBounds = sampleBounds;
+        document.getElementById('scan-desc').textContent = 'Pixel bounds of sample text (x-height/cap-height from reference chars).';
+      } else {
+        ascentBounds = measureChar('Å', font, fontSize, canvasBaseline);
+        descentBounds = measureChar('p', font, fontSize, canvasBaseline);
+        document.getElementById('scan-desc').textContent = 'Actual pixel bounds of rendered reference glyphs.';
+      }
       
       // Calculate metrics
       const baseline = xBounds.bottom;
       const xHeight = baseline - xBounds.top;
       const capHeight = baseline - hBounds.top;
-      const ascent = baseline - accentBounds.top;
-      const descent = pBounds.bottom - baseline;
+      const ascent = baseline - ascentBounds.top;
+      const descent = descentBounds.bottom - baseline;
       
       // Set up main canvas with extra space on right for dimensions
       ctx.font = `${fontSize}px ${font}`;
@@ -708,21 +788,21 @@
         drawDimension(dimX + dimSpacing, baseline, hBounds.top, '#10b981');       // cap height
       }
       if (isLineVisible('line-ascent')) {
-        drawDimension(dimX + dimSpacing * 2, baseline, accentBounds.top, '#3b82f6'); // ascent
+        drawDimension(dimX + dimSpacing * 2, baseline, ascentBounds.top, '#3b82f6'); // ascent
       }
       if (isLineVisible('line-descent')) {
-        drawDimension(dimX + dimSpacing * 0.5, baseline, pBounds.bottom, '#ef4444'); // descent
+        drawDimension(dimX + dimSpacing * 0.5, baseline, descentBounds.bottom, '#ef4444'); // descent
       }
       
       // Position overlay lines using measured pixel positions directly
-      const midpoint = (accentBounds.top + pBounds.bottom) / 2;
+      const midpoint = (ascentBounds.top + descentBounds.bottom) / 2;
       
       document.getElementById('line-baseline').style.top = `${xBounds.bottom}px`;
       document.getElementById('line-x').style.top = `${xBounds.top}px`;
       document.getElementById('line-cap').style.top = `${hBounds.top}px`;
-      document.getElementById('line-ascent').style.top = `${accentBounds.top}px`;
+      document.getElementById('line-ascent').style.top = `${ascentBounds.top}px`;
       document.getElementById('line-midpoint').style.top = `${midpoint}px`;
-      document.getElementById('line-descent').style.top = `${pBounds.bottom}px`;
+      document.getElementById('line-descent').style.top = `${descentBounds.bottom}px`;
       
       // Extend lines across canvas (but not over dimension area)
       const lines = document.querySelectorAll('.metric-line');
@@ -737,12 +817,20 @@
       document.getElementById('measured-ascent').textContent = `${ascent.toFixed(1)}px`;
       document.getElementById('measured-descent').textContent = `${descent.toFixed(1)}px`;
       
-      // Get TextMetrics for the same reference characters we pixel-scan
+      // Get TextMetrics - either for reference chars or sample text based on toggle
       ctx.font = `${fontSize}px ${font}`;
-      const ascentMetrics = ctx.measureText('Å');  // Same char used for pixel-scanned ascent
-      const descentMetrics = ctx.measureText('p');  // Same char used for pixel-scanned descent
-      const xMetrics = ctx.measureText('x');        // Same char used for x-height
-      const capMetrics = ctx.measureText('H');      // Same char used for cap height
+      const useRefChars = document.getElementById('tm-source-ref').checked;
+      
+      let ascentMetrics, descentMetrics;
+      if (useRefChars) {
+        ascentMetrics = ctx.measureText('Å');
+        descentMetrics = ctx.measureText('p');
+        document.getElementById('tm-actual-desc').textContent = 'Bounds for reference characters (Å, p).';
+      } else {
+        ascentMetrics = ctx.measureText(text);
+        descentMetrics = ascentMetrics;  // Same measurement for sample text
+        document.getElementById('tm-actual-desc').textContent = 'Bounds for the sample text above.';
+      }
       
       document.getElementById('tm-font-ascent').textContent = 
         ascentMetrics.fontBoundingBoxAscent !== undefined 
@@ -787,6 +875,14 @@
       updateDisplay();
     });
     customFontInput.addEventListener('input', updateDisplay);
+    
+    // Source toggles
+    document.querySelectorAll('input[name="tm-source"]').forEach(radio => {
+      radio.addEventListener('change', updateDisplay);
+    });
+    document.querySelectorAll('input[name="scan-source"]').forEach(radio => {
+      radio.addEventListener('change', updateDisplay);
+    });
     
     // Load system fonts via Local Font Access API
     loadFontsBtn.addEventListener('click', async () => {
