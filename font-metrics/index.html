@@ -247,15 +247,58 @@
     .legend-color.descent { background: #ef4444; }
     
 
-    .note {
-      margin-top: 24px;
-      padding: 16px;
-      background: rgba(99, 102, 241, 0.1);
-      border-left: 3px solid #6366f1;
-      border-radius: 0 6px 6px 0;
+    .how-it-works {
+      margin-top: 48px;
+      padding-top: 32px;
+      border-top: 1px solid #333;
+    }
+    
+    .how-it-works h2 {
+      font-size: 1.125rem;
+      font-weight: 500;
+      margin: 0 0 16px 0;
+      color: #fff;
+    }
+    
+    .how-it-works h3 {
       font-size: 0.875rem;
-      line-height: 1.6;
-      color: #ccc;
+      font-weight: 600;
+      margin: 24px 0 8px 0;
+      color: #ddd;
+    }
+    
+    .how-it-works p, .how-it-works li {
+      font-size: 0.875rem;
+      line-height: 1.7;
+      color: #aaa;
+      margin: 0 0 12px 0;
+    }
+    
+    .how-it-works ul {
+      margin: 0 0 12px 0;
+      padding-left: 20px;
+    }
+    
+    .how-it-works code {
+      background: #2a2a4a;
+      padding: 2px 6px;
+      border-radius: 3px;
+      font-family: Consolas, monospace;
+      font-size: 0.8125rem;
+      color: #e0e0e0;
+    }
+    
+    .how-it-works .code-block {
+      background: #1e1e3a;
+      border: 1px solid #333;
+      border-radius: 6px;
+      padding: 12px 16px;
+      margin: 12px 0;
+      overflow-x: auto;
+      font-family: Consolas, monospace;
+      font-size: 0.8125rem;
+      line-height: 1.5;
+      color: #e0e0e0;
     }
   </style>
 </head>
@@ -340,10 +383,63 @@
   
 
   
-  <div class="note">
-    <strong>Note:</strong> This demo uses pixel-scanning to find the actual edges of rendered glyphs. 
-    The baseline and x-height are measured from the letter "x", cap height from "H", 
-    ascent from "Å", and descent from "p". Try switching fonts to see how metrics vary.
+  <div class="how-it-works">
+    <h2>How It Works</h2>
+    
+    <p>
+      Browsers don't expose font metrics directly via CSS or the DOM. While the Canvas API provides 
+      <code>TextMetrics</code> with properties like <code>actualBoundingBoxAscent</code>, these values 
+      can be inconsistent across browsers and don't always match the rendered output. This tool takes 
+      a different approach: it measures the actual rendered pixels.
+    </p>
+    
+    <h3>Pixel-Scanning Approach</h3>
+    <p>
+      For each metric, we render a specific reference character to an offscreen canvas, then scan the 
+      pixel data to find the topmost and bottommost non-transparent pixels. This gives us the true 
+      visual bounds of the glyph as the browser actually renders it.
+    </p>
+    
+    <p>Reference characters used:</p>
+    <ul>
+      <li><strong>Baseline &amp; x-height:</strong> lowercase <code>x</code> — its bottom edge defines the baseline, top edge defines x-height</li>
+      <li><strong>Cap height:</strong> uppercase <code>H</code> — a flat-topped capital with no overshoot</li>
+      <li><strong>Ascent:</strong> <code>Å</code> — captures the highest point including diacritics</li>
+      <li><strong>Descent:</strong> lowercase <code>p</code> — captures the descender depth</li>
+    </ul>
+    
+    <h3>The Measurement Code</h3>
+    <div class="code-block"><pre>function getVerticalBounds(ctx, width, height) {
+  const imageData = ctx.getImageData(0, 0, width, height);
+  let top = height, bottom = 0;
+  
+  for (let y = 0; y &lt; height; y++) {
+    for (let x = 0; x &lt; width; x++) {
+      const alpha = imageData.data[(y * width + x) * 4 + 3];
+      if (alpha >= 128) {  // threshold for anti-aliased edges
+        top = Math.min(top, y);
+        bottom = Math.max(bottom, y);
+      }
+    }
+  }
+  return { top, bottom };
+}</pre></div>
+    
+    <h3>Why Not Use TextMetrics?</h3>
+    <p>
+      The Canvas <code>TextMetrics</code> API does provide ascent/descent values, but they represent 
+      the font's <em>declared</em> metrics from the font file, not the actual rendered bounds. These 
+      can differ due to font hinting, rendering engine differences, or glyphs that extend beyond the 
+      declared metrics. Pixel-scanning shows what you actually see.
+    </p>
+    
+    <h3>Font Selection</h3>
+    <p>
+      The dropdown includes common web-safe fonts. You can also type any font name in the custom input 
+      field — if the font is installed on your system, it will be used. In Chrome and Edge, the 
+      "Load System Fonts" button uses the <a href="https://developer.mozilla.org/en-US/docs/Web/API/Local_Font_Access_API" 
+      style="color: #6366f1;">Local Font Access API</a> to enumerate all installed fonts (requires permission).
+    </p>
   </div>
 
   <script>
