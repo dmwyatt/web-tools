@@ -7,6 +7,7 @@ A collection of web-based utility tools hosted on GitHub Pages.
 Access these tools directly via GitHub Pages:
 
 - **Fan Grille Drill Template Generator** - [Live Tool](https://dmwyatt.github.io/web-tools/fan-grille-drill-template-generator/)
+- **Font Metrics Visualizer** - [Live Tool](https://dmwyatt.github.io/web-tools/font-metrics/)
 - **Ford Tow Calculator** - [Live Tool](https://dmwyatt.github.io/web-tools/ford-tow-calc/)
 - **Rectangle Vent Drill Template Generator** - [Live Tool](https://dmwyatt.github.io/web-tools/rectangle-vent-drill-template-generator/)
 - **Speech Synthesis Tester** - [Live Tool](https://dmwyatt.github.io/web-tools/speech-synthesis-tester/)
