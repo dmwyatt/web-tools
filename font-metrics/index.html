@@ -59,6 +59,26 @@
       border-color: #6366f1;
     }
     
+    button {
+      background: #6366f1;
+      border: none;
+      color: #fff;
+      padding: 8px 16px;
+      border-radius: 4px;
+      font-size: 0.875rem;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+    
+    button:hover {
+      background: #4f46e5;
+    }
+    
+    button:disabled {
+      background: #444;
+      cursor: not-allowed;
+    }
+    
     input[type="range"] {
       width: 120px;
       accent-color: #6366f1;
@@ -250,14 +270,26 @@
     <div class="control-group">
       <label for="font-select">Font Family</label>
       <select id="font-select">
-        <option value="Georgia">Georgia (Serif)</option>
-        <option value="Times New Roman">Times New Roman</option>
-        <option value="Arial" selected>Arial (Sans-serif)</option>
-        <option value="Helvetica">Helvetica</option>
-        <option value="Verdana">Verdana</option>
-        <option value="Trebuchet MS">Trebuchet MS</option>
-        <option value="Courier New">Courier New (Mono)</option>
+        <optgroup label="Common Fonts">
+          <option value="Arial" selected>Arial</option>
+          <option value="Georgia">Georgia</option>
+          <option value="Helvetica">Helvetica</option>
+          <option value="Times New Roman">Times New Roman</option>
+          <option value="Trebuchet MS">Trebuchet MS</option>
+          <option value="Verdana">Verdana</option>
+          <option value="Courier New">Courier New</option>
+          <option value="Consolas">Consolas</option>
+        </optgroup>
+        <optgroup label="System Fonts" id="system-fonts-group" style="display: none;"></optgroup>
       </select>
+    </div>
+    <div class="control-group">
+      <label for="custom-font">Custom Font</label>
+      <input type="text" id="custom-font" placeholder="Type font name..." />
+    </div>
+    <div class="control-group" id="load-fonts-group" style="display: none;">
+      <label>&nbsp;</label>
+      <button id="load-system-fonts">Load System Fonts</button>
     </div>
     <div class="control-group">
       <label for="font-size">Font Size</label>
@@ -319,8 +351,23 @@
     const ctx = canvas.getContext('2d');
     const sampleInput = document.getElementById('sample-input');
     const fontSelect = document.getElementById('font-select');
+    const customFontInput = document.getElementById('custom-font');
     const fontSizeInput = document.getElementById('font-size');
     const fontSizeNumber = document.getElementById('font-size-number');
+    const loadFontsBtn = document.getElementById('load-system-fonts');
+    const loadFontsGroup = document.getElementById('load-fonts-group');
+    const systemFontsGroup = document.getElementById('system-fonts-group');
+    
+    // Show "Load System Fonts" button if API is available
+    if ('queryLocalFonts' in window) {
+      loadFontsGroup.style.display = '';
+    }
+    
+    // Get current font - custom input takes precedence if not empty
+    function getCurrentFont() {
+      const customFont = customFontInput.value.trim();
+      return customFont || fontSelect.value;
+    }
     
     const paddingX = 20;
     const paddingY = 80;
@@ -361,7 +408,7 @@
     
     function updateDisplay() {
       const text = sampleInput.value || 'Héxgp';
-      const font = fontSelect.value;
+      const font = getCurrentFont();
       const fontSize = parseInt(fontSizeNumber.value) || 120;
       
       // Fixed baseline position in our canvas coordinate system
@@ -492,7 +539,51 @@
     });
     
     sampleInput.addEventListener('input', updateDisplay);
-    fontSelect.addEventListener('change', updateDisplay);
+    fontSelect.addEventListener('change', () => {
+      customFontInput.value = ''; // Clear custom input when dropdown is used
+      updateDisplay();
+    });
+    customFontInput.addEventListener('input', updateDisplay);
+    
+    // Load system fonts via Local Font Access API
+    loadFontsBtn.addEventListener('click', async () => {
+      try {
+        loadFontsBtn.disabled = true;
+        loadFontsBtn.textContent = 'Loading...';
+        
+        const fonts = await window.queryLocalFonts();
+        
+        // Get unique font families
+        const families = [...new Set(fonts.map(f => f.family))].sort((a, b) => 
+          a.localeCompare(b, undefined, { sensitivity: 'base' })
+        );
+        
+        // Get common fonts to exclude from system list (avoid duplicates)
+        const commonFonts = new Set(
+          [...fontSelect.querySelectorAll('optgroup:first-of-type option')]
+            .map(opt => opt.value.toLowerCase())
+        );
+        
+        // Populate system fonts optgroup
+        systemFontsGroup.innerHTML = '';
+        families.forEach(family => {
+          if (!commonFonts.has(family.toLowerCase())) {
+            const option = document.createElement('option');
+            option.value = family;
+            option.textContent = family;
+            systemFontsGroup.appendChild(option);
+          }
+        });
+        
+        systemFontsGroup.style.display = '';
+        loadFontsGroup.style.display = 'none';
+        
+      } catch (err) {
+        console.error('Failed to load fonts:', err);
+        loadFontsBtn.textContent = 'Permission denied';
+        loadFontsBtn.disabled = true;
+      }
+    });
     
     // Sync slider and number input
     fontSizeInput.addEventListener('input', () => {
