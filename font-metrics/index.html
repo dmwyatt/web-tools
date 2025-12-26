@@ -301,6 +301,14 @@
       color: #e0e0e0;
     }
     
+    .how-it-works .code-block .kw { color: #c586c0; }  /* keywords */
+    .how-it-works .code-block .fn { color: #dcdcaa; }  /* function names */
+    .how-it-works .code-block .num { color: #b5cea8; } /* numbers */
+    .how-it-works .code-block .str { color: #ce9178; } /* strings */
+    .how-it-works .code-block .cm { color: #6a9955; }  /* comments */
+    .how-it-works .code-block .prop { color: #9cdcfe; } /* properties */
+    .how-it-works .code-block .op { color: #d4d4d4; }  /* operators */
+    
     .metrics-comparison {
       margin-top: 24px;
       display: flex;
@@ -588,20 +596,20 @@
     </ul>
     
     <h3>The Measurement Code</h3>
-    <div class="code-block"><pre>function getVerticalBounds(ctx, width, height) {
-  const imageData = ctx.getImageData(0, 0, width, height);
-  let top = height, bottom = 0;
+    <div class="code-block"><pre><span class="kw">function</span> <span class="fn">getVerticalBounds</span>(ctx, width, height) {
+  <span class="kw">const</span> imageData = ctx.<span class="fn">getImageData</span>(<span class="num">0</span>, <span class="num">0</span>, width, height);
+  <span class="kw">let</span> top = height, bottom = <span class="num">0</span>;
   
-  for (let y = 0; y &lt; height; y++) {
-    for (let x = 0; x &lt; width; x++) {
-      const alpha = imageData.data[(y * width + x) * 4 + 3];
-      if (alpha >= 128) {  // threshold for anti-aliased edges
-        top = Math.min(top, y);
-        bottom = Math.max(bottom, y);
+  <span class="kw">for</span> (<span class="kw">let</span> y = <span class="num">0</span>; y &lt; height; y++) {
+    <span class="kw">for</span> (<span class="kw">let</span> x = <span class="num">0</span>; x &lt; width; x++) {
+      <span class="kw">const</span> alpha = imageData.<span class="prop">data</span>[(y * width + x) * <span class="num">4</span> + <span class="num">3</span>];
+      <span class="kw">if</span> (alpha >= <span class="num">128</span>) {  <span class="cm">// threshold for anti-aliased edges</span>
+        top = Math.<span class="fn">min</span>(top, y);
+        bottom = Math.<span class="fn">max</span>(bottom, y);
       }
     }
   }
-  return { top, bottom };
+  <span class="kw">return</span> { <span class="prop">top</span>, <span class="prop">bottom</span> };
 }</pre></div>
     
     <h3>Why Not Use TextMetrics?</h3>
