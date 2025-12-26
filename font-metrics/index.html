@@ -1,0 +1,513 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Font Metrics Visualizer</title>
+  <style>
+    * {
+      box-sizing: border-box;
+    }
+    
+    body {
+      font-family: system-ui, -apple-system, sans-serif;
+      background: #1a1a2e;
+      color: #eee;
+      margin: 0;
+      padding: 24px;
+      min-height: 100vh;
+    }
+    
+    h1 {
+      font-size: 1.5rem;
+      font-weight: 500;
+      margin: 0 0 24px 0;
+      color: #fff;
+    }
+    
+    .controls {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 16px;
+      margin-bottom: 24px;
+    }
+    
+    .control-group {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+    
+    label {
+      font-size: 0.75rem;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: #888;
+    }
+    
+    input[type="text"], select {
+      background: #2a2a4a;
+      border: 1px solid #444;
+      color: #fff;
+      padding: 8px 12px;
+      border-radius: 4px;
+      font-size: 1rem;
+    }
+    
+    input[type="text"]:focus, select:focus {
+      outline: none;
+      border-color: #6366f1;
+    }
+    
+    input[type="range"] {
+      width: 120px;
+      accent-color: #6366f1;
+    }
+    
+    input[type="number"] {
+      background: #2a2a4a;
+      border: 1px solid #444;
+      color: #fff;
+      padding: 4px 8px;
+      border-radius: 4px;
+      font-size: 0.875rem;
+      width: 60px;
+      text-align: right;
+    }
+    
+    input[type="number"]:focus {
+      outline: none;
+      border-color: #6366f1;
+    }
+    
+    .unit {
+      font-size: 0.875rem;
+      color: #888;
+    }
+    
+    .control-group:last-child {
+      flex-direction: row;
+      align-items: center;
+      gap: 12px;
+    }
+    
+    .control-group:last-child label {
+      margin-bottom: 0;
+    }
+    
+    .demo-container {
+      background: #252542;
+      border-radius: 8px;
+      padding: 32px;
+      padding-left: 120px;
+      position: relative;
+      overflow-x: auto;
+    }
+    
+    .canvas-wrapper {
+      position: relative;
+      display: inline-block;
+    }
+    
+    #text-canvas {
+      display: block;
+    }
+    
+    .metric-line {
+      position: absolute;
+      left: -20px;
+      right: -20px;
+      height: 2px;
+      pointer-events: none;
+    }
+    
+    .metric-line::before {
+      content: attr(data-label);
+      position: absolute;
+      right: 100%;
+      margin-right: 8px;
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      white-space: nowrap;
+      top: 50%;
+      transform: translateY(-50%);
+    }
+    
+    .metric-line.baseline {
+      background: #f59e0b;
+    }
+    .metric-line.baseline::before {
+      color: #f59e0b;
+    }
+    
+    .metric-line.cap-height {
+      background: #10b981;
+    }
+    .metric-line.cap-height::before {
+      color: #10b981;
+    }
+    
+    .metric-line.x-height {
+      background: #8b5cf6;
+    }
+    .metric-line.x-height::before {
+      color: #8b5cf6;
+    }
+    
+    .metric-line.ascent {
+      background: #3b82f6;
+    }
+    .metric-line.ascent::before {
+      color: #3b82f6;
+    }
+    
+    .metric-line.midpoint {
+      background: transparent;
+      border-top: 2px dashed #ec4899;
+    }
+    .metric-line.midpoint::before {
+      color: #ec4899;
+    }
+    
+    .metric-line.descent {
+      background: #ef4444;
+    }
+    .metric-line.descent::before {
+      color: #ef4444;
+    }
+    
+    .legend {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 16px;
+      margin-top: 24px;
+      padding-top: 24px;
+      border-top: 1px solid #333;
+    }
+    
+    .legend-item {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 0.875rem;
+      cursor: pointer;
+      user-select: none;
+      transition: opacity 0.2s;
+    }
+    
+    .legend-item:hover {
+      opacity: 0.8;
+    }
+    
+    .legend-item.disabled {
+      opacity: 0.4;
+    }
+    
+    .legend-item.disabled .legend-color {
+      background: #666 !important;
+      border-color: #666 !important;
+    }
+    
+    .legend-color {
+      width: 24px;
+      height: 3px;
+      border-radius: 2px;
+    }
+    
+    .legend-color.baseline { background: #f59e0b; }
+    .legend-color.cap-height { background: #10b981; }
+    .legend-color.midpoint { 
+      background: transparent;
+      border-top: 2px dashed #ec4899;
+      height: 0;
+    }
+    .legend-color.x-height { background: #8b5cf6; }
+    .legend-color.ascent { background: #3b82f6; }
+    .legend-color.descent { background: #ef4444; }
+    
+
+    .note {
+      margin-top: 24px;
+      padding: 16px;
+      background: rgba(99, 102, 241, 0.1);
+      border-left: 3px solid #6366f1;
+      border-radius: 0 6px 6px 0;
+      font-size: 0.875rem;
+      line-height: 1.6;
+      color: #ccc;
+    }
+  </style>
+</head>
+<body>
+  <h1>Font Metrics Visualizer</h1>
+  
+  <div class="controls">
+    <div class="control-group">
+      <label for="sample-input">Sample Text</label>
+      <input type="text" id="sample-input" value="Héxgp 🎉" />
+    </div>
+    <div class="control-group">
+      <label for="font-select">Font Family</label>
+      <select id="font-select">
+        <option value="Georgia">Georgia (Serif)</option>
+        <option value="Times New Roman">Times New Roman</option>
+        <option value="Arial" selected>Arial (Sans-serif)</option>
+        <option value="Helvetica">Helvetica</option>
+        <option value="Verdana">Verdana</option>
+        <option value="Trebuchet MS">Trebuchet MS</option>
+        <option value="Courier New">Courier New (Mono)</option>
+      </select>
+    </div>
+    <div class="control-group">
+      <label for="font-size">Font Size</label>
+      <input type="range" id="font-size" min="12" max="200" value="120" />
+      <input type="number" id="font-size-number" min="12" max="400" value="120" />
+      <span class="unit">px</span>
+    </div>
+  </div>
+  
+  <div class="demo-container">
+    <div class="canvas-wrapper" id="canvas-wrapper">
+      <canvas id="text-canvas"></canvas>
+      <div class="metric-line ascent" data-label="Ascent" id="line-ascent"></div>
+      <div class="metric-line cap-height" data-label="Cap Height" id="line-cap"></div>
+      <div class="metric-line midpoint" data-label="Midpoint" id="line-midpoint"></div>
+      <div class="metric-line x-height" data-label="x-Height" id="line-x"></div>
+      <div class="metric-line baseline" data-label="Baseline" id="line-baseline"></div>
+      <div class="metric-line descent" data-label="Descent" id="line-descent"></div>
+    </div>
+  </div>
+  
+  <div class="legend">
+    <div class="legend-item" data-line="line-ascent">
+      <div class="legend-color ascent"></div>
+      <span>Ascent (top of tallest glyph, e.g., Å)</span>
+    </div>
+    <div class="legend-item" data-line="line-cap">
+      <div class="legend-color cap-height"></div>
+      <span>Cap Height (top of H)</span>
+    </div>
+    <div class="legend-item disabled" data-line="line-midpoint">
+      <div class="legend-color midpoint"></div>
+      <span>Midpoint — not a font metric, just for reference</span>
+    </div>
+    <div class="legend-item" data-line="line-x">
+      <div class="legend-color x-height"></div>
+      <span>x-Height (top of x)</span>
+    </div>
+    <div class="legend-item" data-line="line-baseline">
+      <div class="legend-color baseline"></div>
+      <span>Baseline (bottom of x)</span>
+    </div>
+    <div class="legend-item" data-line="line-descent">
+      <div class="legend-color descent"></div>
+      <span>Descent (bottom of p, g, y)</span>
+    </div>
+  </div>
+  
+
+  
+  <div class="note">
+    <strong>Note:</strong> This demo uses pixel-scanning to find the actual edges of rendered glyphs. 
+    The baseline and x-height are measured from the letter "x", cap height from "H", 
+    ascent from "Å", and descent from "p". Try switching fonts to see how metrics vary.
+  </div>
+
+  <script>
+    const canvas = document.getElementById('text-canvas');
+    const ctx = canvas.getContext('2d');
+    const sampleInput = document.getElementById('sample-input');
+    const fontSelect = document.getElementById('font-select');
+    const fontSizeInput = document.getElementById('font-size');
+    const fontSizeNumber = document.getElementById('font-size-number');
+    
+    const paddingX = 20;
+    const paddingY = 80;
+    
+    function getVerticalBounds(tempCtx, width, height, threshold = 128) {
+      const imageData = tempCtx.getImageData(0, 0, width, height);
+      const data = imageData.data;
+      
+      let top = height, bottom = 0;
+      
+      for (let y = 0; y < height; y++) {
+        for (let x = 0; x < width; x++) {
+          const alpha = data[(y * width + x) * 4 + 3];
+          if (alpha >= threshold) {
+            if (y < top) top = y;
+            if (y > bottom) bottom = y;
+          }
+        }
+      }
+      
+      return { top, bottom };
+    }
+    
+    function measureChar(char, font, fontSize, canvasBaseline) {
+      // Create temp canvas and draw at same baseline we'll use for main text
+      const tempCanvas = document.createElement('canvas');
+      tempCanvas.width = 150;
+      tempCanvas.height = paddingY * 2 + fontSize;
+      const tempCtx = tempCanvas.getContext('2d');
+      
+      tempCtx.font = `${fontSize}px ${font}`;
+      tempCtx.textBaseline = 'alphabetic';
+      tempCtx.fillStyle = 'white';
+      tempCtx.fillText(char, 10, canvasBaseline);
+      
+      return getVerticalBounds(tempCtx, tempCanvas.width, tempCanvas.height);
+    }
+    
+    function updateDisplay() {
+      const text = sampleInput.value || 'Héxgp';
+      const font = fontSelect.value;
+      const fontSize = parseInt(fontSizeNumber.value) || 120;
+      
+      // Fixed baseline position in our canvas coordinate system
+      const canvasBaseline = paddingY + fontSize * 0.75;
+      
+      // Measure reference characters drawn at same baseline
+      const xBounds = measureChar('x', font, fontSize, canvasBaseline);
+      const hBounds = measureChar('H', font, fontSize, canvasBaseline);
+      const accentBounds = measureChar('Å', font, fontSize, canvasBaseline);
+      const pBounds = measureChar('p', font, fontSize, canvasBaseline);
+      
+      // Calculate metrics
+      const baseline = xBounds.bottom;
+      const xHeight = baseline - xBounds.top;
+      const capHeight = baseline - hBounds.top;
+      const ascent = baseline - accentBounds.top;
+      const descent = pBounds.bottom - baseline;
+      
+      // Set up main canvas with extra space on right for dimensions
+      ctx.font = `${fontSize}px ${font}`;
+      const textWidth = ctx.measureText(text).width;
+      const dimensionAreaWidth = 180;
+      
+      const canvasHeight = paddingY * 2 + fontSize;
+      canvas.width = textWidth + paddingX * 2 + dimensionAreaWidth;
+      canvas.height = canvasHeight;
+      
+      // Draw text at same baseline
+      ctx.font = `${fontSize}px ${font}`;
+      ctx.textBaseline = 'alphabetic';
+      ctx.fillStyle = 'white';
+      ctx.fillText(text, paddingX, canvasBaseline);
+      
+      // Draw dimension lines on the right
+      const dimX = textWidth + paddingX + 30; // Starting x for dimension lines
+      const dimSpacing = 50; // Horizontal spacing between dimension lines
+      
+      // Helper function to draw a dimension line
+      function drawDimension(x, y1, y2, color) {
+        ctx.strokeStyle = color;
+        ctx.fillStyle = color;
+        ctx.lineWidth = 1.5;
+        
+        // Vertical line
+        ctx.beginPath();
+        ctx.moveTo(x, y1);
+        ctx.lineTo(x, y2);
+        ctx.stroke();
+        
+        // Top cap
+        ctx.beginPath();
+        ctx.moveTo(x - 4, y1);
+        ctx.lineTo(x + 4, y1);
+        ctx.stroke();
+        
+        // Bottom cap
+        ctx.beginPath();
+        ctx.moveTo(x - 4, y2);
+        ctx.lineTo(x + 4, y2);
+        ctx.stroke();
+        
+        // Label (just the value)
+        ctx.font = '11px system-ui, sans-serif';
+        ctx.textBaseline = 'middle';
+        ctx.textAlign = 'left';
+        const midY = (y1 + y2) / 2;
+        const value = Math.abs(y2 - y1).toFixed(0);
+        ctx.fillText(`${value}px`, x + 8, midY);
+      }
+      
+      // Helper to check if a line is visible
+      function isLineVisible(lineId) {
+        const legendItem = document.querySelector(`.legend-item[data-line="${lineId}"]`);
+        return legendItem && !legendItem.classList.contains('disabled');
+      }
+      
+      // Draw dimensions - stagger from shortest to tallest (left to right)
+      // Only draw if corresponding line is visible
+      if (isLineVisible('line-x')) {
+        drawDimension(dimX, baseline, xBounds.top, '#8b5cf6');                    // x-height
+      }
+      if (isLineVisible('line-cap')) {
+        drawDimension(dimX + dimSpacing, baseline, hBounds.top, '#10b981');       // cap height
+      }
+      if (isLineVisible('line-ascent')) {
+        drawDimension(dimX + dimSpacing * 2, baseline, accentBounds.top, '#3b82f6'); // ascent
+      }
+      if (isLineVisible('line-descent')) {
+        drawDimension(dimX + dimSpacing * 0.5, baseline, pBounds.bottom, '#ef4444'); // descent
+      }
+      
+      // Position overlay lines using measured pixel positions directly
+      const midpoint = (accentBounds.top + pBounds.bottom) / 2;
+      
+      document.getElementById('line-baseline').style.top = `${xBounds.bottom}px`;
+      document.getElementById('line-x').style.top = `${xBounds.top}px`;
+      document.getElementById('line-cap').style.top = `${hBounds.top}px`;
+      document.getElementById('line-ascent').style.top = `${accentBounds.top}px`;
+      document.getElementById('line-midpoint').style.top = `${midpoint}px`;
+      document.getElementById('line-descent').style.top = `${pBounds.bottom}px`;
+      
+      // Extend lines across canvas (but not over dimension area)
+      const lines = document.querySelectorAll('.metric-line');
+      lines.forEach(line => {
+        line.style.width = `${textWidth + paddingX + 40}px`;
+        line.style.left = '-20px';
+      });
+      
+    }
+    
+    // Toggle line visibility when clicking legend items
+    document.querySelectorAll('.legend-item[data-line]').forEach(item => {
+      item.addEventListener('click', () => {
+        const lineId = item.dataset.line;
+        const line = document.getElementById(lineId);
+        
+        item.classList.toggle('disabled');
+        line.style.display = item.classList.contains('disabled') ? 'none' : 'block';
+        updateDisplay(); // Redraw canvas to update dimension lines
+      });
+    });
+    
+    // Initialize visibility based on disabled class
+    document.querySelectorAll('.legend-item.disabled').forEach(item => {
+      const lineId = item.dataset.line;
+      const line = document.getElementById(lineId);
+      if (line) line.style.display = 'none';
+    });
+    
+    sampleInput.addEventListener('input', updateDisplay);
+    fontSelect.addEventListener('change', updateDisplay);
+    
+    // Sync slider and number input
+    fontSizeInput.addEventListener('input', () => {
+      fontSizeNumber.value = fontSizeInput.value;
+      updateDisplay();
+    });
+    
+    fontSizeNumber.addEventListener('input', () => {
+      const val = Math.max(12, Math.min(400, parseInt(fontSizeNumber.value) || 12));
+      fontSizeInput.value = Math.min(val, 200); // Slider maxes at 200
+      updateDisplay();
+    });
+    
+    // Initial render
+    updateDisplay();
+  </script>
+</body>
+</html>
