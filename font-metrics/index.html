@@ -300,6 +300,95 @@
       line-height: 1.5;
       color: #e0e0e0;
     }
+    
+    .metrics-comparison {
+      margin-top: 24px;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 16px;
+    }
+    
+    .metrics-panel {
+      background: #252542;
+      border-radius: 8px;
+      padding: 16px;
+    }
+    
+    .metrics-panel h3 {
+      font-size: 0.875rem;
+      font-weight: 600;
+      margin: 0 0 12px 0;
+      color: #fff;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    
+    .metrics-panel h3 .badge {
+      font-size: 0.625rem;
+      font-weight: 500;
+      padding: 2px 6px;
+      border-radius: 3px;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+    
+    .metrics-panel h3 .badge.measured {
+      background: #10b981;
+      color: #fff;
+    }
+    
+    .metrics-panel h3 .badge.declared {
+      background: #6366f1;
+      color: #fff;
+    }
+    
+    .metrics-panel .description {
+      font-size: 0.75rem;
+      color: #888;
+      margin-bottom: 10px;
+      line-height: 1.4;
+    }
+    
+    .metrics-list {
+      font-size: 0.8125rem;
+    }
+    
+    .metrics-list .metric-row {
+      display: flex;
+      gap: 6px;
+      margin-bottom: 4px;
+    }
+    
+    .metrics-list .label {
+      color: #888;
+    }
+    
+    .metrics-list .label::after {
+      content: ':';
+    }
+    
+    .metrics-list .value {
+      color: #fff;
+      font-family: Consolas, monospace;
+    }
+    
+    .metrics-list .section-header {
+      color: #666;
+      font-size: 0.6875rem;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      margin-top: 10px;
+      margin-bottom: 6px;
+      padding-top: 8px;
+      border-top: 1px solid #333;
+    }
+    
+    .metrics-list .section-header:first-child {
+      margin-top: 0;
+      padding-top: 0;
+      border-top: none;
+    }
   </style>
 </head>
 <body>
@@ -381,7 +470,36 @@
     </div>
   </div>
   
-
+  <div class="metrics-comparison">
+    <div class="metrics-panel">
+      <h3>Pixel-Scanned <span class="badge measured">Measured</span></h3>
+      <p class="description">Actual pixel bounds of rendered reference glyphs.</p>
+      <div class="metrics-list">
+        <div class="metric-row"><span class="label">x-Height</span> <span class="value" id="measured-x-height">—</span></div>
+        <div class="metric-row"><span class="label">Cap Height</span> <span class="value" id="measured-cap-height">—</span></div>
+        <div class="metric-row"><span class="label">Ascent</span> <span class="value" id="measured-ascent">—</span></div>
+        <div class="metric-row"><span class="label">Descent</span> <span class="value" id="measured-descent">—</span></div>
+      </div>
+    </div>
+    
+    <div class="metrics-panel">
+      <h3>Font Bounding Box <span class="badge declared">TextMetrics</span></h3>
+      <p class="description">From font file metadata. Same for any text in this font/size.</p>
+      <div class="metrics-list">
+        <div class="metric-row"><span class="label">Ascent</span> <span class="value" id="tm-font-ascent">—</span></div>
+        <div class="metric-row"><span class="label">Descent</span> <span class="value" id="tm-font-descent">—</span></div>
+      </div>
+    </div>
+    
+    <div class="metrics-panel">
+      <h3>Actual Bounding Box <span class="badge declared">TextMetrics</span></h3>
+      <p class="description">Bounds for the specific sample text rendered above.</p>
+      <div class="metrics-list">
+        <div class="metric-row"><span class="label">Ascent</span> <span class="value" id="tm-actual-ascent">—</span></div>
+        <div class="metric-row"><span class="label">Descent</span> <span class="value" id="tm-actual-descent">—</span></div>
+      </div>
+    </div>
+  </div>
   
   <div class="how-it-works">
     <h2>How It Works</h2>
@@ -613,6 +731,35 @@
         line.style.left = '-20px';
       });
       
+      // Update metrics comparison panel
+      document.getElementById('measured-x-height').textContent = `${xHeight.toFixed(1)}px`;
+      document.getElementById('measured-cap-height').textContent = `${capHeight.toFixed(1)}px`;
+      document.getElementById('measured-ascent').textContent = `${ascent.toFixed(1)}px`;
+      document.getElementById('measured-descent').textContent = `${descent.toFixed(1)}px`;
+      
+      // Get TextMetrics for the same reference characters we pixel-scan
+      ctx.font = `${fontSize}px ${font}`;
+      const ascentMetrics = ctx.measureText('Å');  // Same char used for pixel-scanned ascent
+      const descentMetrics = ctx.measureText('p');  // Same char used for pixel-scanned descent
+      const xMetrics = ctx.measureText('x');        // Same char used for x-height
+      const capMetrics = ctx.measureText('H');      // Same char used for cap height
+      
+      document.getElementById('tm-font-ascent').textContent = 
+        ascentMetrics.fontBoundingBoxAscent !== undefined 
+          ? `${ascentMetrics.fontBoundingBoxAscent.toFixed(1)}px` 
+          : 'N/A';
+      document.getElementById('tm-font-descent').textContent = 
+        descentMetrics.fontBoundingBoxDescent !== undefined 
+          ? `${descentMetrics.fontBoundingBoxDescent.toFixed(1)}px` 
+          : 'N/A';
+      document.getElementById('tm-actual-ascent').textContent = 
+        ascentMetrics.actualBoundingBoxAscent !== undefined 
+          ? `${ascentMetrics.actualBoundingBoxAscent.toFixed(1)}px` 
+          : 'N/A';
+      document.getElementById('tm-actual-descent').textContent = 
+        descentMetrics.actualBoundingBoxDescent !== undefined 
+          ? `${descentMetrics.actualBoundingBoxDescent.toFixed(1)}px` 
+          : 'N/A';
     }
     
     // Toggle line visibility when clicking legend items
