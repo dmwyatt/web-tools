@@ -11,6 +11,7 @@ Access these tools directly via GitHub Pages:
 - **Ford Tow Calculator** - [Live Tool](https://dmwyatt.github.io/web-tools/ford-tow-calc/)
 - **Rectangle Vent Drill Template Generator** - [Live Tool](https://dmwyatt.github.io/web-tools/rectangle-vent-drill-template-generator/)
 - **Speech Synthesis Tester** - [Live Tool](https://dmwyatt.github.io/web-tools/speech-synthesis-tester/)
+- **Slug Font Rendering Demo** - [Live Tool](https://dmwyatt.github.io/web-tools/slug-font-rendering/)
 - **Subway Nutrition** - [Live Tool](https://dmwyatt.github.io/web-tools/subway-nutrition/)
 
 ## Usage
