@@ -95,6 +95,10 @@
       border: 1px solid #333;
     }
 
+    canvas.tall { height: 450px; }
+    canvas.short { height: 200px; }
+    canvas.square { height: 250px; }
+
     .slider-row {
       display: flex;
       align-items: center;
@@ -284,11 +288,11 @@
   <div class="side-by-side">
     <div>
       <div class="canvas-label">Bitmap (how your browser does it)</div>
-      <canvas id="canvas-bitmap" width="400" height="200"></canvas>
+      <canvas id="canvas-bitmap" class="short"></canvas>
     </div>
     <div>
       <div class="canvas-label">Vector curves (what Slug uses)</div>
-      <canvas id="canvas-vector" width="400" height="200"></canvas>
+      <canvas id="canvas-vector" class="short"></canvas>
     </div>
   </div>
 
@@ -312,7 +316,7 @@
   <h2>2. What's Inside a Font?</h2>
   <p class="section-intro">Fonts are not pictures of letters. They are mathematical recipes for drawing curves.</p>
 
-  <canvas id="canvas-bezier" width="500" height="450"></canvas>
+  <canvas id="canvas-bezier" class="tall"></canvas>
 
   <div class="controls-row">
     <button id="btn-animate" class="secondary">Animate curve tracing</button>
@@ -337,7 +341,7 @@
   <p>The GPU needs to answer one question for every pixel: "Am I inside or outside the letter?" It answers this by casting a ray and counting how many times it crosses the outline.</p>
 
   <div class="canvas-container">
-    <canvas id="canvas-winding" width="500" height="450"></canvas>
+    <canvas id="canvas-winding" class="tall"></canvas>
     <div class="click-hint">Click anywhere to test a point</div>
   </div>
 
@@ -357,11 +361,11 @@
   <div class="side-by-side">
     <div>
       <div class="canvas-label">No anti-aliasing</div>
-      <canvas id="canvas-noaa" width="250" height="250"></canvas>
+      <canvas id="canvas-noaa" class="square"></canvas>
     </div>
     <div>
       <div class="canvas-label">With coverage-based AA</div>
-      <canvas id="canvas-aa" width="250" height="250"></canvas>
+      <canvas id="canvas-aa" class="square"></canvas>
     </div>
   </div>
 
@@ -372,7 +376,7 @@
   <h3>3c. Band Optimization</h3>
   <p>Testing every curve for every pixel would be wasteful. Slug divides the glyph into horizontal and vertical bands.</p>
 
-  <canvas id="canvas-bands" width="500" height="450"></canvas>
+  <canvas id="canvas-bands" class="tall"></canvas>
 
   <div class="controls-row">
     <button id="btn-hbands" class="active">Horizontal bands</button>
@@ -398,11 +402,11 @@
   <div class="side-by-side">
     <div>
       <div class="canvas-label">Bitmap rendering</div>
-      <canvas id="canvas-bitmap2" width="400" height="200"></canvas>
+      <canvas id="canvas-bitmap2" class="short"></canvas>
     </div>
     <div>
       <div class="canvas-label">Slug (GPU Bezier evaluation)</div>
-      <canvas id="canvas-slug" width="400" height="200"></canvas>
+      <canvas id="canvas-slug" class="short"></canvas>
     </div>
   </div>
 
@@ -553,6 +557,27 @@ function drawGlyphOutline(ctx, glyph, ox, oy, scale, options = {}) {
 }
 
 // ================================================================
+// UTILITY: High-DPI canvas setup
+// Scales the canvas backing store to match CSS display size * devicePixelRatio
+// so canvases look crisp on retina/high-DPI screens.
+// Returns { width, height } in CSS pixels (use these for layout math).
+// ================================================================
+
+function setupCanvas(canvas) {
+  const dpr = window.devicePixelRatio || 1;
+  const rect = canvas.getBoundingClientRect();
+  const cssW = rect.width;
+  const cssH = rect.height;
+  canvas.width = Math.round(cssW * dpr);
+  canvas.height = Math.round(cssH * dpr);
+  const ctx = canvas.getContext('2d');
+  if (ctx) {
+    ctx.scale(dpr, dpr);
+  }
+  return { width: cssW, height: cssH, dpr };
+}
+
+// ================================================================
 // SECTION 1: Bitmap Problem
 // ================================================================
 
@@ -562,6 +587,8 @@ function initBitmapSection() {
   const slider = document.getElementById('zoom-slider');
   const valueLabel = document.getElementById('zoom-value');
 
+  const bitmapDims = setupCanvas(bitmapCanvas);
+  const vectorDims = setupCanvas(vectorCanvas);
   const bctx = bitmapCanvas.getContext('2d');
   const vctx = vectorCanvas.getContext('2d');
 
@@ -579,12 +606,16 @@ function initBitmapSection() {
   octx.fillText('Slug', 4, offH / 2);
 
   function draw(zoom) {
-    const bw = bitmapCanvas.width;
-    const bh = bitmapCanvas.height;
-    const vw = vectorCanvas.width;
-    const vh = vectorCanvas.height;
+    const bw = bitmapDims.width;
+    const bh = bitmapDims.height;
+    const vw = vectorDims.width;
+    const vh = vectorDims.height;
 
     // Bitmap side: zoom into the tiny rendered text
+    bctx.save();
+    bctx.setTransform(1, 0, 0, 1, 0, 0);
+    bctx.clearRect(0, 0, bitmapCanvas.width, bitmapCanvas.height);
+    bctx.restore();
     bctx.fillStyle = '#1a1a2e';
     bctx.fillRect(0, 0, bw, bh);
     bctx.imageSmoothingEnabled = false;
@@ -596,6 +627,10 @@ function initBitmapSection() {
     bctx.drawImage(offscreen, srcX, srcY, srcW, srcH, 0, 0, bw, bh);
 
     // Vector side: draw the outlines scaled to fill the canvas
+    vctx.save();
+    vctx.setTransform(1, 0, 0, 1, 0, 0);
+    vctx.clearRect(0, 0, vectorCanvas.width, vectorCanvas.height);
+    vctx.restore();
     vctx.fillStyle = '#1a1a2e';
     vctx.fillRect(0, 0, vw, vh);
 
@@ -609,16 +644,11 @@ function initBitmapSection() {
 
     // Center the visible portion
     const totalW = totalAdvance * scale;
-    const glyphH = 0.76 * scale; // approximate cap height
+    const glyphH = 0.76 * scale;
     const centerX = vw / 2;
     const centerY = vh / 2;
 
-    // Viewport: show only the center portion at this zoom
-    const viewW = vw;
-    const viewH = vh;
-
     vctx.save();
-    // Translate so the center of the word is at center of canvas
     const startX = centerX - totalW / 2;
     const baseY = centerY + glyphH * 0.35;
 
@@ -649,14 +679,15 @@ function initBitmapSection() {
 
 function initBezierSection() {
   const canvas = document.getElementById('canvas-bezier');
+  const dims = setupCanvas(canvas);
   const ctx = canvas.getContext('2d');
   const btnAnimate = document.getElementById('btn-animate');
   const btnReset = document.getElementById('btn-reset-bezier');
 
   const glyph = GLYPH_DATA['R'];
-  const scale = 500;
-  const ox = 40;
-  const oy = 470;
+  const scale = dims.height * 0.95;
+  const ox = dims.width * 0.08;
+  const oy = dims.height * 0.96;
 
   // Deep copy control points so we can drag them
   let points = [];
@@ -698,8 +729,8 @@ function initBezierSection() {
   let animCurveIdx = 0;
 
   function draw() {
-    const w = canvas.width;
-    const h = canvas.height;
+    const w = dims.width;
+    const h = dims.height;
     ctx.fillStyle = '#1a1a2e';
     ctx.fillRect(0, 0, w, h);
 
@@ -796,8 +827,8 @@ function initBezierSection() {
 
   canvas.addEventListener('mousedown', (e) => {
     const rect = canvas.getBoundingClientRect();
-    const mx = (e.clientX - rect.left) * (canvas.width / rect.width);
-    const my = (e.clientY - rect.top) * (canvas.height / rect.height);
+    const mx = (e.clientX - rect.left);
+    const my = (e.clientY - rect.top);
 
     for (let i = 0; i < points.length; i++) {
       const sp = toScreen(points[i].x, points[i].y);
@@ -812,8 +843,8 @@ function initBezierSection() {
 
   canvas.addEventListener('mousemove', (e) => {
     const rect = canvas.getBoundingClientRect();
-    const mx = (e.clientX - rect.left) * (canvas.width / rect.width);
-    const my = (e.clientY - rect.top) * (canvas.height / rect.height);
+    const mx = (e.clientX - rect.left);
+    const my = (e.clientY - rect.top);
 
     if (dragging >= 0) {
       const em = toEm(mx, my);
@@ -968,15 +999,16 @@ function computeWindingNumber(glyph, testX, testY) {
 
 function initWindingSection() {
   const canvas = document.getElementById('canvas-winding');
+  const dims = setupCanvas(canvas);
   const ctx = canvas.getContext('2d');
   const resultDiv = document.getElementById('winding-result');
   const windingNum = document.getElementById('winding-number');
   const windingBadge = document.getElementById('winding-badge');
 
   const glyph = GLYPH_DATA['R'];
-  const scale = 500;
-  const ox = 40;
-  const oy = 470;
+  const scale = dims.height * 0.95;
+  const ox = dims.width * 0.08;
+  const oy = dims.height * 0.96;
 
   let testPoint = null;
   let result = null;
@@ -990,8 +1022,8 @@ function initWindingSection() {
   }
 
   function draw() {
-    const w = canvas.width;
-    const h = canvas.height;
+    const w = dims.width;
+    const h = dims.height;
     ctx.fillStyle = '#1a1a2e';
     ctx.fillRect(0, 0, w, h);
 
@@ -1012,7 +1044,7 @@ function initWindingSection() {
       ctx.setLineDash([4, 4]);
       ctx.beginPath();
       ctx.moveTo(sp.x, sp.y);
-      ctx.lineTo(canvas.width, sp.y);
+      ctx.lineTo(dims.width, sp.y);
       ctx.stroke();
       ctx.setLineDash([]);
 
@@ -1045,8 +1077,8 @@ function initWindingSection() {
 
   canvas.addEventListener('click', (e) => {
     const rect = canvas.getBoundingClientRect();
-    const mx = (e.clientX - rect.left) * (canvas.width / rect.width);
-    const my = (e.clientY - rect.top) * (canvas.height / rect.height);
+    const mx = (e.clientX - rect.left);
+    const my = (e.clientY - rect.top);
     testPoint = toEm(mx, my);
     result = computeWindingNumber(glyph, testPoint.x, testPoint.y);
 
@@ -1066,11 +1098,12 @@ function initWindingSection() {
 function initAASection() {
   const noaaCanvas = document.getElementById('canvas-noaa');
   const aaCanvas = document.getElementById('canvas-aa');
+  const noaaDims = setupCanvas(noaaCanvas);
+  const aaDims = setupCanvas(aaCanvas);
   const nctx = noaaCanvas.getContext('2d');
   const actx = aaCanvas.getContext('2d');
 
   const glyph = GLYPH_DATA['R'];
-  const gridSize = 25; // pixels per grid cell
   const gridCols = 10;
   const gridRows = 10;
 
@@ -1079,9 +1112,9 @@ function initAASection() {
   const emCenterY = 0.52;
   const emPerCell = 0.028;
 
-  function renderGrid(ctx, useAA) {
-    const w = ctx.canvas.width;
-    const h = ctx.canvas.height;
+  function renderGrid(ctx, canvasDims, useAA) {
+    const w = canvasDims.width;
+    const h = canvasDims.height;
     ctx.fillStyle = '#1a1a2e';
     ctx.fillRect(0, 0, w, h);
 
@@ -1128,8 +1161,8 @@ function initAASection() {
     }
   }
 
-  renderGrid(nctx, false);
-  renderGrid(actx, true);
+  renderGrid(nctx, noaaDims, false);
+  renderGrid(actx, aaDims, true);
 }
 
 function computeCoverageAA(glyph, emX, emY, cellSize) {
@@ -1153,14 +1186,15 @@ function computeCoverageAA(glyph, emX, emY, cellSize) {
 
 function initBandsSection() {
   const canvas = document.getElementById('canvas-bands');
+  const dims = setupCanvas(canvas);
   const ctx = canvas.getContext('2d');
   const btnH = document.getElementById('btn-hbands');
   const btnV = document.getElementById('btn-vbands');
 
   const glyph = GLYPH_DATA['R'];
-  const scale = 500;
-  const ox = 40;
-  const oy = 470;
+  const scale = dims.height * 0.95;
+  const ox = dims.width * 0.08;
+  const oy = dims.height * 0.96;
   let showHorizontal = true;
 
   const bandColors = [
@@ -1214,8 +1248,8 @@ function initBandsSection() {
   }
 
   function draw() {
-    const w = canvas.width;
-    const h = canvas.height;
+    const w = dims.width;
+    const h = dims.height;
     ctx.fillStyle = '#1a1a2e';
     ctx.fillRect(0, 0, w, h);
 
@@ -1321,6 +1355,15 @@ function initWebGLSection() {
   const slider = document.getElementById('zoom-slider2');
   const valueLabel = document.getElementById('zoom-value2');
   const errorDiv = document.getElementById('webgl-error');
+
+  // Size the WebGL canvas to match CSS display size * DPR
+  const dpr = window.devicePixelRatio || 1;
+  const slugRect = slugCanvas.getBoundingClientRect();
+  slugCanvas.width = Math.round(slugRect.width * dpr);
+  slugCanvas.height = Math.round(slugRect.height * dpr);
+  const slugDims = { width: slugRect.width, height: slugRect.height };
+
+  const bitmapDims2 = setupCanvas(bitmapCanvas);
 
   const gl = slugCanvas.getContext('webgl2');
   if (!gl) {
@@ -1815,8 +1858,12 @@ function initWebGLSection() {
   octx.fillText('Slug', 4, offscreen.height / 2);
 
   function drawBitmap(zoom) {
-    const w = bitmapCanvas.width;
-    const h = bitmapCanvas.height;
+    const w = bitmapDims2.width;
+    const h = bitmapDims2.height;
+    bctx.save();
+    bctx.setTransform(1, 0, 0, 1, 0, 0);
+    bctx.clearRect(0, 0, bitmapCanvas.width, bitmapCanvas.height);
+    bctx.restore();
     bctx.fillStyle = '#1a1a2e';
     bctx.fillRect(0, 0, w, h);
     bctx.imageSmoothingEnabled = false;
