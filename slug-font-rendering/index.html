@@ -4,345 +4,408 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>How Slug Renders Fonts on the GPU</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=IBM+Plex+Sans:wght@300;400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
   <style>
     * { box-sizing: border-box; }
 
     body {
-      font-family: system-ui, -apple-system, sans-serif;
-      background: #1a1a2e;
-      color: #ccc;
+      font-family: 'IBM Plex Sans', sans-serif;
+      font-weight: 300;
+      background: #0c0f1a;
+      color: #a0a8c0;
       margin: 0;
-      padding: 24px;
+      padding: 0;
       min-height: 100vh;
-      line-height: 1.7;
+      line-height: 1.8;
     }
 
-    h1 {
-      font-size: 2rem;
-      font-weight: 600;
-      margin: 0 0 8px 0;
-      color: #fff;
+    /* --- Hero --- */
+
+    .hero {
+      max-width: 740px;
+      margin: 0 auto;
+      padding: 80px 32px 40px;
       text-align: center;
     }
 
-    .subtitle {
-      text-align: center;
-      color: #888;
-      margin: 0 0 48px 0;
-      font-size: 0.95rem;
+    .hero h1 {
+      font-family: 'Instrument Serif', Georgia, serif;
+      font-weight: 400;
+      font-size: 3rem;
+      color: #e8e0d4;
+      margin: 0 0 12px;
+      letter-spacing: -0.02em;
+      line-height: 1.15;
     }
 
-    .hook {
-      text-align: center;
-      max-width: 640px;
-      margin: 0 auto 48px auto;
-      font-size: 1.1rem;
-      color: #aaa;
+    .hero .byline {
+      font-size: 0.9rem;
+      color: #5a6178;
+      margin: 0 0 32px;
     }
+
+    .hero .byline a {
+      color: #8a7e6b;
+      text-decoration: none;
+      border-bottom: 1px solid #3a3528;
+    }
+
+    .hero .byline a:hover { border-color: #8a7e6b; }
+
+    .hero .lede {
+      font-size: 1.05rem;
+      line-height: 1.9;
+      color: #7a8299;
+      max-width: 560px;
+      margin: 0 auto;
+    }
+
+    /* --- Sections --- */
 
     section {
-      max-width: 900px;
-      margin: 0 auto 64px auto;
-      background: #252542;
-      border-radius: 12px;
-      padding: 32px;
+      max-width: 780px;
+      margin: 0 auto 0;
+      padding: 0 32px;
+    }
+
+    .section-rule {
+      max-width: 780px;
+      margin: 56px auto;
+      border: none;
+      border-top: 1px solid #1c2030;
+      padding: 0;
     }
 
     h2 {
-      font-size: 1.4rem;
-      font-weight: 500;
-      color: #fff;
-      margin: 0 0 8px 0;
+      font-family: 'Instrument Serif', Georgia, serif;
+      font-weight: 400;
+      font-size: 1.8rem;
+      color: #e8e0d4;
+      margin: 0 0 6px;
+      letter-spacing: -0.01em;
     }
 
     h3 {
-      font-size: 1.1rem;
+      font-family: 'IBM Plex Sans', sans-serif;
       font-weight: 500;
-      color: #ddd;
-      margin: 24px 0 8px 0;
+      font-size: 1rem;
+      color: #c0b8a8;
+      margin: 32px 0 8px;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      font-size: 0.8rem;
     }
 
     .section-intro {
-      color: #999;
-      font-size: 0.9rem;
-      margin-bottom: 24px;
+      color: #5a6178;
+      font-size: 0.88rem;
+      margin: 0 0 24px;
     }
 
-    p { margin: 12px 0; }
+    p { margin: 14px 0; }
 
-    .side-by-side {
-      display: flex;
-      gap: 24px;
-      align-items: flex-start;
-    }
+    strong { color: #c0b8a8; font-weight: 500; }
+    em { color: #b0a890; font-style: italic; }
 
-    .side-by-side > div { flex: 1; min-width: 0; }
+    /* --- Canvas --- */
 
-    .canvas-label {
-      font-size: 0.8rem;
-      text-transform: uppercase;
-      letter-spacing: 0.08em;
-      color: #888;
-      margin-bottom: 8px;
-      text-align: center;
+    .canvas-wrap {
+      position: relative;
+      margin: 20px 0;
     }
 
     canvas {
       display: block;
       width: 100%;
-      border-radius: 8px;
-      background: #1a1a2e;
-      border: 1px solid #333;
+      border-radius: 6px;
+      background: #0e1220;
+      border: 1px solid #1c2030;
     }
 
-    canvas.tall { height: 450px; }
-    canvas.short { height: 200px; }
-    canvas.square { height: 250px; }
+    canvas.tall { height: 420px; }
+    canvas.demo { height: 280px; }
+    canvas.square { height: 240px; }
+
+    .canvas-label {
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 0.7rem;
+      font-weight: 500;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      color: #4a5068;
+      margin-bottom: 8px;
+      text-align: center;
+    }
+
+    .click-hint {
+      position: absolute;
+      bottom: 10px;
+      right: 10px;
+      background: rgba(12, 15, 26, 0.85);
+      color: #5a6178;
+      font-size: 0.7rem;
+      padding: 4px 10px;
+      border-radius: 4px;
+      pointer-events: none;
+      font-family: 'IBM Plex Mono', monospace;
+      letter-spacing: 0.02em;
+    }
+
+    /* --- Side-by-side --- */
+
+    .side-by-side {
+      display: flex;
+      gap: 20px;
+      align-items: flex-start;
+    }
+
+    .side-by-side > div { flex: 1; min-width: 0; }
+
+    /* --- Controls --- */
 
     .slider-row {
       display: flex;
       align-items: center;
       gap: 12px;
-      margin: 16px 0;
+      margin: 14px 0;
     }
 
     .slider-row label {
-      font-size: 0.8rem;
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 0.7rem;
       text-transform: uppercase;
-      letter-spacing: 0.05em;
-      color: #888;
+      letter-spacing: 0.08em;
+      color: #4a5068;
       white-space: nowrap;
     }
 
     .slider-row input[type="range"] {
       flex: 1;
-      accent-color: #6366f1;
+      accent-color: #b09860;
+      height: 4px;
     }
 
     .slider-row .value {
-      font-size: 0.85rem;
-      color: #6366f1;
-      font-weight: 600;
-      min-width: 40px;
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 0.8rem;
+      color: #b09860;
+      font-weight: 500;
+      min-width: 42px;
       text-align: right;
     }
 
-    .explanation {
-      background: #1e1e3a;
-      border-radius: 8px;
-      padding: 16px 20px;
-      margin: 20px 0;
-      border-left: 3px solid #6366f1;
-    }
-
-    .explanation p {
-      margin: 8px 0;
-      font-size: 0.92rem;
-      color: #bbb;
-    }
-
-    .explanation p:first-child { margin-top: 0; }
-    .explanation p:last-child { margin-bottom: 0; }
-
     .controls-row {
       display: flex;
-      gap: 12px;
+      gap: 10px;
       align-items: center;
       flex-wrap: wrap;
       margin: 12px 0;
     }
 
     button {
-      background: #6366f1;
-      border: none;
-      color: #fff;
-      padding: 6px 16px;
+      font-family: 'IBM Plex Mono', monospace;
+      background: transparent;
+      border: 1px solid #2a2f40;
+      color: #7a8299;
+      padding: 5px 14px;
       border-radius: 4px;
-      font-size: 0.85rem;
+      font-size: 0.75rem;
       cursor: pointer;
-      transition: background 0.2s;
+      transition: all 0.2s;
+      letter-spacing: 0.02em;
     }
 
-    button:hover { background: #4f46e5; }
-
-    button.secondary {
-      background: #3a3a5c;
+    button:hover {
+      border-color: #b09860;
+      color: #c0b8a8;
     }
-
-    button.secondary:hover { background: #4a4a6c; }
 
     button.active {
-      background: #4f46e5;
-      outline: 2px solid #818cf8;
+      border-color: #b09860;
+      color: #b09860;
+      background: rgba(176, 152, 96, 0.08);
     }
+
+    /* --- Callout --- */
+
+    .callout {
+      background: #10131f;
+      border-radius: 6px;
+      padding: 18px 22px;
+      margin: 22px 0;
+      border-left: 2px solid #2a2520;
+    }
+
+    .callout p {
+      margin: 8px 0;
+      font-size: 0.9rem;
+      color: #7a8299;
+    }
+
+    .callout p:first-child { margin-top: 0; }
+    .callout p:last-child { margin-bottom: 0; }
+
+    /* --- Winding result --- */
 
     .info-badge {
       display: inline-block;
-      background: #6366f1;
-      color: #fff;
-      font-size: 0.75rem;
-      font-weight: 600;
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 0.7rem;
+      font-weight: 500;
       padding: 2px 8px;
-      border-radius: 10px;
+      border-radius: 3px;
       margin-left: 8px;
+      letter-spacing: 0.04em;
     }
 
-    .info-badge.inside { background: #22c55e; }
-    .info-badge.outside { background: #ef4444; }
+    .info-badge.inside { background: rgba(76, 175, 80, 0.15); color: #6abf6e; border: 1px solid rgba(76, 175, 80, 0.2); }
+    .info-badge.outside { background: rgba(200, 80, 70, 0.15); color: #c87060; border: 1px solid rgba(200, 80, 70, 0.2); }
 
     .winding-display {
-      font-size: 1rem;
-      color: #fff;
+      font-size: 0.9rem;
+      color: #c0b8a8;
       margin: 12px 0;
     }
 
-    .learn-more {
-      max-width: 900px;
-      margin: 0 auto 48px auto;
-      text-align: center;
-      padding: 32px;
-    }
-
-    .learn-more a {
-      color: #818cf8;
-      text-decoration: none;
-    }
-
-    .learn-more a:hover { text-decoration: underline; }
-
-    .band-legend {
-      display: flex;
-      gap: 16px;
-      flex-wrap: wrap;
-      font-size: 0.85rem;
-      margin: 8px 0;
-    }
-
-    .band-legend span {
-      display: flex;
-      align-items: center;
-      gap: 4px;
-    }
-
-    .band-legend .swatch {
-      width: 14px;
-      height: 14px;
-      border-radius: 3px;
-      display: inline-block;
-    }
+    /* --- WebGL error --- */
 
     .webgl-error {
-      background: #3a1a1a;
-      border: 1px solid #ef4444;
-      border-radius: 8px;
+      background: rgba(200, 80, 70, 0.08);
+      border: 1px solid rgba(200, 80, 70, 0.2);
+      border-radius: 6px;
       padding: 16px;
-      color: #fca5a5;
+      color: #c87060;
       display: none;
+      font-size: 0.9rem;
     }
+
+    /* --- Code --- */
 
     code {
-      background: #1e1e3a;
+      font-family: 'IBM Plex Mono', monospace;
+      background: #10131f;
       padding: 2px 6px;
       border-radius: 3px;
-      font-size: 0.88em;
-      color: #c4b5fd;
+      font-size: 0.85em;
+      color: #b09860;
     }
 
-    .canvas-container {
-      position: relative;
+    /* --- Pan hint --- */
+
+    .pan-hint {
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 0.7rem;
+      color: #3a3f50;
+      text-align: center;
+      margin: 6px 0 0;
+      letter-spacing: 0.02em;
     }
 
-    .click-hint {
-      position: absolute;
-      bottom: 8px;
-      right: 8px;
-      background: rgba(0,0,0,0.6);
-      color: #888;
+    /* --- Footer --- */
+
+    .footer {
+      max-width: 780px;
+      margin: 0 auto;
+      padding: 64px 32px 48px;
+      text-align: center;
+    }
+
+    .footer h2 {
+      font-size: 1.2rem;
+      margin-bottom: 16px;
+    }
+
+    .footer-links {
+      display: flex;
+      gap: 32px;
+      justify-content: center;
+      flex-wrap: wrap;
+      margin-bottom: 32px;
+    }
+
+    .footer-links a {
+      color: #7a8299;
+      text-decoration: none;
+      font-size: 0.88rem;
+      border-bottom: 1px solid #1c2030;
+      transition: all 0.2s;
+    }
+
+    .footer-links a:hover {
+      color: #b09860;
+      border-color: #4a3f28;
+    }
+
+    .footer .fine {
       font-size: 0.75rem;
-      padding: 4px 8px;
-      border-radius: 4px;
-      pointer-events: none;
+      color: #2a2f40;
     }
+
+    /* --- Responsive --- */
 
     @media (max-width: 700px) {
-      body { padding: 12px; }
-      section { padding: 20px; }
-      .side-by-side {
-        flex-direction: column;
-      }
+      .hero { padding: 48px 20px 24px; }
+      .hero h1 { font-size: 2rem; }
+      section { padding: 0 20px; }
+      .section-rule { margin: 40px auto; }
+      .side-by-side { flex-direction: column; }
+      canvas.tall { height: 320px; }
+      canvas.demo { height: 200px; }
     }
   </style>
 </head>
 <body>
 
-<h1>How Slug Renders Fonts on the GPU</h1>
-<p class="subtitle">An interactive explainer of Eric Lengyel's Slug algorithm</p>
+<!-- ============================================================ -->
+<!-- Hero                                                          -->
+<!-- ============================================================ -->
+<div class="hero">
+  <h1>How Slug Renders Fonts on the GPU</h1>
+  <p class="byline">An interactive explainer of <a href="https://github.com/EricLengyel/Slug" target="_blank" rel="noopener">Eric Lengyel's algorithm</a></p>
+  <p class="lede">Your browser rasterizes fonts on the CPU, pixel by pixel, at a specific size. That works for web pages but not for 3D games, where a street sign might be 5 pixels tall in the distance and 500 pixels tall up close. Slug takes a different approach: it sends the font's mathematical curves to the GPU and evaluates them per pixel, in real time. The result is always sharp, at any scale.</p>
+</div>
+
+<hr class="section-rule">
 
 <!-- ============================================================ -->
-<!-- SECTION 1: The Bitmap Problem                                 -->
-<!-- ============================================================ -->
-<section id="sec-bitmap">
-  <h2>1. The Bitmap Problem</h2>
-  <p class="section-intro">Why games and GPU applications need a special font rendering algorithm.</p>
-
-  <div class="side-by-side">
-    <div>
-      <div class="canvas-label">Bitmap (how your browser does it)</div>
-      <canvas id="canvas-bitmap" class="short"></canvas>
-    </div>
-    <div>
-      <div class="canvas-label">Vector curves (what Slug uses)</div>
-      <canvas id="canvas-vector" class="short"></canvas>
-    </div>
-  </div>
-
-  <div class="slider-row">
-    <label for="zoom-slider">Zoom</label>
-    <input type="range" id="zoom-slider" min="1" max="32" value="1" step="0.5">
-    <span class="value" id="zoom-value">1x</span>
-  </div>
-
-  <div class="explanation">
-    <p>Your browser renders text by converting mathematical font outlines into a grid of colored pixels. At the intended size, this looks great. But zoom in and you see the pixel grid.</p>
-    <p>In a 3D game, a street sign might be 5 pixels tall in the distance and 500 pixels tall up close. Pre-rendering bitmaps at every possible size wastes enormous amounts of memory. Rendering them on the CPU each frame is too slow.</p>
-    <p>The Slug algorithm takes a different approach: store the font's mathematical curves and evaluate them directly on the GPU, per pixel, in real time. The result is always crisp, at any size.</p>
-  </div>
-</section>
-
-<!-- ============================================================ -->
-<!-- SECTION 2: What's Inside a Font?                              -->
+<!-- Section 1: What's Inside a Font?                              -->
 <!-- ============================================================ -->
 <section id="sec-bezier">
-  <h2>2. What's Inside a Font?</h2>
+  <h2>What's Inside a Font?</h2>
   <p class="section-intro">Fonts are not pictures of letters. They are mathematical recipes for drawing curves.</p>
 
-  <canvas id="canvas-bezier" class="tall"></canvas>
-
-  <div class="controls-row">
-    <button id="btn-animate" class="secondary">Animate curve tracing</button>
-    <button id="btn-reset-bezier" class="secondary">Reset positions</button>
+  <div class="canvas-wrap">
+    <canvas id="canvas-bezier" class="tall"></canvas>
   </div>
 
-  <div class="explanation">
-    <p>A font file stores each letter as a series of <strong>quadratic Bezier curves</strong>. Each curve has three control points: a start (filled dot), an end (filled dot), and a "pull" point (hollow dot) that bends the curve toward it.</p>
-    <p>Try dragging the control points above to reshape the letter. This is literally what font design software does.</p>
-    <p>TrueType fonts (the most common format) use exactly these quadratic curves. The Slug algorithm sends these control points to the GPU and evaluates the curves mathematically for every pixel on screen.</p>
+  <div class="controls-row">
+    <button id="btn-animate">Animate tracing</button>
+    <button id="btn-reset-bezier">Reset</button>
+  </div>
+
+  <div class="callout">
+    <p>A font file stores each letter as a series of <strong>quadratic Bezier curves</strong>. Each curve has three control points: a start, an end, and a "pull" point that shapes the arc between them.</p>
+    <p>Drag the control points above to reshape the letter. TrueType fonts use exactly these quadratic curves, and Slug sends them directly to the GPU.</p>
   </div>
 </section>
 
+<hr class="section-rule">
+
 <!-- ============================================================ -->
-<!-- SECTION 3: Inside or Outside?                                 -->
+<!-- Section 2: Inside or Outside?                                 -->
 <!-- ============================================================ -->
 <section id="sec-winding">
-  <h2>3. Inside or Outside?</h2>
+  <h2>Inside or Outside?</h2>
   <p class="section-intro">How the GPU decides whether each pixel is part of the letter.</p>
 
-  <h3>3a. Ray Casting</h3>
-  <p>The GPU needs to answer one question for every pixel: "Am I inside or outside the letter?" It answers this by casting a ray and counting how many times it crosses the outline.</p>
+  <h3>Ray Casting</h3>
+  <p>For every pixel, the GPU asks: "Am I inside or outside the letter?" It answers by casting a ray and counting curve crossings.</p>
 
-  <div class="canvas-container">
+  <div class="canvas-wrap">
     <canvas id="canvas-winding" class="tall"></canvas>
-    <div class="click-hint">Click anywhere to test a point</div>
+    <div class="click-hint">click to test a point</div>
   </div>
 
   <div id="winding-result" class="winding-display" style="display:none;">
@@ -350,13 +413,12 @@
     <span id="winding-badge" class="info-badge">outside</span>
   </div>
 
-  <div class="explanation">
-    <p>A horizontal ray is cast from the test point to the right. Each time it crosses a curve going <strong>upward</strong>, add 1. Going <strong>downward</strong>, subtract 1. If the total (the "winding number") is not zero, the pixel is inside the letter.</p>
-    <p>This is the <strong>nonzero winding rule</strong>, and it is the default fill rule Slug uses.</p>
+  <div class="callout">
+    <p>A horizontal ray is cast from the test point to the right. Each crossing going <strong>upward</strong> adds 1; going <strong>downward</strong> subtracts 1. If the total is nonzero, the pixel is inside. This is the <strong>nonzero winding rule</strong>.</p>
   </div>
 
-  <h3>3b. Anti-aliasing with Coverage</h3>
-  <p>Sharp inside/outside decisions produce jagged edges. Slug uses two rays (horizontal and vertical) and measures <em>how far</em> each crossing is from the pixel center to compute partial coverage.</p>
+  <h3>Anti-aliasing</h3>
+  <p>A binary inside/outside decision produces jagged edges. Slug casts two rays (horizontal and vertical) and measures <em>how far</em> each crossing is from the pixel center to produce partial coverage.</p>
 
   <div class="side-by-side">
     <div>
@@ -364,36 +426,40 @@
       <canvas id="canvas-noaa" class="square"></canvas>
     </div>
     <div>
-      <div class="canvas-label">With coverage-based AA</div>
+      <div class="canvas-label">Coverage-based AA</div>
       <canvas id="canvas-aa" class="square"></canvas>
     </div>
   </div>
 
-  <div class="explanation">
-    <p>Pixels near the edge get a fractional coverage value (e.g., 0.3 means 30% covered). This produces smooth, anti-aliased edges without any blur. The two rays are combined using distance-based weights.</p>
+  <div class="callout">
+    <p>Edge pixels get a fractional coverage (e.g., 0.3 = 30% covered), producing smooth outlines without blur.</p>
   </div>
 
-  <h3>3c. Band Optimization</h3>
-  <p>Testing every curve for every pixel would be wasteful. Slug divides the glyph into horizontal and vertical bands.</p>
+  <h3>Band Optimization</h3>
+  <p>Testing every curve for every pixel would be slow. Slug divides the glyph into bands so each pixel only checks a few curves.</p>
 
-  <canvas id="canvas-bands" class="tall"></canvas>
+  <div class="canvas-wrap">
+    <canvas id="canvas-bands" class="tall"></canvas>
+  </div>
 
   <div class="controls-row">
     <button id="btn-hbands" class="active">Horizontal bands</button>
-    <button id="btn-vbands" class="secondary">Vertical bands</button>
+    <button id="btn-vbands">Vertical bands</button>
   </div>
 
-  <div class="explanation">
-    <p>Each pixel only tests the curves in its band, not every curve in the glyph. For the letter "R" shown above, each band contains only 3 to 8 curves instead of all 23. This is what makes Slug fast enough for real-time rendering.</p>
+  <div class="callout">
+    <p>Each band contains only 3 to 8 of the letter's 23 curves. This is what makes Slug fast enough for real-time rendering.</p>
   </div>
 </section>
 
+<hr class="section-rule">
+
 <!-- ============================================================ -->
-<!-- SECTION 4: See It Running                                     -->
+<!-- Section 3: See It Running                                     -->
 <!-- ============================================================ -->
 <section id="sec-webgl">
-  <h2>4. See It Running</h2>
-  <p class="section-intro">The actual Slug algorithm, ported from Eric Lengyel's HLSL reference shaders to WebGL2 GLSL, running in your browser right now.</p>
+  <h2>See It Running</h2>
+  <p class="section-intro">The actual Slug algorithm, ported from the reference HLSL shaders to WebGL2 GLSL, running in your browser.</p>
 
   <div id="webgl-error" class="webgl-error">
     Your browser does not support WebGL2, which is required for this demo. Try a recent version of Chrome, Firefox, or Edge.
@@ -401,45 +467,39 @@
 
   <div class="side-by-side">
     <div>
-      <div class="canvas-label">Bitmap rendering</div>
-      <canvas id="canvas-bitmap2" class="short"></canvas>
+      <div class="canvas-label">Bitmap (pre-rendered pixels)</div>
+      <canvas id="canvas-bitmap" class="demo"></canvas>
     </div>
     <div>
-      <div class="canvas-label">Slug (GPU Bezier evaluation)</div>
-      <canvas id="canvas-slug" class="short"></canvas>
+      <div class="canvas-label">Slug (curves evaluated per-pixel on GPU)</div>
+      <canvas id="canvas-slug" class="demo"></canvas>
     </div>
   </div>
+  <p class="pan-hint">drag to pan &middot; scroll or slider to zoom</p>
 
   <div class="slider-row">
-    <label for="zoom-slider2">Zoom</label>
-    <input type="range" id="zoom-slider2" min="1" max="64" value="1" step="0.5">
-    <span class="value" id="zoom-value2">1x</span>
+    <label for="zoom-slider">Zoom</label>
+    <input type="range" id="zoom-slider" min="1" max="64" value="1" step="0.5">
+    <span class="value" id="zoom-value">1x</span>
   </div>
 
-  <div class="explanation">
-    <p>Both canvases show the word "Slug" at the same zoom level. The left uses a traditional bitmap render (the browser's <code>fillText</code>). The right evaluates quadratic Bezier curves per-pixel on the GPU using the Slug algorithm.</p>
-    <p>Crank the zoom slider to the right. The bitmap becomes a blocky mess. The Slug render stays perfectly sharp because it is computing the mathematically exact outline for every pixel, every frame.</p>
+  <div class="callout">
+    <p>Both canvases show the word "Slug" at the same zoom and pan position. The left uses the browser's <code>fillText</code> to pre-render pixels. The right evaluates quadratic Bezier curves per-pixel on the GPU using the Slug algorithm.</p>
+    <p>Zoom in. The bitmap becomes a blocky mess. The Slug render stays perfectly sharp because it computes the mathematically exact curve for every pixel, every frame.</p>
   </div>
 </section>
 
 <!-- ============================================================ -->
-<!-- SECTION 5: Learn More                                         -->
+<!-- Footer                                                        -->
 <!-- ============================================================ -->
-<div class="learn-more">
-  <h2>Learn More</h2>
-  <p>
-    <a href="https://jcgt.org/published/0006/02/02/" target="_blank" rel="noopener">Original 2017 Paper</a> (Journal of Computer Graphics Techniques)
-  </p>
-  <p>
-    <a href="https://terathon.com/blog/decade-slug.html" target="_blank" rel="noopener">A Decade of Slug</a> (Eric Lengyel's retrospective)
-  </p>
-  <p>
-    <a href="https://github.com/EricLengyel/Slug" target="_blank" rel="noopener">Reference HLSL Shaders</a> (GitHub)
-  </p>
-  <p style="margin-top:24px; font-size:0.8rem; color:#666;">
-    Glyph data extracted from the DejaVu Sans font (public domain).
-    Slug algorithm by Eric Lengyel, MIT/Apache-2.0 licensed.
-  </p>
+<div class="footer">
+  <h2>Further Reading</h2>
+  <div class="footer-links">
+    <a href="https://jcgt.org/published/0006/02/02/" target="_blank" rel="noopener">Original 2017 Paper</a>
+    <a href="https://terathon.com/blog/decade-slug.html" target="_blank" rel="noopener">A Decade of Slug</a>
+    <a href="https://github.com/EricLengyel/Slug" target="_blank" rel="noopener">Reference Shaders</a>
+  </div>
+  <p class="fine">Glyph data from DejaVu Sans (public domain). Slug algorithm by Eric Lengyel, MIT / Apache-2.0.</p>
 </div>
 
 <script>
@@ -491,8 +551,7 @@ const GLYPH_DATA = {
 };
 
 // ================================================================
-// UTILITY: Parse curve data
-// Each curve in the data is [p1x,p1y, p2x,p2y, p3x,p3y]
+// UTILITIES
 // ================================================================
 
 function parseCurve(arr, offset) {
@@ -521,17 +580,21 @@ function evalBezier(p1, p2, p3, t) {
   };
 }
 
-// ================================================================
-// UTILITY: Draw glyph outline on a 2D canvas
-// ================================================================
+function setupCanvas(canvas) {
+  const dpr = window.devicePixelRatio || 1;
+  const rect = canvas.getBoundingClientRect();
+  canvas.width = Math.round(rect.width * dpr);
+  canvas.height = Math.round(rect.height * dpr);
+  const ctx = canvas.getContext('2d');
+  if (ctx) ctx.scale(dpr, dpr);
+  return { width: rect.width, height: rect.height, dpr };
+}
 
 function drawGlyphOutline(ctx, glyph, ox, oy, scale, options = {}) {
-  const { strokeColor = '#818cf8', lineWidth = 2, fill = false, fillColor = '#818cf8' } = options;
-
+  const { strokeColor = '#b09860', lineWidth = 2, fill = false, fillColor = '#b09860' } = options;
   ctx.save();
   ctx.translate(ox, oy);
-  ctx.scale(scale, -scale); // flip Y for em-space
-
+  ctx.scale(scale, -scale);
   ctx.beginPath();
   for (const contour of glyph.contours) {
     if (contour.length === 0) continue;
@@ -543,138 +606,13 @@ function drawGlyphOutline(ctx, glyph, ox, oy, scale, options = {}) {
     }
     ctx.closePath();
   }
-
-  if (fill) {
-    ctx.fillStyle = fillColor;
-    ctx.fill('nonzero');
-  }
-  if (strokeColor) {
-    ctx.strokeStyle = strokeColor;
-    ctx.lineWidth = lineWidth / scale;
-    ctx.stroke();
-  }
+  if (fill) { ctx.fillStyle = fillColor; ctx.fill('nonzero'); }
+  if (strokeColor) { ctx.strokeStyle = strokeColor; ctx.lineWidth = lineWidth / scale; ctx.stroke(); }
   ctx.restore();
 }
 
 // ================================================================
-// UTILITY: High-DPI canvas setup
-// Scales the canvas backing store to match CSS display size * devicePixelRatio
-// so canvases look crisp on retina/high-DPI screens.
-// Returns { width, height } in CSS pixels (use these for layout math).
-// ================================================================
-
-function setupCanvas(canvas) {
-  const dpr = window.devicePixelRatio || 1;
-  const rect = canvas.getBoundingClientRect();
-  const cssW = rect.width;
-  const cssH = rect.height;
-  canvas.width = Math.round(cssW * dpr);
-  canvas.height = Math.round(cssH * dpr);
-  const ctx = canvas.getContext('2d');
-  if (ctx) {
-    ctx.scale(dpr, dpr);
-  }
-  return { width: cssW, height: cssH, dpr };
-}
-
-// ================================================================
-// SECTION 1: Bitmap Problem
-// ================================================================
-
-function initBitmapSection() {
-  const bitmapCanvas = document.getElementById('canvas-bitmap');
-  const vectorCanvas = document.getElementById('canvas-vector');
-  const slider = document.getElementById('zoom-slider');
-  const valueLabel = document.getElementById('zoom-value');
-
-  const bitmapDims = setupCanvas(bitmapCanvas);
-  const vectorDims = setupCanvas(vectorCanvas);
-  const bctx = bitmapCanvas.getContext('2d');
-  const vctx = vectorCanvas.getContext('2d');
-
-  // Render "Slug" to a tiny offscreen canvas
-  const offW = 80, offH = 32;
-  const offscreen = document.createElement('canvas');
-  offscreen.width = offW;
-  offscreen.height = offH;
-  const octx = offscreen.getContext('2d');
-  octx.fillStyle = '#1a1a2e';
-  octx.fillRect(0, 0, offW, offH);
-  octx.font = 'bold 24px sans-serif';
-  octx.fillStyle = '#818cf8';
-  octx.textBaseline = 'middle';
-  octx.fillText('Slug', 4, offH / 2);
-
-  function draw(zoom) {
-    const bw = bitmapDims.width;
-    const bh = bitmapDims.height;
-    const vw = vectorDims.width;
-    const vh = vectorDims.height;
-
-    // Bitmap side: zoom into the tiny rendered text
-    bctx.save();
-    bctx.setTransform(1, 0, 0, 1, 0, 0);
-    bctx.clearRect(0, 0, bitmapCanvas.width, bitmapCanvas.height);
-    bctx.restore();
-    bctx.fillStyle = '#1a1a2e';
-    bctx.fillRect(0, 0, bw, bh);
-    bctx.imageSmoothingEnabled = false;
-
-    const srcW = offW / zoom;
-    const srcH = offH / zoom;
-    const srcX = (offW - srcW) / 2;
-    const srcY = (offH - srcH) / 2;
-    bctx.drawImage(offscreen, srcX, srcY, srcW, srcH, 0, 0, bw, bh);
-
-    // Vector side: draw the outlines scaled to fill the canvas
-    vctx.save();
-    vctx.setTransform(1, 0, 0, 1, 0, 0);
-    vctx.clearRect(0, 0, vectorCanvas.width, vectorCanvas.height);
-    vctx.restore();
-    vctx.fillStyle = '#1a1a2e';
-    vctx.fillRect(0, 0, vw, vh);
-
-    // Layout "Slug" from glyph data
-    const word = ['S', 'l', 'u', 'g'];
-    const totalAdvance = word.reduce((s, ch) => s + GLYPH_DATA[ch].advance, 0);
-
-    // Compute base scale to fit the word in the canvas
-    const baseScale = vw * 0.8 / totalAdvance;
-    const scale = baseScale * zoom;
-
-    // Center the visible portion
-    const totalW = totalAdvance * scale;
-    const glyphH = 0.76 * scale;
-    const centerX = vw / 2;
-    const centerY = vh / 2;
-
-    vctx.save();
-    const startX = centerX - totalW / 2;
-    const baseY = centerY + glyphH * 0.35;
-
-    let x = startX;
-    for (const ch of word) {
-      const g = GLYPH_DATA[ch];
-      drawGlyphOutline(vctx, g, x, baseY, scale, {
-        fill: true,
-        fillColor: '#818cf8',
-        strokeColor: null
-      });
-      x += g.advance * scale;
-    }
-    vctx.restore();
-  }
-
-  draw(1);
-  slider.addEventListener('input', () => {
-    const zoom = parseFloat(slider.value);
-    valueLabel.textContent = zoom + 'x';
-    draw(zoom);
-  });
-}
-
-// ================================================================
-// SECTION 2: Bezier Curves
+// SECTION 1: Bezier Curves
 // ================================================================
 
 function initBezierSection() {
@@ -689,9 +627,8 @@ function initBezierSection() {
   const ox = dims.width * 0.08;
   const oy = dims.height * 0.96;
 
-  // Deep copy control points so we can drag them
   let points = [];
-  const curveRefs = []; // { contourIdx, curveIdx, pointType: 'p1'|'p2'|'p3' }
+  const curveRefs = [];
 
   function rebuildPoints() {
     points = [];
@@ -700,7 +637,6 @@ function initBezierSection() {
       for (let qi = 0; qi < glyph.contours[ci].length; qi++) {
         const c = glyph.contours[ci][qi];
         const cv = parseCurve(c, 0);
-        // Only add p1 for the first curve of each contour (rest share with previous p3)
         if (qi === 0) {
           points.push({ x: cv.p1.x, y: cv.p1.y, type: 'on' });
           curveRefs.push({ ci, qi, pt: 'p1' });
@@ -713,35 +649,24 @@ function initBezierSection() {
     }
   }
 
-  // Store original glyph data for reset
   const originalContours = JSON.parse(JSON.stringify(glyph.contours));
   rebuildPoints();
 
-  function toScreen(px, py) {
-    return { x: ox + px * scale, y: oy - py * scale };
-  }
+  function toScreen(px, py) { return { x: ox + px * scale, y: oy - py * scale }; }
+  function toEm(sx, sy) { return { x: (sx - ox) / scale, y: (oy - sy) / scale }; }
 
-  function toEm(sx, sy) {
-    return { x: (sx - ox) / scale, y: (oy - sy) / scale };
-  }
-
-  let animT = -1; // -1 = not animating
+  let animT = -1;
   let animCurveIdx = 0;
 
   function draw() {
-    const w = dims.width;
-    const h = dims.height;
-    ctx.fillStyle = '#1a1a2e';
+    const w = dims.width, h = dims.height;
+    ctx.fillStyle = '#0e1220';
     ctx.fillRect(0, 0, w, h);
 
-    // Draw the filled glyph faintly
     drawGlyphOutline(ctx, glyph, ox, oy, scale, {
-      fill: true,
-      fillColor: 'rgba(99, 102, 241, 0.15)',
-      strokeColor: null
+      fill: true, fillColor: 'rgba(176, 152, 96, 0.08)', strokeColor: null
     });
 
-    // Draw each curve with control arms
     for (const contour of glyph.contours) {
       for (const c of contour) {
         const cv = parseCurve(c, 0);
@@ -749,43 +674,34 @@ function initBezierSection() {
         const s2 = toScreen(cv.p2.x, cv.p2.y);
         const s3 = toScreen(cv.p3.x, cv.p3.y);
 
-        // Control arms (thin lines)
-        ctx.strokeStyle = 'rgba(255,255,255,0.15)';
+        ctx.strokeStyle = 'rgba(255,255,255,0.08)';
         ctx.lineWidth = 1;
         ctx.beginPath();
-        ctx.moveTo(s1.x, s1.y);
-        ctx.lineTo(s2.x, s2.y);
-        ctx.lineTo(s3.x, s3.y);
+        ctx.moveTo(s1.x, s1.y); ctx.lineTo(s2.x, s2.y); ctx.lineTo(s3.x, s3.y);
         ctx.stroke();
 
-        // The curve itself
-        ctx.strokeStyle = '#818cf8';
-        ctx.lineWidth = 2;
+        ctx.strokeStyle = '#b09860';
+        ctx.lineWidth = 1.5;
         ctx.beginPath();
-        ctx.moveTo(s1.x, s1.y);
-        ctx.quadraticCurveTo(s2.x, s2.y, s3.x, s3.y);
+        ctx.moveTo(s1.x, s1.y); ctx.quadraticCurveTo(s2.x, s2.y, s3.x, s3.y);
         ctx.stroke();
       }
     }
 
-    // Draw control points
     for (const p of points) {
       const sp = toScreen(p.x, p.y);
       ctx.beginPath();
-      ctx.arc(sp.x, sp.y, p.type === 'on' ? 5 : 6, 0, Math.PI * 2);
+      ctx.arc(sp.x, sp.y, p.type === 'on' ? 4 : 5, 0, Math.PI * 2);
       if (p.type === 'on') {
-        ctx.fillStyle = '#818cf8';
+        ctx.fillStyle = '#c0b8a8';
         ctx.fill();
       } else {
-        ctx.strokeStyle = '#f59e0b';
-        ctx.lineWidth = 2;
+        ctx.strokeStyle = '#b09860';
+        ctx.lineWidth = 1.5;
         ctx.stroke();
-        ctx.fillStyle = '#1a1a2e';
-        ctx.fill();
       }
     }
 
-    // Animation dot
     if (animT >= 0) {
       const allCurves = getAllCurves(glyph);
       if (animCurveIdx < allCurves.length) {
@@ -793,72 +709,41 @@ function initBezierSection() {
         const pt = evalBezier(cv.p1, cv.p2, cv.p3, animT);
         const sp = toScreen(pt.x, pt.y);
         ctx.beginPath();
-        ctx.arc(sp.x, sp.y, 6, 0, Math.PI * 2);
-        ctx.fillStyle = '#22c55e';
+        ctx.arc(sp.x, sp.y, 5, 0, Math.PI * 2);
+        ctx.fillStyle = '#6abf6e';
         ctx.fill();
       }
     }
 
-    // Legend
-    ctx.fillStyle = '#888';
-    ctx.font = '12px system-ui';
-    ctx.fillText('Drag points to reshape the letter', 10, 18);
-
-    ctx.beginPath();
-    ctx.arc(300, 14, 5, 0, Math.PI * 2);
-    ctx.fillStyle = '#818cf8';
-    ctx.fill();
-    ctx.fillStyle = '#888';
-    ctx.fillText('On-curve point', 310, 18);
-
-    ctx.beginPath();
-    ctx.arc(420, 14, 5, 0, Math.PI * 2);
-    ctx.strokeStyle = '#f59e0b';
-    ctx.lineWidth = 2;
-    ctx.stroke();
-    ctx.fillStyle = '#888';
-    ctx.fillText('Control point', 430, 18);
+    ctx.fillStyle = '#3a3f50';
+    ctx.font = '11px IBM Plex Mono, monospace';
+    ctx.fillText('Drag points to reshape', 8, 16);
   }
 
   draw();
 
-  // Dragging
   let dragging = -1;
 
   canvas.addEventListener('mousedown', (e) => {
     const rect = canvas.getBoundingClientRect();
-    const mx = (e.clientX - rect.left);
-    const my = (e.clientY - rect.top);
-
+    const mx = e.clientX - rect.left, my = e.clientY - rect.top;
     for (let i = 0; i < points.length; i++) {
       const sp = toScreen(points[i].x, points[i].y);
-      const dx = mx - sp.x, dy = my - sp.y;
-      if (dx*dx + dy*dy < 100) {
-        dragging = i;
-        canvas.style.cursor = 'grabbing';
-        break;
-      }
+      if ((mx-sp.x)**2 + (my-sp.y)**2 < 100) { dragging = i; canvas.style.cursor = 'grabbing'; break; }
     }
   });
 
   canvas.addEventListener('mousemove', (e) => {
     const rect = canvas.getBoundingClientRect();
-    const mx = (e.clientX - rect.left);
-    const my = (e.clientY - rect.top);
-
+    const mx = e.clientX - rect.left, my = e.clientY - rect.top;
     if (dragging >= 0) {
       const em = toEm(mx, my);
-      points[dragging].x = em.x;
-      points[dragging].y = em.y;
-
-      // Update the glyph data
+      points[dragging].x = em.x; points[dragging].y = em.y;
       const ref = curveRefs[dragging];
       const c = glyph.contours[ref.ci][ref.qi];
       if (ref.pt === 'p1') { c[0] = em.x; c[1] = em.y; }
       else if (ref.pt === 'p2') { c[2] = em.x; c[3] = em.y; }
       else { c[4] = em.x; c[5] = em.y; }
-
-      // Keep contour connected: p3 of one curve = p1 of the next
       if (ref.pt === 'p3') {
         const nextQi = (ref.qi + 1) % glyph.contours[ref.ci].length;
         glyph.contours[ref.ci][nextQi][0] = em.x;
@@ -868,124 +753,75 @@ function initBezierSection() {
         glyph.contours[ref.ci][ref.qi - 1][4] = em.x;
         glyph.contours[ref.ci][ref.qi - 1][5] = em.y;
       }
-
       draw();
     } else {
-      // Hover cursor
       let hover = false;
       for (const p of points) {
         const sp = toScreen(p.x, p.y);
-        const dx = mx - sp.x, dy = my - sp.y;
-        if (dx*dx + dy*dy < 100) { hover = true; break; }
+        if ((mx-sp.x)**2 + (my-sp.y)**2 < 100) { hover = true; break; }
       }
       canvas.style.cursor = hover ? 'grab' : 'default';
     }
   });
 
-  canvas.addEventListener('mouseup', () => {
-    dragging = -1;
-    canvas.style.cursor = 'default';
-  });
+  canvas.addEventListener('mouseup', () => { dragging = -1; canvas.style.cursor = 'default'; });
+  canvas.addEventListener('mouseleave', () => { dragging = -1; });
 
-  canvas.addEventListener('mouseleave', () => {
-    dragging = -1;
-  });
-
-  // Animate button
   btnAnimate.addEventListener('click', () => {
-    if (animT >= 0) {
-      animT = -1;
-      btnAnimate.textContent = 'Animate curve tracing';
-      draw();
-      return;
-    }
-    animT = 0;
-    animCurveIdx = 0;
-    btnAnimate.textContent = 'Stop animation';
-
+    if (animT >= 0) { animT = -1; btnAnimate.textContent = 'Animate tracing'; draw(); return; }
+    animT = 0; animCurveIdx = 0;
+    btnAnimate.textContent = 'Stop';
+    btnAnimate.classList.add('active');
     function step() {
-      if (animT < 0) return;
+      if (animT < 0) { btnAnimate.classList.remove('active'); return; }
       animT += 0.02;
-      if (animT > 1) {
-        animT = 0;
-        animCurveIdx++;
-        if (animCurveIdx >= getAllCurves(glyph).length) {
-          animCurveIdx = 0;
-        }
-      }
-      draw();
-      requestAnimationFrame(step);
+      if (animT > 1) { animT = 0; animCurveIdx++; if (animCurveIdx >= getAllCurves(glyph).length) animCurveIdx = 0; }
+      draw(); requestAnimationFrame(step);
     }
     requestAnimationFrame(step);
   });
 
-  // Reset button
   btnReset.addEventListener('click', () => {
-    for (let ci = 0; ci < originalContours.length; ci++) {
+    for (let ci = 0; ci < originalContours.length; ci++)
       glyph.contours[ci] = JSON.parse(JSON.stringify(originalContours[ci]));
-    }
-    rebuildPoints();
-    draw();
+    rebuildPoints(); draw();
   });
 }
 
 // ================================================================
-// SECTION 3a: Ray Casting / Winding Number
+// SECTION 2a: Ray Casting / Winding Number
 // ================================================================
 
 function solveHorizRoots(p1y, p2y, p3y) {
-  // Solve for t where the quadratic Bezier y(t) = 0
-  const a = p1y - 2*p2y + p3y;
-  const b = p1y - p2y;
-  const c = p1y;
-
+  const a = p1y - 2*p2y + p3y, b = p1y - p2y, c = p1y;
   if (Math.abs(a) < 1/65536) {
-    // Nearly linear
     if (Math.abs(b) < 1e-10) return [];
     const t = c / (2*b);
     return (t >= 0 && t <= 1) ? [t] : [];
   }
-
   const disc = b*b - a*c;
   if (disc < 0) return [];
-
   const d = Math.sqrt(disc);
-  const t1 = (b - d) / a;
-  const t2 = (b + d) / a;
-
+  const t1 = (b - d) / a, t2 = (b + d) / a;
   const roots = [];
   if (t1 >= 0 && t1 <= 1) roots.push(t1);
   if (t2 >= 0 && t2 <= 1 && Math.abs(t2 - t1) > 1e-10) roots.push(t2);
   return roots;
 }
 
-function curveDirectionAtT(p1y, p2y, p3y, t) {
-  // dy/dt = 2(1-t)(p2y - p1y) + 2t(p3y - p2y)
-  const dy = 2*(1-t)*(p2y - p1y) + 2*t*(p3y - p2y);
-  return dy;
-}
-
 function computeWindingNumber(glyph, testX, testY) {
   let winding = 0;
   const crossings = [];
-
   for (const contour of glyph.contours) {
     for (const c of contour) {
       const cv = parseCurve(c, 0);
-      // Shift curve so test point is at origin
-      const p1y = cv.p1.y - testY;
-      const p2y = cv.p2.y - testY;
-      const p3y = cv.p3.y - testY;
-
+      const p1y = cv.p1.y - testY, p2y = cv.p2.y - testY, p3y = cv.p3.y - testY;
       const roots = solveHorizRoots(p1y, p2y, p3y);
       for (const t of roots) {
-        // Evaluate x at this t
         const mt = 1 - t;
         const x = mt*mt*cv.p1.x + 2*mt*t*cv.p2.x + t*t*cv.p3.x;
-
-        // Only count crossings to the right of the test point
         if (x > testX) {
-          const dy = curveDirectionAtT(p1y, p2y, p3y, t);
+          const dy = 2*(1-t)*(p2y - p1y) + 2*t*(p3y - p2y);
           const dir = dy > 0 ? 1 : -1;
           winding += dir;
           crossings.push({ x, y: testY, dir });
@@ -993,7 +829,6 @@ function computeWindingNumber(glyph, testX, testY) {
       }
     }
   }
-
   return { winding, crossings };
 }
 
@@ -1010,65 +845,45 @@ function initWindingSection() {
   const ox = dims.width * 0.08;
   const oy = dims.height * 0.96;
 
-  let testPoint = null;
-  let result = null;
+  let testPoint = null, result = null;
 
-  function toScreen(px, py) {
-    return { x: ox + px * scale, y: oy - py * scale };
-  }
-
-  function toEm(sx, sy) {
-    return { x: (sx - ox) / scale, y: (oy - sy) / scale };
-  }
+  function toScreen(px, py) { return { x: ox + px * scale, y: oy - py * scale }; }
+  function toEm(sx, sy) { return { x: (sx - ox) / scale, y: (oy - sy) / scale }; }
 
   function draw() {
-    const w = dims.width;
-    const h = dims.height;
-    ctx.fillStyle = '#1a1a2e';
-    ctx.fillRect(0, 0, w, h);
+    ctx.fillStyle = '#0e1220';
+    ctx.fillRect(0, 0, dims.width, dims.height);
 
-    // Draw filled glyph
     drawGlyphOutline(ctx, glyph, ox, oy, scale, {
-      fill: true,
-      fillColor: 'rgba(99, 102, 241, 0.2)',
-      strokeColor: '#818cf8',
-      lineWidth: 2
+      fill: true, fillColor: 'rgba(176, 152, 96, 0.1)',
+      strokeColor: 'rgba(176, 152, 96, 0.4)', lineWidth: 1.5
     });
 
     if (testPoint && result) {
       const sp = toScreen(testPoint.x, testPoint.y);
-
-      // Draw ray (horizontal line to the right)
-      ctx.strokeStyle = 'rgba(255, 255, 255, 0.4)';
+      ctx.strokeStyle = 'rgba(255, 255, 255, 0.2)';
       ctx.lineWidth = 1;
       ctx.setLineDash([4, 4]);
-      ctx.beginPath();
-      ctx.moveTo(sp.x, sp.y);
-      ctx.lineTo(dims.width, sp.y);
-      ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(sp.x, sp.y); ctx.lineTo(dims.width, sp.y); ctx.stroke();
       ctx.setLineDash([]);
 
-      // Draw crossings
       for (const cr of result.crossings) {
         const cs = toScreen(cr.x, cr.y);
         ctx.beginPath();
-        ctx.arc(cs.x, cs.y, 6, 0, Math.PI * 2);
-        ctx.fillStyle = cr.dir > 0 ? '#22c55e' : '#ef4444';
+        ctx.arc(cs.x, cs.y, 5, 0, Math.PI * 2);
+        ctx.fillStyle = cr.dir > 0 ? '#6abf6e' : '#c87060';
         ctx.fill();
-
-        // Arrow showing direction
-        ctx.fillStyle = '#fff';
-        ctx.font = '14px system-ui';
-        ctx.fillText(cr.dir > 0 ? '\u2191+1' : '\u2193-1', cs.x + 8, cs.y + 5);
+        ctx.fillStyle = '#c0b8a8';
+        ctx.font = '12px IBM Plex Mono, monospace';
+        ctx.fillText(cr.dir > 0 ? '\u2191+1' : '\u2193\u22121', cs.x + 8, cs.y + 4);
       }
 
-      // Draw test point
       ctx.beginPath();
-      ctx.arc(sp.x, sp.y, 7, 0, Math.PI * 2);
-      ctx.fillStyle = result.winding !== 0 ? '#22c55e' : '#ef4444';
+      ctx.arc(sp.x, sp.y, 6, 0, Math.PI * 2);
+      ctx.fillStyle = result.winding !== 0 ? '#6abf6e' : '#c87060';
       ctx.fill();
-      ctx.strokeStyle = '#fff';
-      ctx.lineWidth = 2;
+      ctx.strokeStyle = '#e8e0d4';
+      ctx.lineWidth = 1.5;
       ctx.stroke();
     }
   }
@@ -1077,22 +892,18 @@ function initWindingSection() {
 
   canvas.addEventListener('click', (e) => {
     const rect = canvas.getBoundingClientRect();
-    const mx = (e.clientX - rect.left);
-    const my = (e.clientY - rect.top);
-    testPoint = toEm(mx, my);
+    testPoint = toEm(e.clientX - rect.left, e.clientY - rect.top);
     result = computeWindingNumber(glyph, testPoint.x, testPoint.y);
-
     windingNum.textContent = result.winding;
     windingBadge.textContent = result.winding !== 0 ? 'inside' : 'outside';
     windingBadge.className = 'info-badge ' + (result.winding !== 0 ? 'inside' : 'outside');
     resultDiv.style.display = 'block';
-
     draw();
   });
 }
 
 // ================================================================
-// SECTION 3b: Anti-aliasing comparison
+// SECTION 2b: Anti-aliasing comparison
 // ================================================================
 
 function initAASection() {
@@ -1104,84 +915,49 @@ function initAASection() {
   const actx = aaCanvas.getContext('2d');
 
   const glyph = GLYPH_DATA['R'];
-  const gridCols = 10;
-  const gridRows = 10;
-
-  // Focus on the top-right of the "R" where the curve is
-  const emCenterX = 0.5;
-  const emCenterY = 0.52;
-  const emPerCell = 0.028;
+  const gridCols = 10, gridRows = 10;
+  const emCenterX = 0.5, emCenterY = 0.52, emPerCell = 0.028;
 
   function renderGrid(ctx, canvasDims, useAA) {
-    const w = canvasDims.width;
-    const h = canvasDims.height;
-    ctx.fillStyle = '#1a1a2e';
+    const w = canvasDims.width, h = canvasDims.height;
+    ctx.fillStyle = '#0e1220';
     ctx.fillRect(0, 0, w, h);
-
-    const cellW = w / gridCols;
-    const cellH = h / gridRows;
+    const cellW = w / gridCols, cellH = h / gridRows;
 
     for (let row = 0; row < gridRows; row++) {
       for (let col = 0; col < gridCols; col++) {
         const emX = emCenterX + (col - gridCols/2 + 0.5) * emPerCell;
         const emY = emCenterY + (gridRows/2 - row - 0.5) * emPerCell;
-
         let coverage;
         if (useAA) {
-          coverage = computeCoverageAA(glyph, emX, emY, emPerCell);
+          let total = 0;
+          for (let sy = 0; sy < 4; sy++) for (let sx = 0; sx < 4; sx++) {
+            const px = emX + (sx - 1.5) * emPerCell / 4;
+            const py = emY + (sy - 1.5) * emPerCell / 4;
+            if (computeWindingNumber(glyph, px, py).winding !== 0) total++;
+          }
+          coverage = total / 16;
         } else {
-          const { winding } = computeWindingNumber(glyph, emX, emY);
-          coverage = winding !== 0 ? 1 : 0;
+          coverage = computeWindingNumber(glyph, emX, emY).winding !== 0 ? 1 : 0;
         }
-
-        const alpha = Math.max(0, Math.min(1, coverage));
-        const r = Math.round(99 * alpha + 26 * (1 - alpha));
-        const g = Math.round(102 * alpha + 26 * (1 - alpha));
-        const b = Math.round(241 * alpha + 46 * (1 - alpha));
-
-        ctx.fillStyle = `rgb(${r},${g},${b})`;
-        ctx.fillRect(col * cellW, row * cellH, cellW - 1, cellH - 1);
+        const a = Math.max(0, Math.min(1, coverage));
+        ctx.fillStyle = `rgba(176, 152, 96, ${a * 0.9 + 0.02})`;
+        ctx.fillRect(col * cellW + 0.5, row * cellH + 0.5, cellW - 1, cellH - 1);
       }
     }
 
-    // Grid lines
-    ctx.strokeStyle = 'rgba(255,255,255,0.1)';
+    ctx.strokeStyle = 'rgba(255,255,255,0.04)';
     ctx.lineWidth = 1;
-    for (let i = 0; i <= gridCols; i++) {
-      ctx.beginPath();
-      ctx.moveTo(i * cellW, 0);
-      ctx.lineTo(i * cellW, h);
-      ctx.stroke();
-    }
-    for (let i = 0; i <= gridRows; i++) {
-      ctx.beginPath();
-      ctx.moveTo(0, i * cellH);
-      ctx.lineTo(w, i * cellH);
-      ctx.stroke();
-    }
+    for (let i = 0; i <= gridCols; i++) { ctx.beginPath(); ctx.moveTo(i * cellW, 0); ctx.lineTo(i * cellW, h); ctx.stroke(); }
+    for (let i = 0; i <= gridRows; i++) { ctx.beginPath(); ctx.moveTo(0, i * cellH); ctx.lineTo(w, i * cellH); ctx.stroke(); }
   }
 
   renderGrid(nctx, noaaDims, false);
   renderGrid(actx, aaDims, true);
 }
 
-function computeCoverageAA(glyph, emX, emY, cellSize) {
-  // Simplified coverage: sample a few sub-pixels
-  const samples = 4;
-  let total = 0;
-  for (let sy = 0; sy < samples; sy++) {
-    for (let sx = 0; sx < samples; sx++) {
-      const px = emX + (sx - samples/2 + 0.5) * cellSize / samples;
-      const py = emY + (sy - samples/2 + 0.5) * cellSize / samples;
-      const { winding } = computeWindingNumber(glyph, px, py);
-      if (winding !== 0) total++;
-    }
-  }
-  return total / (samples * samples);
-}
-
 // ================================================================
-// SECTION 3c: Bands
+// SECTION 2c: Bands
 // ================================================================
 
 function initBandsSection() {
@@ -1197,193 +973,124 @@ function initBandsSection() {
   const oy = dims.height * 0.96;
   let showHorizontal = true;
 
-  const bandColors = [
-    'rgba(239, 68, 68, 0.2)',
-    'rgba(249, 115, 22, 0.2)',
-    'rgba(234, 179, 8, 0.2)',
-    'rgba(34, 197, 94, 0.2)',
-    'rgba(59, 130, 246, 0.2)',
-    'rgba(168, 85, 247, 0.2)',
-    'rgba(236, 72, 153, 0.2)',
-    'rgba(20, 184, 166, 0.2)',
-  ];
-
-  const bandColorsStrong = [
-    'rgba(239, 68, 68, 0.8)',
-    'rgba(249, 115, 22, 0.8)',
-    'rgba(234, 179, 8, 0.8)',
-    'rgba(34, 197, 94, 0.8)',
-    'rgba(59, 130, 246, 0.8)',
-    'rgba(168, 85, 247, 0.8)',
-    'rgba(236, 72, 153, 0.8)',
-    'rgba(20, 184, 166, 0.8)',
-  ];
+  const bandHues = ['0', '30', '50', '140', '220', '270', '330', '180'];
 
   function buildBands(numBands, horizontal) {
     const allCurves = getAllCurves(glyph);
-    const bounds = glyph.bounds;
+    const b = glyph.bounds;
     const bands = [];
-
     for (let i = 0; i < numBands; i++) {
-      const lo = (horizontal ? bounds[1] : bounds[0]) + i * ((horizontal ? bounds[3] - bounds[1] : bounds[2] - bounds[0]) / numBands);
-      const hi = lo + (horizontal ? bounds[3] - bounds[1] : bounds[2] - bounds[0]) / numBands;
-
+      const lo = (horizontal ? b[1] : b[0]) + i * ((horizontal ? b[3]-b[1] : b[2]-b[0]) / numBands);
+      const hi = lo + (horizontal ? b[3]-b[1] : b[2]-b[0]) / numBands;
       const curvesInBand = [];
       for (let ci = 0; ci < allCurves.length; ci++) {
         const cv = allCurves[ci];
-        const minV = Math.min(horizontal ? cv.p1.y : cv.p1.x, horizontal ? cv.p2.y : cv.p2.x, horizontal ? cv.p3.y : cv.p3.x);
-        const maxV = Math.max(horizontal ? cv.p1.y : cv.p1.x, horizontal ? cv.p2.y : cv.p2.x, horizontal ? cv.p3.y : cv.p3.x);
-        if (maxV >= lo && minV <= hi) {
-          curvesInBand.push(ci);
-        }
+        const vals = horizontal ? [cv.p1.y, cv.p2.y, cv.p3.y] : [cv.p1.x, cv.p2.x, cv.p3.x];
+        if (Math.max(...vals) >= lo && Math.min(...vals) <= hi) curvesInBand.push(ci);
       }
-
       bands.push({ lo, hi, curves: curvesInBand });
     }
     return bands;
   }
 
-  function toScreen(px, py) {
-    return { x: ox + px * scale, y: oy - py * scale };
-  }
+  function toScreen(px, py) { return { x: ox + px * scale, y: oy - py * scale }; }
 
   function draw() {
-    const w = dims.width;
-    const h = dims.height;
-    ctx.fillStyle = '#1a1a2e';
+    const w = dims.width, h = dims.height;
+    ctx.fillStyle = '#0e1220';
     ctx.fillRect(0, 0, w, h);
 
-    const numBands = 6;
-    const bands = buildBands(numBands, showHorizontal);
+    const bands = buildBands(6, showHorizontal);
     const allCurves = getAllCurves(glyph);
 
-    // Draw band regions
     for (let i = 0; i < bands.length; i++) {
       const band = bands[i];
-      const color = bandColors[i % bandColors.length];
-
+      const hue = bandHues[i % bandHues.length];
       if (showHorizontal) {
-        const top = toScreen(0, band.hi);
-        const bot = toScreen(0, band.lo);
-        ctx.fillStyle = color;
+        const top = toScreen(0, band.hi), bot = toScreen(0, band.lo);
+        ctx.fillStyle = `hsla(${hue}, 50%, 50%, 0.08)`;
         ctx.fillRect(0, top.y, w, bot.y - top.y);
       } else {
-        const left = toScreen(band.lo, 0);
-        const right = toScreen(band.hi, 0);
-        ctx.fillStyle = color;
+        const left = toScreen(band.lo, 0), right = toScreen(band.hi, 0);
+        ctx.fillStyle = `hsla(${hue}, 50%, 50%, 0.08)`;
         ctx.fillRect(left.x, 0, right.x - left.x, h);
       }
     }
 
-    // Draw all curves dimly
     for (const cv of allCurves) {
-      const s1 = toScreen(cv.p1.x, cv.p1.y);
-      const s2 = toScreen(cv.p2.x, cv.p2.y);
-      const s3 = toScreen(cv.p3.x, cv.p3.y);
-      ctx.strokeStyle = 'rgba(255,255,255,0.15)';
+      const s1 = toScreen(cv.p1.x, cv.p1.y), s2 = toScreen(cv.p2.x, cv.p2.y), s3 = toScreen(cv.p3.x, cv.p3.y);
+      ctx.strokeStyle = 'rgba(255,255,255,0.06)';
       ctx.lineWidth = 1;
-      ctx.beginPath();
-      ctx.moveTo(s1.x, s1.y);
-      ctx.quadraticCurveTo(s2.x, s2.y, s3.x, s3.y);
-      ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(s1.x, s1.y); ctx.quadraticCurveTo(s2.x, s2.y, s3.x, s3.y); ctx.stroke();
     }
 
-    // Draw curves in each band with the band's color
     for (let i = 0; i < bands.length; i++) {
       const band = bands[i];
-      const color = bandColorsStrong[i % bandColorsStrong.length];
-
+      const hue = bandHues[i % bandHues.length];
       for (const ci of band.curves) {
         const cv = allCurves[ci];
-        const s1 = toScreen(cv.p1.x, cv.p1.y);
-        const s2 = toScreen(cv.p2.x, cv.p2.y);
-        const s3 = toScreen(cv.p3.x, cv.p3.y);
-        ctx.strokeStyle = color;
-        ctx.lineWidth = 2;
-        ctx.beginPath();
-        ctx.moveTo(s1.x, s1.y);
-        ctx.quadraticCurveTo(s2.x, s2.y, s3.x, s3.y);
-        ctx.stroke();
+        const s1 = toScreen(cv.p1.x, cv.p1.y), s2 = toScreen(cv.p2.x, cv.p2.y), s3 = toScreen(cv.p3.x, cv.p3.y);
+        ctx.strokeStyle = `hsla(${hue}, 55%, 60%, 0.7)`;
+        ctx.lineWidth = 1.5;
+        ctx.beginPath(); ctx.moveTo(s1.x, s1.y); ctx.quadraticCurveTo(s2.x, s2.y, s3.x, s3.y); ctx.stroke();
       }
     }
 
-    // Band labels
-    ctx.font = '11px system-ui';
+    ctx.font = '10px IBM Plex Mono, monospace';
     for (let i = 0; i < bands.length; i++) {
       const band = bands[i];
-      const color = bandColorsStrong[i % bandColorsStrong.length];
-      ctx.fillStyle = color;
-
+      const hue = bandHues[i % bandHues.length];
+      ctx.fillStyle = `hsla(${hue}, 55%, 65%, 0.8)`;
       if (showHorizontal) {
         const mid = toScreen(0, (band.lo + band.hi) / 2);
-        ctx.fillText(`Band ${i+1}: ${band.curves.length} curves`, 5, mid.y + 4);
+        ctx.fillText(`${band.curves.length} curves`, 5, mid.y + 3);
       } else {
         const mid = toScreen((band.lo + band.hi) / 2, 0);
-        ctx.save();
-        ctx.translate(mid.x, h - 5);
-        ctx.rotate(-Math.PI/2);
-        ctx.fillText(`${band.curves.length} curves`, 0, 4);
+        ctx.save(); ctx.translate(mid.x, h - 5); ctx.rotate(-Math.PI/2);
+        ctx.fillText(`${band.curves.length}`, 0, 4);
         ctx.restore();
       }
     }
   }
 
   draw();
-
-  btnH.addEventListener('click', () => {
-    showHorizontal = true;
-    btnH.className = 'active';
-    btnV.className = 'secondary';
-    draw();
-  });
-
-  btnV.addEventListener('click', () => {
-    showHorizontal = false;
-    btnV.className = 'active';
-    btnH.className = 'secondary';
-    draw();
-  });
+  btnH.addEventListener('click', () => { showHorizontal = true; btnH.classList.add('active'); btnV.classList.remove('active'); draw(); });
+  btnV.addEventListener('click', () => { showHorizontal = false; btnV.classList.add('active'); btnH.classList.remove('active'); draw(); });
 }
 
 // ================================================================
-// SECTION 4: WebGL2 Slug Rendering
+// SECTION 3: WebGL2 Slug Rendering (with pan + zoom)
 // ================================================================
 
 function initWebGLSection() {
   const slugCanvas = document.getElementById('canvas-slug');
-  const bitmapCanvas = document.getElementById('canvas-bitmap2');
-  const slider = document.getElementById('zoom-slider2');
-  const valueLabel = document.getElementById('zoom-value2');
+  const bitmapCanvas = document.getElementById('canvas-bitmap');
+  const slider = document.getElementById('zoom-slider');
+  const valueLabel = document.getElementById('zoom-value');
   const errorDiv = document.getElementById('webgl-error');
 
-  // Size the WebGL canvas to match CSS display size * DPR
+  // Size canvases
   const dpr = window.devicePixelRatio || 1;
   const slugRect = slugCanvas.getBoundingClientRect();
   slugCanvas.width = Math.round(slugRect.width * dpr);
   slugCanvas.height = Math.round(slugRect.height * dpr);
   const slugDims = { width: slugRect.width, height: slugRect.height };
 
-  const bitmapDims2 = setupCanvas(bitmapCanvas);
+  const bitmapDims = setupCanvas(bitmapCanvas);
 
   const gl = slugCanvas.getContext('webgl2');
-  if (!gl) {
-    errorDiv.style.display = 'block';
-    return;
-  }
+  if (!gl) { errorDiv.style.display = 'block'; return; }
 
-  // -------- Shaders --------
+  // ---- Shaders ----
   const vsSource = `#version 300 es
     in vec2 a_position;
     in vec2 a_texcoord;
     in vec4 a_banding;
     in ivec4 a_glyph;
-
     out vec2 v_texcoord;
     flat out vec4 v_banding;
     flat out ivec4 v_glyph;
-
     uniform mat4 u_mvp;
-
     void main() {
       gl_Position = u_mvp * vec4(a_position, 0.0, 1.0);
       v_texcoord = a_texcoord;
@@ -1392,19 +1099,15 @@ function initWebGLSection() {
     }
   `;
 
-  // Fragment shader: port of SlugPixelShader.hlsl to GLSL ES 3.0
   const fsSource = `#version 300 es
     precision highp float;
     precision highp int;
-
     in vec2 v_texcoord;
     flat in vec4 v_banding;
     flat in ivec4 v_glyph;
-
     uniform sampler2D u_curveTexture;
     uniform highp usampler2D u_bandTexture;
     uniform vec4 u_color;
-
     out vec4 fragColor;
 
     #define kLogBandTextureWidth 12
@@ -1413,10 +1116,8 @@ function initWebGLSection() {
       uint i1 = floatBitsToUint(y1) >> 31u;
       uint i2 = floatBitsToUint(y2) >> 30u;
       uint i3 = floatBitsToUint(y3) >> 29u;
-
       uint shift = (i2 & 2u) | (i1 & ~2u);
       shift = (i3 & 4u) | (shift & ~4u);
-
       return (0x2E74u >> shift) & 0x0101u;
     }
 
@@ -1425,17 +1126,11 @@ function initWebGLSection() {
       vec2 b = p12.xy - p12.zw;
       float ra = 1.0 / a.y;
       float rb = 0.5 / b.y;
-
       float d = sqrt(max(b.y * b.y - a.y * p12.y, 0.0));
       float t1 = (b.y - d) * ra;
       float t2 = (b.y + d) * ra;
-
       if (abs(a.y) < 1.0 / 65536.0) { t1 = p12.y * rb; t2 = t1; }
-
-      return vec2(
-        (a.x * t1 - b.x * 2.0) * t1 + p12.x,
-        (a.x * t2 - b.x * 2.0) * t2 + p12.x
-      );
+      return vec2((a.x * t1 - b.x * 2.0) * t1 + p12.x, (a.x * t2 - b.x * 2.0) * t2 + p12.x);
     }
 
     vec2 solveVertPoly(vec4 p12, vec2 p3) {
@@ -1443,17 +1138,11 @@ function initWebGLSection() {
       vec2 b = p12.xy - p12.zw;
       float ra = 1.0 / a.x;
       float rb = 0.5 / b.x;
-
       float d = sqrt(max(b.x * b.x - a.x * p12.x, 0.0));
       float t1 = (b.x - d) * ra;
       float t2 = (b.x + d) * ra;
-
       if (abs(a.x) < 1.0 / 65536.0) { t1 = p12.x * rb; t2 = t1; }
-
-      return vec2(
-        (a.y * t1 - b.y * 2.0) * t1 + p12.y,
-        (a.y * t2 - b.y * 2.0) * t2 + p12.y
-      );
+      return vec2((a.y * t1 - b.y * 2.0) * t1 + p12.y, (a.y * t2 - b.y * 2.0) * t2 + p12.y);
     }
 
     ivec2 calcBandLoc(ivec2 glyphLoc, uint offset) {
@@ -1464,82 +1153,49 @@ function initWebGLSection() {
     }
 
     float calcCoverage(float xcov, float ycov, float xwgt, float ywgt) {
-      float coverage = max(
-        abs(xcov * xwgt + ycov * ywgt) / max(xwgt + ywgt, 1.0 / 65536.0),
-        min(abs(xcov), abs(ycov))
-      );
+      float coverage = max(abs(xcov * xwgt + ycov * ywgt) / max(xwgt + ywgt, 1.0 / 65536.0), min(abs(xcov), abs(ycov)));
       return clamp(coverage, 0.0, 1.0);
     }
 
     float slugRender(vec2 renderCoord) {
-      int curveIndex;
       vec2 emsPerPixel = fwidth(renderCoord);
       vec2 pixelsPerEm = 1.0 / emsPerPixel;
-
       ivec2 bandMax = v_glyph.zw;
       bandMax.y &= 0x00FF;
-
-      ivec2 bandIndex = clamp(
-        ivec2(renderCoord * v_banding.xy + v_banding.zw),
-        ivec2(0, 0), bandMax
-      );
+      ivec2 bandIndex = clamp(ivec2(renderCoord * v_banding.xy + v_banding.zw), ivec2(0), bandMax);
       ivec2 glyphLoc = v_glyph.xy;
 
-      float xcov = 0.0;
-      float xwgt = 0.0;
-
+      float xcov = 0.0, xwgt = 0.0;
       uvec2 hbandData = texelFetch(u_bandTexture, ivec2(glyphLoc.x + bandIndex.y, glyphLoc.y), 0).xy;
       ivec2 hbandLoc = calcBandLoc(glyphLoc, hbandData.y);
 
-      for (curveIndex = 0; curveIndex < int(hbandData.x); curveIndex++) {
-        ivec2 curveLoc = ivec2(texelFetch(u_bandTexture, ivec2(hbandLoc.x + curveIndex, hbandLoc.y), 0).xy);
+      for (int ci = 0; ci < int(hbandData.x); ci++) {
+        ivec2 curveLoc = ivec2(texelFetch(u_bandTexture, ivec2(hbandLoc.x + ci, hbandLoc.y), 0).xy);
         vec4 p12 = texelFetch(u_curveTexture, curveLoc, 0) - vec4(renderCoord, renderCoord);
         vec2 p3 = texelFetch(u_curveTexture, ivec2(curveLoc.x + 1, curveLoc.y), 0).xy - renderCoord;
-
         if (max(max(p12.x, p12.z), p3.x) * pixelsPerEm.x < -0.5) break;
-
         uint code = calcRootCode(p12.y, p12.w, p3.y);
         if (code != 0u) {
           vec2 r = solveHorizPoly(p12, p3) * pixelsPerEm.x;
-
-          if ((code & 1u) != 0u) {
-            xcov += clamp(r.x + 0.5, 0.0, 1.0);
-            xwgt = max(xwgt, clamp(1.0 - abs(r.x) * 2.0, 0.0, 1.0));
-          }
-
-          if (code > 1u) {
-            xcov -= clamp(r.y + 0.5, 0.0, 1.0);
-            xwgt = max(xwgt, clamp(1.0 - abs(r.y) * 2.0, 0.0, 1.0));
-          }
+          if ((code & 1u) != 0u) { xcov += clamp(r.x + 0.5, 0.0, 1.0); xwgt = max(xwgt, clamp(1.0 - abs(r.x) * 2.0, 0.0, 1.0)); }
+          if (code > 1u) { xcov -= clamp(r.y + 0.5, 0.0, 1.0); xwgt = max(xwgt, clamp(1.0 - abs(r.y) * 2.0, 0.0, 1.0)); }
         }
       }
 
-      float ycov = 0.0;
-      float ywgt = 0.0;
-
+      float ycov = 0.0, ywgt = 0.0;
       uvec2 vbandData = texelFetch(u_bandTexture, ivec2(glyphLoc.x + bandMax.y + 1 + bandIndex.x, glyphLoc.y), 0).xy;
       ivec2 vbandLoc = calcBandLoc(glyphLoc, vbandData.y);
 
-      for (curveIndex = 0; curveIndex < int(vbandData.x); curveIndex++) {
-        ivec2 curveLoc = ivec2(texelFetch(u_bandTexture, ivec2(vbandLoc.x + curveIndex, vbandLoc.y), 0).xy);
+      for (int ci = 0; ci < int(vbandData.x); ci++) {
+        ivec2 curveLoc = ivec2(texelFetch(u_bandTexture, ivec2(vbandLoc.x + ci, vbandLoc.y), 0).xy);
         vec4 p12 = texelFetch(u_curveTexture, curveLoc, 0) - vec4(renderCoord, renderCoord);
         vec2 p3 = texelFetch(u_curveTexture, ivec2(curveLoc.x + 1, curveLoc.y), 0).xy - renderCoord;
-
         if (max(max(p12.y, p12.w), p3.y) * pixelsPerEm.y < -0.5) break;
-
         uint code = calcRootCode(p12.x, p12.z, p3.x);
         if (code != 0u) {
           vec2 r = solveVertPoly(p12, p3) * pixelsPerEm.y;
-
-          if ((code & 1u) != 0u) {
-            ycov -= clamp(r.x + 0.5, 0.0, 1.0);
-            ywgt = max(ywgt, clamp(1.0 - abs(r.x) * 2.0, 0.0, 1.0));
-          }
-
-          if (code > 1u) {
-            ycov += clamp(r.y + 0.5, 0.0, 1.0);
-            ywgt = max(ywgt, clamp(1.0 - abs(r.y) * 2.0, 0.0, 1.0));
-          }
+          if ((code & 1u) != 0u) { ycov -= clamp(r.x + 0.5, 0.0, 1.0); ywgt = max(ywgt, clamp(1.0 - abs(r.x) * 2.0, 0.0, 1.0)); }
+          if (code > 1u) { ycov += clamp(r.y + 0.5, 0.0, 1.0); ywgt = max(ywgt, clamp(1.0 - abs(r.y) * 2.0, 0.0, 1.0)); }
         }
       }
 
@@ -1552,55 +1208,36 @@ function initWebGLSection() {
     }
   `;
 
-  // -------- Compile shaders --------
   function compileShader(src, type) {
-    const shader = gl.createShader(type);
-    gl.shaderSource(shader, src);
-    gl.compileShader(shader);
-    if (!gl.getShaderParameter(shader, gl.COMPILE_STATUS)) {
-      console.error('Shader compile error:', gl.getShaderInfoLog(shader));
-      return null;
-    }
-    return shader;
+    const s = gl.createShader(type);
+    gl.shaderSource(s, src);
+    gl.compileShader(s);
+    if (!gl.getShaderParameter(s, gl.COMPILE_STATUS)) { console.error(gl.getShaderInfoLog(s)); return null; }
+    return s;
   }
 
   const vs = compileShader(vsSource, gl.VERTEX_SHADER);
   const fs = compileShader(fsSource, gl.FRAGMENT_SHADER);
-  if (!vs || !fs) {
-    errorDiv.style.display = 'block';
-    errorDiv.textContent = 'Shader compilation failed. Check console for details.';
-    return;
-  }
+  if (!vs || !fs) { errorDiv.style.display = 'block'; errorDiv.textContent = 'Shader compilation failed.'; return; }
 
   const program = gl.createProgram();
-  gl.attachShader(program, vs);
-  gl.attachShader(program, fs);
+  gl.attachShader(program, vs); gl.attachShader(program, fs);
   gl.linkProgram(program);
-  if (!gl.getProgramParameter(program, gl.LINK_STATUS)) {
-    console.error('Program link error:', gl.getProgramInfoLog(program));
-    errorDiv.style.display = 'block';
-    errorDiv.textContent = 'Shader program link failed. Check console for details.';
-    return;
-  }
+  if (!gl.getProgramParameter(program, gl.LINK_STATUS)) { errorDiv.style.display = 'block'; return; }
 
-  // -------- Build glyph data for GPU --------
+  // ---- Build GPU data ----
   const word = ['S', 'l', 'u', 'g'];
 
   function buildSlugData(glyphs) {
-    // Build curve texture and band texture data for all glyphs
-    const curveTexels = []; // Each pair of texels: [p1x,p1y,p2x,p2y], [p3x,p3y, 0, 0]
-    const bandEntries = []; // Band index data
-
-    const glyphInfos = [];
+    const curveTexels = [], bandEntries = [], glyphInfos = [];
     let curveTexelOffset = 0;
 
     for (const ch of glyphs) {
       const glyph = GLYPH_DATA[ch];
       const allCurves = getAllCurves(glyph);
       const bounds = glyph.bounds;
-
-      // Store curve control points
       const curveLocations = [];
+
       for (const cv of allCurves) {
         curveLocations.push(curveTexelOffset);
         curveTexels.push(cv.p1.x, cv.p1.y, cv.p2.x, cv.p2.y);
@@ -1608,332 +1245,248 @@ function initWebGLSection() {
         curveTexelOffset += 2;
       }
 
-      // Build horizontal bands
       const numHBands = Math.max(1, Math.min(8, Math.ceil(allCurves.length / 3)));
       const numVBands = Math.max(1, Math.min(8, Math.ceil(allCurves.length / 3)));
 
-      const hBandHeight = (bounds[3] - bounds[1]) / numHBands;
-      const vBandWidth = (bounds[2] - bounds[0]) / numVBands;
+      const glyphBandStart = bandEntries.length / 2;
+      let dataOffset = numHBands + numVBands;
 
-      const bandDataStart = bandEntries.length;
-
-      // Horizontal band headers
-      const hBandHeaders = [];
-      const hBandCurveLists = [];
+      const hLists = [], vLists = [];
 
       for (let bi = 0; bi < numHBands; bi++) {
-        const lo = bounds[1] + bi * hBandHeight;
-        const hi = lo + hBandHeight;
-        const curvesInBand = [];
-
+        const lo = bounds[1] + bi * (bounds[3]-bounds[1]) / numHBands;
+        const hi = lo + (bounds[3]-bounds[1]) / numHBands;
+        const list = [];
         for (let ci = 0; ci < allCurves.length; ci++) {
           const cv = allCurves[ci];
-          const minY = Math.min(cv.p1.y, cv.p2.y, cv.p3.y);
-          const maxY = Math.max(cv.p1.y, cv.p2.y, cv.p3.y);
-          if (maxY >= lo && minY <= hi) {
-            curvesInBand.push(ci);
-          }
+          if (Math.max(cv.p1.y, cv.p2.y, cv.p3.y) >= lo && Math.min(cv.p1.y, cv.p2.y, cv.p3.y) <= hi) list.push(ci);
         }
-
-        // Sort by max x coordinate descending (for early exit optimization)
-        curvesInBand.sort((a, b) => {
-          const ca = allCurves[a], cb = allCurves[b];
-          const maxA = Math.max(ca.p1.x, ca.p2.x, ca.p3.x);
-          const maxB = Math.max(cb.p1.x, cb.p2.x, cb.p3.x);
-          return maxB - maxA;
-        });
-
-        hBandHeaders.push(curvesInBand.length);
-        hBandCurveLists.push(curvesInBand);
+        list.sort((a,b) => Math.max(allCurves[b].p1.x, allCurves[b].p2.x, allCurves[b].p3.x) - Math.max(allCurves[a].p1.x, allCurves[a].p2.x, allCurves[a].p3.x));
+        hLists.push(list);
+        bandEntries.push(list.length, dataOffset);
+        dataOffset += list.length;
       }
 
-      // Vertical band headers
-      const vBandHeaders = [];
-      const vBandCurveLists = [];
-
       for (let bi = 0; bi < numVBands; bi++) {
-        const lo = bounds[0] + bi * vBandWidth;
-        const hi = lo + vBandWidth;
-        const curvesInBand = [];
-
+        const lo = bounds[0] + bi * (bounds[2]-bounds[0]) / numVBands;
+        const hi = lo + (bounds[2]-bounds[0]) / numVBands;
+        const list = [];
         for (let ci = 0; ci < allCurves.length; ci++) {
           const cv = allCurves[ci];
-          const minX = Math.min(cv.p1.x, cv.p2.x, cv.p3.x);
-          const maxX = Math.max(cv.p1.x, cv.p2.x, cv.p3.x);
-          if (maxX >= lo && minX <= hi) {
-            curvesInBand.push(ci);
-          }
+          if (Math.max(cv.p1.x, cv.p2.x, cv.p3.x) >= lo && Math.min(cv.p1.x, cv.p2.x, cv.p3.x) <= hi) list.push(ci);
         }
-
-        // Sort by max y coordinate descending
-        curvesInBand.sort((a, b) => {
-          const ca = allCurves[a], cb = allCurves[b];
-          const maxA = Math.max(ca.p1.y, ca.p2.y, ca.p3.y);
-          const maxB = Math.max(cb.p1.y, cb.p2.y, cb.p3.y);
-          return maxB - maxA;
-        });
-
-        vBandHeaders.push(curvesInBand.length);
-        vBandCurveLists.push(curvesInBand);
+        list.sort((a,b) => Math.max(allCurves[b].p1.y, allCurves[b].p2.y, allCurves[b].p3.y) - Math.max(allCurves[a].p1.y, allCurves[a].p2.y, allCurves[a].p3.y));
+        vLists.push(list);
+        bandEntries.push(list.length, dataOffset);
+        dataOffset += list.length;
       }
 
-      // Pack band data:
-      // First: horizontal band headers (count, offset)
-      // Then: vertical band headers (count, offset)
-      // Then: curve location lists for each band
-
-      const glyphBandStart = bandEntries.length / 2; // in texels
-      let dataOffset = numHBands + numVBands; // offset from glyph start to first curve list
-
-      // Horizontal headers
-      for (let bi = 0; bi < numHBands; bi++) {
-        bandEntries.push(hBandHeaders[bi]); // curve count
-        bandEntries.push(dataOffset); // offset to curve list
-        dataOffset += hBandCurveLists[bi].length;
-      }
-
-      // Vertical headers
-      for (let bi = 0; bi < numVBands; bi++) {
-        bandEntries.push(vBandHeaders[bi]);
-        bandEntries.push(dataOffset);
-        dataOffset += vBandCurveLists[bi].length;
-      }
-
-      // Curve lists for horizontal bands
-      for (const list of hBandCurveLists) {
-        for (const ci of list) {
-          bandEntries.push(curveLocations[ci]); // x coord in curve texture
-          bandEntries.push(0); // y coord (always 0 for single-row)
-        }
-      }
-
-      // Curve lists for vertical bands
-      for (const list of vBandCurveLists) {
-        for (const ci of list) {
-          bandEntries.push(curveLocations[ci]);
-          bandEntries.push(0);
-        }
-      }
-
-      // Band transform: scale and offset to map em-space coords to band indices
-      const bandScaleY = numHBands / (bounds[3] - bounds[1]);
-      const bandOffsetY = -bounds[1] * bandScaleY;
-      const bandScaleX = numVBands / (bounds[2] - bounds[0]);
-      const bandOffsetX = -bounds[0] * bandScaleX;
+      for (const list of hLists) for (const ci of list) bandEntries.push(curveLocations[ci], 0);
+      for (const list of vLists) for (const ci of list) bandEntries.push(curveLocations[ci], 0);
 
       glyphInfos.push({
-        ch,
-        advance: glyph.advance,
-        bounds: bounds,
-        bandTransform: [bandScaleX, bandScaleY, bandOffsetX, bandOffsetY],
-        glyphLoc: [glyphBandStart, 0], // x,y in band texture
+        advance: glyph.advance, bounds,
+        bandTransform: [numVBands / (bounds[2]-bounds[0]), numHBands / (bounds[3]-bounds[1]), -bounds[0] * numVBands / (bounds[2]-bounds[0]), -bounds[1] * numHBands / (bounds[3]-bounds[1])],
+        glyphLoc: [glyphBandStart, 0],
         bandMax: [numVBands - 1, numHBands - 1],
       });
     }
-
     return { curveTexels, bandEntries, glyphInfos };
   }
 
   const slugData = buildSlugData(word);
 
-  // -------- Create textures --------
-  // Curve texture: RGBA32F, single row
-  const numCurveTexels = slugData.curveTexels.length / 4;
+  // Textures
   const curveTexture = gl.createTexture();
   gl.activeTexture(gl.TEXTURE0);
   gl.bindTexture(gl.TEXTURE_2D, curveTexture);
-  gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA32F, numCurveTexels, 1, 0, gl.RGBA, gl.FLOAT, new Float32Array(slugData.curveTexels));
+  gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA32F, slugData.curveTexels.length / 4, 1, 0, gl.RGBA, gl.FLOAT, new Float32Array(slugData.curveTexels));
   gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
   gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
   gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
   gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
 
-  // Band texture: RG32UI, single row
-  const numBandTexels = slugData.bandEntries.length / 2;
   const bandTexture = gl.createTexture();
   gl.activeTexture(gl.TEXTURE1);
   gl.bindTexture(gl.TEXTURE_2D, bandTexture);
-  gl.texImage2D(gl.TEXTURE_2D, 0, gl.RG32UI, numBandTexels, 1, 0, gl.RG_INTEGER, gl.UNSIGNED_INT, new Uint32Array(slugData.bandEntries));
+  gl.texImage2D(gl.TEXTURE_2D, 0, gl.RG32UI, slugData.bandEntries.length / 2, 1, 0, gl.RG_INTEGER, gl.UNSIGNED_INT, new Uint32Array(slugData.bandEntries));
   gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
   gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
   gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
   gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
 
-  // -------- Build quad geometry for each glyph --------
-  // Layout the word "Slug" with proper advances
-  const positions = []; // 2 floats per vertex
-  const texcoords = []; // 2 floats per vertex
-  const bandings = []; // 4 floats per vertex
-  const glyphDatas = []; // 4 ints per vertex
-  const indices = [];
-
-  let cursorX = 0;
+  // Geometry
+  const positions = [], texcoords = [], bandings = [], glyphDatas = [], indices = [];
   const totalAdvance = slugData.glyphInfos.reduce((s, g) => s + g.advance, 0);
-  cursorX = -totalAdvance / 2;
+  let cursorX = -totalAdvance / 2;
 
-  for (let gi = 0; gi < slugData.glyphInfos.length; gi++) {
-    const info = slugData.glyphInfos[gi];
-    const b = info.bounds;
-    const pad = 0.02; // small padding around glyph bounds
-
-    const x0 = cursorX + b[0] - pad;
-    const y0 = b[1] - pad;
-    const x1 = cursorX + b[2] + pad;
-    const y1 = b[3] + pad;
-
-    // Em-space texcoords match the position but without the cursor offset for the glyph
-    const tx0 = b[0] - pad;
-    const ty0 = b[1] - pad;
-    const tx1 = b[2] + pad;
-    const ty1 = b[3] + pad;
-
+  for (const info of slugData.glyphInfos) {
+    const b = info.bounds, pad = 0.02;
+    const x0 = cursorX + b[0] - pad, y0 = b[1] - pad, x1 = cursorX + b[2] + pad, y1 = b[3] + pad;
+    const tx0 = b[0] - pad, ty0 = b[1] - pad, tx1 = b[2] + pad, ty1 = b[3] + pad;
     const vi = positions.length / 2;
-
-    // 4 vertices for quad
-    positions.push(x0, y0, x1, y0, x1, y1, x0, y1);
-    texcoords.push(tx0, ty0, tx1, ty0, tx1, ty1, tx0, ty1);
-
+    positions.push(x0,y0, x1,y0, x1,y1, x0,y1);
+    texcoords.push(tx0,ty0, tx1,ty0, tx1,ty1, tx0,ty1);
     for (let v = 0; v < 4; v++) {
-      bandings.push(info.bandTransform[0], info.bandTransform[1], info.bandTransform[2], info.bandTransform[3]);
+      bandings.push(...info.bandTransform);
       glyphDatas.push(info.glyphLoc[0], info.glyphLoc[1], info.bandMax[0], info.bandMax[1]);
     }
-
-    indices.push(vi, vi+1, vi+2, vi, vi+2, vi+3);
+    indices.push(vi,vi+1,vi+2, vi,vi+2,vi+3);
     cursorX += info.advance;
   }
 
-  // -------- Create buffers and VAO --------
   const vao = gl.createVertexArray();
   gl.bindVertexArray(vao);
 
-  const aPos = gl.getAttribLocation(program, 'a_position');
-  const aTex = gl.getAttribLocation(program, 'a_texcoord');
-  const aBand = gl.getAttribLocation(program, 'a_banding');
-  const aGlyph = gl.getAttribLocation(program, 'a_glyph');
-
-  function makeBuffer(data, attrib, size, type, isInt) {
+  function makeBuf(data, attr, size, type, isInt) {
     const buf = gl.createBuffer();
     gl.bindBuffer(gl.ARRAY_BUFFER, buf);
     gl.bufferData(gl.ARRAY_BUFFER, data, gl.STATIC_DRAW);
-    if (isInt) {
-      gl.vertexAttribIPointer(attrib, size, type, 0, 0);
-    } else {
-      gl.vertexAttribPointer(attrib, size, type, false, 0, 0);
-    }
-    gl.enableVertexAttribArray(attrib);
-    return buf;
+    if (isInt) gl.vertexAttribIPointer(attr, size, type, 0, 0);
+    else gl.vertexAttribPointer(attr, size, type, false, 0, 0);
+    gl.enableVertexAttribArray(attr);
   }
 
-  makeBuffer(new Float32Array(positions), aPos, 2, gl.FLOAT, false);
-  makeBuffer(new Float32Array(texcoords), aTex, 2, gl.FLOAT, false);
-  makeBuffer(new Float32Array(bandings), aBand, 4, gl.FLOAT, false);
-  makeBuffer(new Int32Array(glyphDatas), aGlyph, 4, gl.INT, true);
+  makeBuf(new Float32Array(positions), gl.getAttribLocation(program, 'a_position'), 2, gl.FLOAT, false);
+  makeBuf(new Float32Array(texcoords), gl.getAttribLocation(program, 'a_texcoord'), 2, gl.FLOAT, false);
+  makeBuf(new Float32Array(bandings), gl.getAttribLocation(program, 'a_banding'), 4, gl.FLOAT, false);
+  makeBuf(new Int32Array(glyphDatas), gl.getAttribLocation(program, 'a_glyph'), 4, gl.INT, true);
 
   const indexBuf = gl.createBuffer();
   gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, indexBuf);
   gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, new Uint16Array(indices), gl.STATIC_DRAW);
-
   gl.bindVertexArray(null);
 
-  // -------- Uniforms --------
   const uMvp = gl.getUniformLocation(program, 'u_mvp');
   const uColor = gl.getUniformLocation(program, 'u_color');
   const uCurveTex = gl.getUniformLocation(program, 'u_curveTexture');
   const uBandTex = gl.getUniformLocation(program, 'u_bandTexture');
 
-  // -------- Bitmap side --------
+  // ---- Bitmap side ----
   const bctx = bitmapCanvas.getContext('2d');
-
-  // Render "Slug" bitmap at a base size
-  const bitmapBaseSize = 40;
   const offscreen = document.createElement('canvas');
-  offscreen.width = 120;
-  offscreen.height = 48;
+  offscreen.width = 120; offscreen.height = 48;
   const octx = offscreen.getContext('2d');
-  octx.fillStyle = '#1a1a2e';
-  octx.fillRect(0, 0, offscreen.width, offscreen.height);
-  octx.font = `bold ${bitmapBaseSize}px sans-serif`;
-  octx.fillStyle = '#818cf8';
+  octx.fillStyle = '#0e1220';
+  octx.fillRect(0, 0, 120, 48);
+  octx.font = 'bold 40px sans-serif';
+  octx.fillStyle = '#b09860';
   octx.textBaseline = 'middle';
-  octx.fillText('Slug', 4, offscreen.height / 2);
+  octx.fillText('Slug', 4, 24);
 
-  function drawBitmap(zoom) {
-    const w = bitmapDims2.width;
-    const h = bitmapDims2.height;
+  // ---- Pan + Zoom state ----
+  let zoom = 1;
+  let panX = 0, panY = 0; // in em-space
+
+  function drawBitmap() {
+    const w = bitmapDims.width, h = bitmapDims.height;
     bctx.save();
-    bctx.setTransform(1, 0, 0, 1, 0, 0);
+    bctx.setTransform(1,0,0,1,0,0);
     bctx.clearRect(0, 0, bitmapCanvas.width, bitmapCanvas.height);
     bctx.restore();
-    bctx.fillStyle = '#1a1a2e';
+    bctx.fillStyle = '#0e1220';
     bctx.fillRect(0, 0, w, h);
     bctx.imageSmoothingEnabled = false;
 
-    const srcW = offscreen.width / zoom;
-    const srcH = offscreen.height / zoom;
-    const srcX = (offscreen.width - srcW) / 2;
-    const srcY = (offscreen.height - srcH) / 2;
+    // Map pan from em-space to bitmap pixel space
+    const bitmapScale = 120 / (totalAdvance * 1.1); // approx: 120px covers totalAdvance
+    const srcW = 120 / zoom, srcH = 48 / zoom;
+    const srcCenterX = 60 - panX * bitmapScale;
+    const srcCenterY = 24 + panY * bitmapScale;
+    const srcX = srcCenterX - srcW / 2;
+    const srcY = srcCenterY - srcH / 2;
     bctx.drawImage(offscreen, srcX, srcY, srcW, srcH, 0, 0, w, h);
   }
 
-  function drawSlug(zoom) {
-    const w = slugCanvas.width;
-    const h = slugCanvas.height;
-
+  function drawSlug() {
+    const w = slugCanvas.width, h = slugCanvas.height;
     gl.viewport(0, 0, w, h);
-    gl.clearColor(0.102, 0.102, 0.180, 1.0);
+    gl.clearColor(0.055, 0.071, 0.125, 1.0);
     gl.clear(gl.COLOR_BUFFER_BIT);
-
     gl.enable(gl.BLEND);
     gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
-
     gl.useProgram(program);
 
-    // Orthographic projection: map em-space to clip space
-    // Base view sized so "Slug" fills the canvas at 1x, matching the bitmap side
     const aspect = w / h;
-    const baseViewH = 1.2; // enough to show full glyph height with padding
+    const baseViewH = 1.2;
     const viewH = baseViewH / zoom;
     const viewW = viewH * aspect;
-
-    // Center on the middle of the word
-    const cx = 0;
-    const cy = 0.28; // vertical center of glyphs (descenders to ascenders)
+    const cx = panX, cy = 0.28 + panY;
 
     const mvp = new Float32Array([
-      2.0 / viewW, 0, 0, 0,
-      0, 2.0 / viewH, 0, 0,
+      2/viewW, 0, 0, 0,
+      0, 2/viewH, 0, 0,
       0, 0, 1, 0,
-      -2.0 * cx / viewW, -2.0 * cy / viewH, 0, 1
+      -2*cx/viewW, -2*cy/viewH, 0, 1
     ]);
 
     gl.uniformMatrix4fv(uMvp, false, mvp);
-    gl.uniform4f(uColor, 0.506, 0.400, 0.945, 1.0);
-
-    gl.activeTexture(gl.TEXTURE0);
-    gl.bindTexture(gl.TEXTURE_2D, curveTexture);
-    gl.uniform1i(uCurveTex, 0);
-
-    gl.activeTexture(gl.TEXTURE1);
-    gl.bindTexture(gl.TEXTURE_2D, bandTexture);
-    gl.uniform1i(uBandTex, 1);
-
+    gl.uniform4f(uColor, 0.69, 0.60, 0.38, 1.0);
+    gl.activeTexture(gl.TEXTURE0); gl.bindTexture(gl.TEXTURE_2D, curveTexture); gl.uniform1i(uCurveTex, 0);
+    gl.activeTexture(gl.TEXTURE1); gl.bindTexture(gl.TEXTURE_2D, bandTexture); gl.uniform1i(uBandTex, 1);
     gl.bindVertexArray(vao);
     gl.drawElements(gl.TRIANGLES, indices.length, gl.UNSIGNED_SHORT, 0);
     gl.bindVertexArray(null);
   }
 
-  function render(zoom) {
-    drawBitmap(zoom);
-    drawSlug(zoom);
-  }
-
-  render(1);
+  function render() { drawBitmap(); drawSlug(); }
+  render();
 
   slider.addEventListener('input', () => {
-    const zoom = parseFloat(slider.value);
+    zoom = parseFloat(slider.value);
     valueLabel.textContent = zoom + 'x';
-    render(zoom);
+    render();
   });
+
+  // ---- Pan via drag (both canvases) ----
+  let dragging = false, lastMx = 0, lastMy = 0;
+
+  function startDrag(e) {
+    dragging = true;
+    lastMx = e.clientX; lastMy = e.clientY;
+    slugCanvas.style.cursor = 'grabbing';
+    bitmapCanvas.style.cursor = 'grabbing';
+  }
+
+  function moveDrag(e) {
+    if (!dragging) return;
+    const dx = e.clientX - lastMx, dy = e.clientY - lastMy;
+    lastMx = e.clientX; lastMy = e.clientY;
+    // Convert pixel drag to em-space
+    const aspect = slugCanvas.width / slugCanvas.height;
+    const viewH = 1.2 / zoom;
+    const viewW = viewH * aspect;
+    panX -= dx / slugDims.width * viewW;
+    panY += dy / slugDims.height * viewH;
+    render();
+  }
+
+  function endDrag() {
+    dragging = false;
+    slugCanvas.style.cursor = 'grab';
+    bitmapCanvas.style.cursor = 'grab';
+  }
+
+  for (const c of [slugCanvas, bitmapCanvas]) {
+    c.style.cursor = 'grab';
+    c.addEventListener('mousedown', startDrag);
+    c.addEventListener('mousemove', moveDrag);
+    c.addEventListener('mouseup', endDrag);
+    c.addEventListener('mouseleave', endDrag);
+  }
+
+  // ---- Scroll to zoom (on either canvas) ----
+  function handleWheel(e) {
+    e.preventDefault();
+    const delta = e.deltaY > 0 ? 0.9 : 1.1;
+    zoom = Math.max(1, Math.min(64, zoom * delta));
+    slider.value = zoom;
+    valueLabel.textContent = zoom.toFixed(1).replace(/\.0$/, '') + 'x';
+    render();
+  }
+
+  slugCanvas.addEventListener('wheel', handleWheel, { passive: false });
+  bitmapCanvas.addEventListener('wheel', handleWheel, { passive: false });
 }
 
 // ================================================================
@@ -1941,7 +1494,6 @@ function initWebGLSection() {
 // ================================================================
 
 document.addEventListener('DOMContentLoaded', () => {
-  initBitmapSection();
   initBezierSection();
   initWindingSection();
   initAASection();
