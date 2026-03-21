@@ -418,7 +418,21 @@
   </div>
 
   <h3>Anti-aliasing</h3>
-  <p>A binary inside/outside decision produces jagged edges. Slug casts two rays (horizontal and vertical) and measures <em>how far</em> each crossing is from the pixel center to produce partial coverage.</p>
+  <p>The winding number gives a binary answer: inside or outside. That produces jagged staircase edges. Slug improves on this by computing <em>how much</em> of each pixel is covered by the glyph.</p>
+
+  <p>Here is how it works. When the horizontal ray crosses a curve, Slug measures where that crossing lands relative to the pixel. Imagine the pixel as a 1-unit-wide window:</p>
+
+  <div class="canvas-wrap">
+    <canvas id="canvas-coverage" class="square"></canvas>
+    <div class="click-hint">drag the curve crossing</div>
+  </div>
+
+  <div class="callout">
+    <p>If the crossing is at the pixel's left edge, coverage is 0 (nothing is filled). At the right edge, coverage is 1 (fully filled). In between, coverage ramps linearly. A crossing at the center means the pixel is half-covered, so it gets drawn at 50% opacity.</p>
+    <p>Slug does this for both a horizontal and a vertical ray, then blends the two coverage values. This produces smooth edges in all directions, not just horizontally.</p>
+  </div>
+
+  <p>The result compared to the binary approach:</p>
 
   <div class="side-by-side">
     <div>
@@ -429,10 +443,6 @@
       <div class="canvas-label">Coverage-based AA</div>
       <canvas id="canvas-aa" class="square"></canvas>
     </div>
-  </div>
-
-  <div class="callout">
-    <p>Edge pixels get a fractional coverage (e.g., 0.3 = 30% covered), producing smooth outlines without blur.</p>
   </div>
 
   <h3>Band Optimization</h3>
@@ -905,6 +915,184 @@ function initWindingSection() {
 // ================================================================
 // SECTION 2b: Anti-aliasing comparison
 // ================================================================
+
+function initCoverageSection() {
+  const canvas = document.getElementById('canvas-coverage');
+  const dims = setupCanvas(canvas);
+  const ctx = canvas.getContext('2d');
+  const w = dims.width, h = dims.height;
+
+  // Interactive: a single pixel with a draggable curve crossing point
+  let crossingX = 0.65; // 0 = left edge of pixel, 1 = right edge
+
+  function draw() {
+    ctx.fillStyle = '#0e1220';
+    ctx.fillRect(0, 0, w, h);
+
+    const pixelLeft = w * 0.15;
+    const pixelRight = w * 0.85;
+    const pixelW = pixelRight - pixelLeft;
+    const pixelTop = h * 0.15;
+    const pixelBot = h * 0.55;
+    const pixelH = pixelBot - pixelTop;
+
+    // Draw the pixel box
+    ctx.strokeStyle = '#2a2f40';
+    ctx.lineWidth = 1;
+    ctx.strokeRect(pixelLeft, pixelTop, pixelW, pixelH);
+
+    // Fill the covered portion (left side up to crossing)
+    const coverageVal = Math.max(0, Math.min(1, crossingX));
+    const fillW = pixelW * coverageVal;
+    ctx.fillStyle = `rgba(176, 152, 96, ${coverageVal * 0.7 + 0.05})`;
+    ctx.fillRect(pixelLeft, pixelTop, fillW, pixelH);
+
+    // Crossing point marker
+    const crossX = pixelLeft + crossingX * pixelW;
+    const crossY = (pixelTop + pixelBot) / 2;
+
+    // Ray line (horizontal, goes through pixel)
+    ctx.strokeStyle = 'rgba(255,255,255,0.15)';
+    ctx.setLineDash([4, 3]);
+    ctx.beginPath();
+    ctx.moveTo(0, crossY);
+    ctx.lineTo(w, crossY);
+    ctx.stroke();
+    ctx.setLineDash([]);
+
+    // Curve crossing through the pixel (a simple diagonal to suggest a curve edge)
+    ctx.strokeStyle = '#b09860';
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.moveTo(crossX - pixelW * 0.15, pixelTop - 20);
+    ctx.quadraticCurveTo(crossX, crossY, crossX + pixelW * 0.08, pixelBot + 20);
+    ctx.stroke();
+
+    // Crossing dot
+    ctx.beginPath();
+    ctx.arc(crossX, crossY, 6, 0, Math.PI * 2);
+    ctx.fillStyle = '#6abf6e';
+    ctx.fill();
+
+    // Labels
+    ctx.font = '500 12px IBM Plex Mono, monospace';
+
+    // "pixel" label
+    ctx.fillStyle = '#4a5068';
+    ctx.textAlign = 'center';
+    ctx.fillText('pixel', (pixelLeft + pixelRight) / 2, pixelTop - 8);
+
+    // Left/right edge labels
+    ctx.fillStyle = '#3a3f50';
+    ctx.textAlign = 'left';
+    ctx.fillText('0', pixelLeft, pixelBot + 16);
+    ctx.textAlign = 'right';
+    ctx.fillText('1', pixelRight, pixelBot + 16);
+
+    // Coverage value display
+    const barY = pixelBot + 40;
+    const barH = 24;
+
+    ctx.fillStyle = '#1c2030';
+    ctx.fillRect(pixelLeft, barY, pixelW, barH);
+
+    ctx.fillStyle = `rgba(176, 152, 96, ${coverageVal * 0.8 + 0.1})`;
+    ctx.fillRect(pixelLeft, barY, fillW, barH);
+
+    ctx.strokeStyle = '#2a2f40';
+    ctx.lineWidth = 1;
+    ctx.strokeRect(pixelLeft, barY, pixelW, barH);
+
+    // Coverage text
+    ctx.font = '500 13px IBM Plex Mono, monospace';
+    ctx.fillStyle = '#c0b8a8';
+    ctx.textAlign = 'center';
+    ctx.fillText(`coverage: ${(coverageVal * 100).toFixed(0)}%`, (pixelLeft + pixelRight) / 2, barY + barH + 20);
+
+    // Result pixel preview
+    const previewSize = 40;
+    const previewX = (w - previewSize) / 2;
+    const previewY = barY + barH + 36;
+
+    ctx.fillStyle = `rgba(176, 152, 96, ${coverageVal})`;
+    ctx.fillRect(previewX, previewY, previewSize, previewSize);
+    ctx.strokeStyle = '#2a2f40';
+    ctx.strokeRect(previewX, previewY, previewSize, previewSize);
+
+    ctx.font = '11px IBM Plex Mono, monospace';
+    ctx.fillStyle = '#4a5068';
+    ctx.fillText('rendered pixel', w / 2, previewY + previewSize + 16);
+
+    // Arrow from crossing to coverage bar
+    ctx.strokeStyle = 'rgba(106, 191, 110, 0.3)';
+    ctx.lineWidth = 1;
+    ctx.setLineDash([3, 3]);
+    ctx.beginPath();
+    ctx.moveTo(crossX, pixelBot);
+    ctx.lineTo(pixelLeft + fillW, barY);
+    ctx.stroke();
+    ctx.setLineDash([]);
+
+    // "glyph edge" label near the curve
+    ctx.save();
+    ctx.translate(crossX + 14, crossY - 20);
+    ctx.rotate(-0.6);
+    ctx.font = '10px IBM Plex Mono, monospace';
+    ctx.fillStyle = '#8a7e6b';
+    ctx.textAlign = 'left';
+    ctx.fillText('glyph edge', 0, 0);
+    ctx.restore();
+
+    // "inside" / "outside" labels
+    ctx.font = '10px IBM Plex Mono, monospace';
+    ctx.textAlign = 'center';
+    ctx.fillStyle = 'rgba(176, 152, 96, 0.4)';
+    const insideMid = pixelLeft + fillW / 2;
+    if (fillW > 40) ctx.fillText('inside', insideMid, crossY + 4);
+    const outsideW = pixelW - fillW;
+    const outsideMid = pixelLeft + fillW + outsideW / 2;
+    ctx.fillStyle = 'rgba(255,255,255,0.15)';
+    if (outsideW > 40) ctx.fillText('outside', outsideMid, crossY + 4);
+
+    ctx.textAlign = 'left';
+  }
+
+  draw();
+
+  // Dragging the crossing point
+  let dragging = false;
+
+  function getPixelBounds() {
+    return { left: w * 0.15, right: w * 0.85 };
+  }
+
+  canvas.addEventListener('mousedown', (e) => {
+    const rect = canvas.getBoundingClientRect();
+    const mx = e.clientX - rect.left;
+    const { left, right } = getPixelBounds();
+    const crossScreenX = left + crossingX * (right - left);
+    if (Math.abs(mx - crossScreenX) < 20) {
+      dragging = true;
+      canvas.style.cursor = 'grabbing';
+    }
+  });
+
+  canvas.addEventListener('mousemove', (e) => {
+    const rect = canvas.getBoundingClientRect();
+    const mx = e.clientX - rect.left;
+    const { left, right } = getPixelBounds();
+    if (dragging) {
+      crossingX = Math.max(0, Math.min(1, (mx - left) / (right - left)));
+      draw();
+    } else {
+      const crossScreenX = left + crossingX * (right - left);
+      canvas.style.cursor = Math.abs(mx - crossScreenX) < 20 ? 'grab' : 'default';
+    }
+  });
+
+  canvas.addEventListener('mouseup', () => { dragging = false; canvas.style.cursor = 'default'; });
+  canvas.addEventListener('mouseleave', () => { dragging = false; });
+}
 
 function initAASection() {
   const noaaCanvas = document.getElementById('canvas-noaa');
@@ -1496,6 +1684,7 @@ function initWebGLSection() {
 document.addEventListener('DOMContentLoaded', () => {
   initBezierSection();
   initWindingSection();
+  initCoverageSection();
   initAASection();
   initBandsSection();
   initWebGLSection();
