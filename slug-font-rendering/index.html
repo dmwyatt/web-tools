@@ -446,10 +446,15 @@
   </div>
 
   <h3>Band Optimization</h3>
-  <p>Testing every curve for every pixel would be slow. Slug divides the glyph into bands so each pixel only checks a few curves.</p>
+  <p>The letter "R" has 23 curves. Without optimization, every pixel would test all 23 to find ray crossings. But think about a pixel near the bottom of the letter: its horizontal ray can only cross curves that actually <em>exist at that height</em>. Curves up in the bowl of the "R" are irrelevant because they are nowhere near that ray's Y coordinate.</p>
+
+  <p>Slug exploits this by dividing the glyph into horizontal bands (slices at different heights). Before rendering, it pre-computes which curves overlap each band. At render time, a pixel looks up its band and gets a short list of candidates instead of all 23. The same logic applies vertically for the vertical ray.</p>
+
+  <p>Click on the glyph below to place a pixel. The highlighted curves are the only ones that band needs to check. Everything else is skipped.</p>
 
   <div class="canvas-wrap">
     <canvas id="canvas-bands" class="tall"></canvas>
+    <div class="click-hint">click to pick a pixel's band</div>
   </div>
 
   <div class="controls-row">
@@ -457,8 +462,12 @@
     <button id="btn-vbands">Vertical bands</button>
   </div>
 
+  <div id="band-result" class="callout" style="display:none;">
+    <p>This pixel is in <strong id="band-name">band 3</strong>. Its ray only needs to check <strong id="band-count">5</strong> of 23 curves. The <span id="band-skipped-count">18</span> dim curves are guaranteed not to cross the ray at this height, so Slug skips them entirely.</p>
+  </div>
+
   <div class="callout">
-    <p>Each band contains only 3 to 8 of the letter's 23 curves. This is what makes Slug fast enough for real-time rendering.</p>
+    <p>This is purely a performance optimization. It doesn't change the result at all. Every curve that <em>could</em> contribute to a pixel's coverage is still tested. Slug just avoids wasting time on curves that mathematically cannot intersect the ray.</p>
   </div>
 </section>
 
@@ -1154,17 +1163,23 @@ function initBandsSection() {
   const ctx = canvas.getContext('2d');
   const btnH = document.getElementById('btn-hbands');
   const btnV = document.getElementById('btn-vbands');
+  const bandResult = document.getElementById('band-result');
+  const bandNameEl = document.getElementById('band-name');
+  const bandCountEl = document.getElementById('band-count');
+  const bandSkippedEl = document.getElementById('band-skipped-count');
 
   const glyph = GLYPH_DATA['R'];
   const scale = dims.height * 0.95;
   const ox = dims.width * 0.08;
   const oy = dims.height * 0.96;
   let showHorizontal = true;
+  let selectedBand = -1; // -1 = none selected, show all bands
+  let clickPoint = null; // em-space coords of click
 
-  const bandHues = ['0', '30', '50', '140', '220', '270', '330', '180'];
+  const allCurves = getAllCurves(glyph);
+  const totalCurves = allCurves.length;
 
   function buildBands(numBands, horizontal) {
-    const allCurves = getAllCurves(glyph);
     const b = glyph.bounds;
     const bands = [];
     for (let i = 0; i < numBands; i++) {
@@ -1182,6 +1197,7 @@ function initBandsSection() {
   }
 
   function toScreen(px, py) { return { x: ox + px * scale, y: oy - py * scale }; }
+  function toEm(sx, sy) { return { x: (sx - ox) / scale, y: (oy - sy) / scale }; }
 
   function draw() {
     const w = dims.width, h = dims.height;
@@ -1189,52 +1205,98 @@ function initBandsSection() {
     ctx.fillRect(0, 0, w, h);
 
     const bands = buildBands(6, showHorizontal);
-    const allCurves = getAllCurves(glyph);
+    const activeCurves = new Set();
 
+    // If a band is selected, collect its curves
+    if (selectedBand >= 0 && selectedBand < bands.length) {
+      for (const ci of bands[selectedBand].curves) activeCurves.add(ci);
+    }
+
+    // Draw band regions
     for (let i = 0; i < bands.length; i++) {
       const band = bands[i];
-      const hue = bandHues[i % bandHues.length];
+      const isSelected = i === selectedBand;
+      const alpha = selectedBand >= 0 ? (isSelected ? 0.12 : 0.03) : 0.06;
+
       if (showHorizontal) {
         const top = toScreen(0, band.hi), bot = toScreen(0, band.lo);
-        ctx.fillStyle = `hsla(${hue}, 50%, 50%, 0.08)`;
+        ctx.fillStyle = isSelected ? `rgba(176, 152, 96, ${alpha})` : `rgba(100, 120, 160, ${alpha})`;
         ctx.fillRect(0, top.y, w, bot.y - top.y);
+        // Band boundary lines
+        ctx.strokeStyle = 'rgba(255,255,255,0.06)';
+        ctx.lineWidth = 1;
+        ctx.beginPath(); ctx.moveTo(0, top.y); ctx.lineTo(w, top.y); ctx.stroke();
       } else {
         const left = toScreen(band.lo, 0), right = toScreen(band.hi, 0);
-        ctx.fillStyle = `hsla(${hue}, 50%, 50%, 0.08)`;
+        ctx.fillStyle = isSelected ? `rgba(176, 152, 96, ${alpha})` : `rgba(100, 120, 160, ${alpha})`;
         ctx.fillRect(left.x, 0, right.x - left.x, h);
+        ctx.strokeStyle = 'rgba(255,255,255,0.06)';
+        ctx.lineWidth = 1;
+        ctx.beginPath(); ctx.moveTo(left.x, 0); ctx.lineTo(left.x, h); ctx.stroke();
       }
     }
 
-    for (const cv of allCurves) {
+    // Draw all curves: dim if a band is selected and this curve isn't in it
+    for (let ci = 0; ci < allCurves.length; ci++) {
+      const cv = allCurves[ci];
       const s1 = toScreen(cv.p1.x, cv.p1.y), s2 = toScreen(cv.p2.x, cv.p2.y), s3 = toScreen(cv.p3.x, cv.p3.y);
-      ctx.strokeStyle = 'rgba(255,255,255,0.06)';
-      ctx.lineWidth = 1;
-      ctx.beginPath(); ctx.moveTo(s1.x, s1.y); ctx.quadraticCurveTo(s2.x, s2.y, s3.x, s3.y); ctx.stroke();
-    }
 
-    for (let i = 0; i < bands.length; i++) {
-      const band = bands[i];
-      const hue = bandHues[i % bandHues.length];
-      for (const ci of band.curves) {
-        const cv = allCurves[ci];
-        const s1 = toScreen(cv.p1.x, cv.p1.y), s2 = toScreen(cv.p2.x, cv.p2.y), s3 = toScreen(cv.p3.x, cv.p3.y);
-        ctx.strokeStyle = `hsla(${hue}, 55%, 60%, 0.7)`;
+      if (selectedBand >= 0) {
+        if (activeCurves.has(ci)) {
+          ctx.strokeStyle = '#b09860';
+          ctx.lineWidth = 2.5;
+        } else {
+          ctx.strokeStyle = 'rgba(255,255,255,0.06)';
+          ctx.lineWidth = 1;
+        }
+      } else {
+        ctx.strokeStyle = 'rgba(176, 152, 96, 0.5)';
         ctx.lineWidth = 1.5;
-        ctx.beginPath(); ctx.moveTo(s1.x, s1.y); ctx.quadraticCurveTo(s2.x, s2.y, s3.x, s3.y); ctx.stroke();
       }
+
+      ctx.beginPath();
+      ctx.moveTo(s1.x, s1.y);
+      ctx.quadraticCurveTo(s2.x, s2.y, s3.x, s3.y);
+      ctx.stroke();
     }
 
+    // Draw the ray from the click point if selected
+    if (clickPoint && selectedBand >= 0) {
+      const sp = toScreen(clickPoint.x, clickPoint.y);
+
+      // Ray line
+      ctx.strokeStyle = 'rgba(176, 152, 96, 0.3)';
+      ctx.lineWidth = 1;
+      ctx.setLineDash([4, 3]);
+      if (showHorizontal) {
+        ctx.beginPath(); ctx.moveTo(sp.x, sp.y); ctx.lineTo(w, sp.y); ctx.stroke();
+      } else {
+        ctx.beginPath(); ctx.moveTo(sp.x, sp.y); ctx.lineTo(sp.x, 0); ctx.stroke();
+      }
+      ctx.setLineDash([]);
+
+      // Click point dot
+      ctx.beginPath();
+      ctx.arc(sp.x, sp.y, 5, 0, Math.PI * 2);
+      ctx.fillStyle = '#6abf6e';
+      ctx.fill();
+    }
+
+    // Band labels
     ctx.font = '10px IBM Plex Mono, monospace';
     for (let i = 0; i < bands.length; i++) {
       const band = bands[i];
-      const hue = bandHues[i % bandHues.length];
-      ctx.fillStyle = `hsla(${hue}, 55%, 65%, 0.8)`;
+      const isSelected = i === selectedBand;
+      ctx.fillStyle = isSelected ? '#b09860' : '#3a4050';
+
       if (showHorizontal) {
         const mid = toScreen(0, (band.lo + band.hi) / 2);
         ctx.fillText(`${band.curves.length} curves`, 5, mid.y + 3);
       } else {
         const mid = toScreen((band.lo + band.hi) / 2, 0);
-        ctx.save(); ctx.translate(mid.x, h - 5); ctx.rotate(-Math.PI/2);
+        ctx.save();
+        ctx.translate(mid.x, h - 5);
+        ctx.rotate(-Math.PI / 2);
         ctx.fillText(`${band.curves.length}`, 0, 4);
         ctx.restore();
       }
@@ -1242,8 +1304,49 @@ function initBandsSection() {
   }
 
   draw();
-  btnH.addEventListener('click', () => { showHorizontal = true; btnH.classList.add('active'); btnV.classList.remove('active'); draw(); });
-  btnV.addEventListener('click', () => { showHorizontal = false; btnV.classList.add('active'); btnH.classList.remove('active'); draw(); });
+
+  // Click to select a band
+  canvas.addEventListener('click', (e) => {
+    const rect = canvas.getBoundingClientRect();
+    const mx = e.clientX - rect.left, my = e.clientY - rect.top;
+    clickPoint = toEm(mx, my);
+
+    const bands = buildBands(6, showHorizontal);
+    const testVal = showHorizontal ? clickPoint.y : clickPoint.x;
+
+    selectedBand = -1;
+    for (let i = 0; i < bands.length; i++) {
+      if (testVal >= bands[i].lo && testVal <= bands[i].hi) {
+        selectedBand = i;
+        break;
+      }
+    }
+
+    if (selectedBand >= 0) {
+      const band = bands[selectedBand];
+      bandNameEl.textContent = `band ${selectedBand + 1}`;
+      bandCountEl.textContent = band.curves.length;
+      bandSkippedEl.textContent = totalCurves - band.curves.length;
+      bandResult.style.display = 'block';
+    } else {
+      bandResult.style.display = 'none';
+    }
+
+    draw();
+  });
+
+  function switchMode(horizontal) {
+    showHorizontal = horizontal;
+    btnH.classList.toggle('active', horizontal);
+    btnV.classList.toggle('active', !horizontal);
+    selectedBand = -1;
+    clickPoint = null;
+    bandResult.style.display = 'none';
+    draw();
+  }
+
+  btnH.addEventListener('click', () => switchMode(true));
+  btnV.addEventListener('click', () => switchMode(false));
 }
 
 // ================================================================
