@@ -1682,8 +1682,8 @@ function initWebGLSection() {
     // Map pan from em-space to bitmap pixel space
     const bitmapScale = 120 / (totalAdvance * 1.1); // approx: 120px covers totalAdvance
     const srcW = 120 / zoom, srcH = 48 / zoom;
-    const srcCenterX = 60 - panX * bitmapScale;
-    const srcCenterY = 24 + panY * bitmapScale;
+    const srcCenterX = 60 + panX * bitmapScale;
+    const srcCenterY = 24 - panY * bitmapScale;
     const srcX = srcCenterX - srcW / 2;
     const srcY = srcCenterY - srcH / 2;
     bctx.drawImage(offscreen, srcX, srcY, srcW, srcH, 0, 0, w, h);
