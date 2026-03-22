@@ -1654,13 +1654,28 @@ function initWebGLSection() {
   const uBandTex = gl.getUniformLocation(program, 'u_bandTexture');
 
   // ---- Bitmap side ----
-  // Render the same glyph outlines to a fixed-resolution bitmap.
-  // This ensures the bitmap uses the exact same letter shapes as the Slug side,
-  // just frozen at one resolution instead of recomputed per-pixel.
+  // Render the same glyph outlines to a fixed-resolution bitmap that covers
+  // the exact same em-space region the Slug projection shows at 1x zoom.
+  // This way both sides are pixel-identical at 1x, differing only in what
+  // happens when you zoom in.
   const bctx = bitmapCanvas.getContext('2d');
-  const bitmapRenderScale = 80; // pixels per em unit
-  const offW = Math.ceil(totalAdvance * bitmapRenderScale) + 8;
-  const offH = Math.ceil(1.0 * bitmapRenderScale) + 8;
+
+  // The Slug projection at 1x: viewH = 1.2, centered at (0, 0.28)
+  const baseViewH = 1.2;
+  const baseCenterY = 0.28;
+  const bitmapAspect = bitmapDims.width / bitmapDims.height;
+  const baseViewW = baseViewH * bitmapAspect;
+
+  // Em-space bounds of the 1x view
+  const viewEmLeft = -baseViewW / 2;
+  const viewEmRight = baseViewW / 2;
+  const viewEmBottom = baseCenterY - baseViewH / 2;
+  const viewEmTop = baseCenterY + baseViewH / 2;
+
+  // Render at a fixed pixel density
+  const bitmapPxPerEm = 100;
+  const offW = Math.ceil(baseViewW * bitmapPxPerEm);
+  const offH = Math.ceil(baseViewH * bitmapPxPerEm);
   const offscreen = document.createElement('canvas');
   offscreen.width = offW;
   offscreen.height = offH;
@@ -1668,15 +1683,19 @@ function initWebGLSection() {
   octx.fillStyle = '#0e1220';
   octx.fillRect(0, 0, offW, offH);
 
-  // Draw each glyph using the same outline data
-  let bitmapCursorX = 4;
-  const bitmapBaseY = offH * 0.78; // baseline position
+  // Draw glyphs into the offscreen canvas.
+  // Map em-space to offscreen pixels: ox, oy are the pixel position of em-space (0, 0).
+  const offOx = -viewEmLeft * bitmapPxPerEm;  // pixel x of em-space x=0
+  const offOy = viewEmTop * bitmapPxPerEm;     // pixel y of em-space y=0 (y-up flipped)
+
+  // Glyphs are centered at x=0 in em-space (cursorX starts at -totalAdvance/2)
+  let emCursorX = -totalAdvance / 2;
   for (const ch of word) {
     const g = GLYPH_DATA[ch];
-    drawGlyphOutline(octx, g, bitmapCursorX, bitmapBaseY, bitmapRenderScale, {
+    drawGlyphOutline(octx, g, offOx + emCursorX * bitmapPxPerEm, offOy, bitmapPxPerEm, {
       fill: true, fillColor: '#b09860', strokeColor: null
     });
-    bitmapCursorX += g.advance * bitmapRenderScale;
+    emCursorX += g.advance;
   }
 
   // ---- Pan + Zoom state ----
@@ -1693,12 +1712,19 @@ function initWebGLSection() {
     bctx.fillRect(0, 0, w, h);
     bctx.imageSmoothingEnabled = false;
 
-    // Map pan from em-space to bitmap pixel space
-    const srcW = offW / zoom, srcH = offH / zoom;
-    const srcCenterX = offW / 2 + panX * bitmapRenderScale;
-    const srcCenterY = offH / 2 - panY * bitmapRenderScale;
-    const srcX = srcCenterX - srcW / 2;
-    const srcY = srcCenterY - srcH / 2;
+    // The visible em-space region at current zoom/pan:
+    // same math as the Slug projection
+    const curViewH = baseViewH / zoom;
+    const curViewW = curViewH * bitmapAspect;
+    const cx = panX;
+    const cy = baseCenterY + panY;
+
+    // Map the visible em-space region to offscreen pixel coords
+    const srcX = (cx - curViewW / 2 - viewEmLeft) * bitmapPxPerEm;
+    const srcY = (viewEmTop - (cy + curViewH / 2)) * bitmapPxPerEm;
+    const srcW = curViewW * bitmapPxPerEm;
+    const srcH = curViewH * bitmapPxPerEm;
+
     bctx.drawImage(offscreen, srcX, srcY, srcW, srcH, 0, 0, w, h);
   }
 
@@ -1712,10 +1738,9 @@ function initWebGLSection() {
     gl.useProgram(program);
 
     const aspect = w / h;
-    const baseViewH = 1.2;
     const viewH = baseViewH / zoom;
     const viewW = viewH * aspect;
-    const cx = panX, cy = 0.28 + panY;
+    const cx = panX, cy = baseCenterY + panY;
 
     const mvp = new Float32Array([
       2/viewW, 0, 0, 0,
