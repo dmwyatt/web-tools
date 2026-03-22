@@ -1660,10 +1660,15 @@ function initWebGLSection() {
   // happens when you zoom in.
   const bctx = bitmapCanvas.getContext('2d');
 
-  // The Slug projection at 1x: viewH = 1.2, centered at (0, 0.28)
-  const baseViewH = 1.2;
+  // Compute the 1x view so "Slug" fits fully with padding.
+  // The word spans totalAdvance wide, glyphs range roughly y=-0.21 to y=0.76.
   const baseCenterY = 0.28;
   const bitmapAspect = bitmapDims.width / bitmapDims.height;
+  const wordPadding = 1.2; // 20% breathing room
+  const neededViewW = totalAdvance * wordPadding;
+  const neededViewH = 1.0 * wordPadding; // ~1em glyph height
+  // Pick whichever dimension is the constraint
+  const baseViewH = Math.max(neededViewH, neededViewW / bitmapAspect);
   const baseViewW = baseViewH * bitmapAspect;
 
   // Em-space bounds of the 1x view
