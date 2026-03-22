@@ -504,6 +504,7 @@
 
   <div class="callout">
     <p>Both canvases render the same sign in 3D. The camera orbits automatically. The left maps a pre-rendered bitmap texture onto the sign. The right evaluates Bezier curves per-pixel using the Slug shader. Watch what happens as the sign gets close, far, and viewed at oblique angles.</p>
+    <p>Slug itself is purely 2D. It has no concept of 3D, perspective, or camera angles. The GPU's standard 3D pipeline handles all of that. It transforms the sign's corners into screen space, then interpolates the glyph's 2D coordinates across the surface, automatically adjusting for perspective foreshortening. By the time the Slug shader runs for each pixel, it just sees a 2D coordinate and evaluates curves there, exactly as described in the sections above. The built-in <code>fwidth</code> function tells the shader how much the glyph coordinate changes per screen pixel, which keeps the anti-aliasing correct even at extreme angles.</p>
   </div>
 </section>
 
@@ -1890,13 +1891,13 @@ function initWebGLSection() {
 
   function computeMVP(canvas, t) {
     const aspect = canvas.width / canvas.height;
-    const orbitAngle = t * 0.3 + orbitAngleOffset;
-    const distBase = 3.75;
-    const distVar = 1.25;
-    const dist = distBase + distVar * Math.sin(t * 0.13);
+    const orbitAngle = t * 0.5 + orbitAngleOffset;
+    const distBase = 2.8;
+    const distVar = 1.5;
+    const dist = distBase + distVar * Math.sin(t * 0.3);
     const camX = dist * Math.sin(orbitAngle);
     const camZ = dist * Math.cos(orbitAngle);
-    const camY = 0.8 * Math.sin(t * 0.17) + 0.5;
+    const camY = 0.6 * Math.sin(t * 0.37) + 0.4;
 
     const proj = mat4Perspective(Math.PI / 4, aspect, 0.1, 100);
     const view = mat4LookAt([camX, camY, camZ], lookTarget, [0, 1, 0]);
