@@ -503,7 +503,7 @@
   </div>
 
   <div class="callout">
-    <p>Both canvases show the word "Slug" at the same zoom and pan position. The left uses the browser's <code>fillText</code> to pre-render pixels. The right evaluates quadratic Bezier curves per-pixel on the GPU using the Slug algorithm.</p>
+    <p>Both canvases show the same glyph outlines at the same zoom and pan position. The left was rasterized once at a fixed resolution (a bitmap). The right evaluates the quadratic Bezier curves per-pixel on the GPU using the Slug algorithm.</p>
     <p>Zoom in. The bitmap becomes a blocky mess. The Slug render stays perfectly sharp because it computes the mathematically exact curve for every pixel, every frame.</p>
   </div>
 </section>
@@ -1654,16 +1654,30 @@ function initWebGLSection() {
   const uBandTex = gl.getUniformLocation(program, 'u_bandTexture');
 
   // ---- Bitmap side ----
+  // Render the same glyph outlines to a fixed-resolution bitmap.
+  // This ensures the bitmap uses the exact same letter shapes as the Slug side,
+  // just frozen at one resolution instead of recomputed per-pixel.
   const bctx = bitmapCanvas.getContext('2d');
+  const bitmapRenderScale = 80; // pixels per em unit
+  const offW = Math.ceil(totalAdvance * bitmapRenderScale) + 8;
+  const offH = Math.ceil(1.0 * bitmapRenderScale) + 8;
   const offscreen = document.createElement('canvas');
-  offscreen.width = 120; offscreen.height = 48;
+  offscreen.width = offW;
+  offscreen.height = offH;
   const octx = offscreen.getContext('2d');
   octx.fillStyle = '#0e1220';
-  octx.fillRect(0, 0, 120, 48);
-  octx.font = 'bold 40px sans-serif';
-  octx.fillStyle = '#b09860';
-  octx.textBaseline = 'middle';
-  octx.fillText('Slug', 4, 24);
+  octx.fillRect(0, 0, offW, offH);
+
+  // Draw each glyph using the same outline data
+  let bitmapCursorX = 4;
+  const bitmapBaseY = offH * 0.78; // baseline position
+  for (const ch of word) {
+    const g = GLYPH_DATA[ch];
+    drawGlyphOutline(octx, g, bitmapCursorX, bitmapBaseY, bitmapRenderScale, {
+      fill: true, fillColor: '#b09860', strokeColor: null
+    });
+    bitmapCursorX += g.advance * bitmapRenderScale;
+  }
 
   // ---- Pan + Zoom state ----
   let zoom = 1;
@@ -1680,10 +1694,9 @@ function initWebGLSection() {
     bctx.imageSmoothingEnabled = false;
 
     // Map pan from em-space to bitmap pixel space
-    const bitmapScale = 120 / (totalAdvance * 1.1); // approx: 120px covers totalAdvance
-    const srcW = 120 / zoom, srcH = 48 / zoom;
-    const srcCenterX = 60 + panX * bitmapScale;
-    const srcCenterY = 24 - panY * bitmapScale;
+    const srcW = offW / zoom, srcH = offH / zoom;
+    const srcCenterX = offW / 2 + panX * bitmapRenderScale;
+    const srcCenterY = offH / 2 - panY * bitmapRenderScale;
     const srcX = srcCenterX - srcW / 2;
     const srcY = srcCenterY - srcH / 2;
     bctx.drawImage(offscreen, srcX, srcY, srcW, srcH, 0, 0, w, h);
