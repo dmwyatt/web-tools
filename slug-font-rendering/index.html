@@ -126,6 +126,7 @@
 
     canvas.tall { height: 420px; }
     canvas.demo { height: 280px; }
+    canvas.demo-tall { height: 360px; }
     canvas.square { height: 240px; }
 
     .canvas-label {
@@ -353,6 +354,7 @@
       .side-by-side { flex-direction: column; }
       canvas.tall { height: 320px; }
       canvas.demo { height: 200px; }
+      canvas.demo-tall { height: 260px; }
     }
   </style>
 </head>
@@ -486,38 +488,22 @@
 
   <div class="side-by-side">
     <div>
-      <div class="canvas-label">Bitmap (pre-rendered pixels)</div>
-      <canvas id="canvas-bitmap" class="demo"></canvas>
+      <div class="canvas-label">Bitmap texture</div>
+      <canvas id="canvas-bitmap" class="demo demo-tall"></canvas>
     </div>
     <div>
-      <div class="canvas-label">Slug (curves evaluated per-pixel on GPU)</div>
-      <div style="position:relative;">
-        <canvas id="canvas-slug" class="demo"></canvas>
-        <canvas id="canvas-slug-overlay" class="demo" style="position:absolute;top:0;left:0;pointer-events:none;background:transparent;border-color:transparent;"></canvas>
-      </div>
+      <div class="canvas-label">Slug (per-pixel curves)</div>
+      <canvas id="canvas-slug" class="demo demo-tall"></canvas>
     </div>
   </div>
-  <p class="pan-hint">drag to pan &middot; scroll or slider to zoom</p>
-
-  <div class="slider-row">
-    <label for="zoom-slider">Zoom</label>
-    <input type="range" id="zoom-slider" min="1" max="64" value="1" step="0.5">
-    <span class="value" id="zoom-value">1x</span>
-  </div>
-
-  <div class="slider-row">
-    <label for="rotate-slider">Rotate</label>
-    <input type="range" id="rotate-slider" min="-180" max="180" value="0" step="1">
-    <span class="value" id="rotate-value">0&deg;</span>
-  </div>
+  <p class="pan-hint">drag to orbit</p>
 
   <div class="controls-row">
     <button id="btn-show-curves">Show curves</button>
   </div>
 
   <div class="callout">
-    <p>Both sides render the same glyph outlines. The left was rasterized once at a fixed resolution. The right evaluates the curves mathematically, per pixel, on the GPU.</p>
-    <p>Try rotating the text. In a game, text appears on angled signs, tilted HUDs, spinning objects. The bitmap smears and aliases. The Slug render stays perfectly sharp at any angle, any zoom, because it recomputes every pixel from the original curves.</p>
+    <p>Both canvases render the same sign in 3D. The camera orbits automatically. The left maps a pre-rendered bitmap texture onto the sign. The right evaluates Bezier curves per-pixel using the Slug shader. Watch what happens as the sign gets close, far, and viewed at oblique angles.</p>
   </div>
 </section>
 
@@ -1369,27 +1355,96 @@ function initBandsSection() {
 function initWebGLSection() {
   const slugCanvas = document.getElementById('canvas-slug');
   const bitmapCanvas = document.getElementById('canvas-bitmap');
-  const slider = document.getElementById('zoom-slider');
-  const valueLabel = document.getElementById('zoom-value');
-  const rotateSlider = document.getElementById('rotate-slider');
-  const rotateLabel = document.getElementById('rotate-value');
   const btnShowCurves = document.getElementById('btn-show-curves');
   const errorDiv = document.getElementById('webgl-error');
 
-  // Size canvases
+  // ---- 3D Math Helpers (column-major Float32Array) ----
+
+  function mat4Perspective(fov, aspect, near, far) {
+    const f = 1.0 / Math.tan(fov / 2);
+    const rangeInv = 1.0 / (near - far);
+    return new Float32Array([
+      f / aspect, 0, 0, 0,
+      0, f, 0, 0,
+      0, 0, (far + near) * rangeInv, -1,
+      0, 0, 2 * far * near * rangeInv, 0
+    ]);
+  }
+
+  function mat4LookAt(eye, center, up) {
+    let zx = eye[0] - center[0], zy = eye[1] - center[1], zz = eye[2] - center[2];
+    let len = Math.sqrt(zx * zx + zy * zy + zz * zz);
+    zx /= len; zy /= len; zz /= len;
+    let xx = up[1] * zz - up[2] * zy;
+    let xy = up[2] * zx - up[0] * zz;
+    let xz = up[0] * zy - up[1] * zx;
+    len = Math.sqrt(xx * xx + xy * xy + xz * xz);
+    xx /= len; xy /= len; xz /= len;
+    const yx = zy * xz - zz * xy;
+    const yy = zz * xx - zx * xz;
+    const yz = zx * xy - zy * xx;
+    return new Float32Array([
+      xx, yx, zx, 0,
+      xy, yy, zy, 0,
+      xz, yz, zz, 0,
+      -(xx * eye[0] + xy * eye[1] + xz * eye[2]),
+      -(yx * eye[0] + yy * eye[1] + yz * eye[2]),
+      -(zx * eye[0] + zy * eye[1] + zz * eye[2]),
+      1
+    ]);
+  }
+
+  function mat4Multiply(a, b) {
+    const out = new Float32Array(16);
+    for (let i = 0; i < 4; i++) {
+      for (let j = 0; j < 4; j++) {
+        out[j * 4 + i] = a[i] * b[j * 4] + a[4 + i] * b[j * 4 + 1] + a[8 + i] * b[j * 4 + 2] + a[12 + i] * b[j * 4 + 3];
+      }
+    }
+    return out;
+  }
+
+  // ---- Size canvases ----
   const dpr = window.devicePixelRatio || 1;
-  const slugRect = slugCanvas.getBoundingClientRect();
-  slugCanvas.width = Math.round(slugRect.width * dpr);
-  slugCanvas.height = Math.round(slugRect.height * dpr);
-  const slugDims = { width: slugRect.width, height: slugRect.height };
 
-  const bitmapDims = setupCanvas(bitmapCanvas);
+  function sizeCanvas(canvas) {
+    const rect = canvas.getBoundingClientRect();
+    canvas.width = Math.round(rect.width * dpr);
+    canvas.height = Math.round(rect.height * dpr);
+    return { width: rect.width, height: rect.height };
+  }
 
-  const gl = slugCanvas.getContext('webgl2');
-  if (!gl) { errorDiv.style.display = 'block'; return; }
+  const slugDims = sizeCanvas(slugCanvas);
+  const bitmapDims = sizeCanvas(bitmapCanvas);
 
-  // ---- Shaders ----
-  const vsSource = `#version 300 es
+  // ---- Get WebGL2 contexts ----
+  const glSlug = slugCanvas.getContext('webgl2');
+  const glBitmap = bitmapCanvas.getContext('webgl2');
+  if (!glSlug || !glBitmap) { errorDiv.style.display = 'block'; return; }
+
+  // ---- Helper: compile shader for a given gl context ----
+  function compileShader(gl, src, type) {
+    const s = gl.createShader(type);
+    gl.shaderSource(s, src);
+    gl.compileShader(s);
+    if (!gl.getShaderParameter(s, gl.COMPILE_STATUS)) { console.error(gl.getShaderInfoLog(s)); return null; }
+    return s;
+  }
+
+  function linkProgram(gl, vsSrc, fsSrc) {
+    const vs = compileShader(gl, vsSrc, gl.VERTEX_SHADER);
+    const fs = compileShader(gl, fsSrc, gl.FRAGMENT_SHADER);
+    if (!vs || !fs) return null;
+    const prog = gl.createProgram();
+    gl.attachShader(prog, vs);
+    gl.attachShader(prog, fs);
+    gl.linkProgram(prog);
+    if (!gl.getProgramParameter(prog, gl.LINK_STATUS)) { console.error(gl.getProgramInfoLog(prog)); return null; }
+    return prog;
+  }
+
+  // ---- Slug Shaders (same algorithm, now with perspective MVP) ----
+  const slugVsSrc = `#version 300 es
     in vec2 a_position;
     in vec2 a_texcoord;
     in vec4 a_banding;
@@ -1406,7 +1461,7 @@ function initWebGLSection() {
     }
   `;
 
-  const fsSource = `#version 300 es
+  const slugFsSrc = `#version 300 es
     precision highp float;
     precision highp int;
     in vec2 v_texcoord;
@@ -1515,24 +1570,59 @@ function initWebGLSection() {
     }
   `;
 
-  function compileShader(src, type) {
-    const s = gl.createShader(type);
-    gl.shaderSource(s, src);
-    gl.compileShader(s);
-    if (!gl.getShaderParameter(s, gl.COMPILE_STATUS)) { console.error(gl.getShaderInfoLog(s)); return null; }
-    return s;
-  }
+  const slugProgram = linkProgram(glSlug, slugVsSrc, slugFsSrc);
+  if (!slugProgram) { errorDiv.style.display = 'block'; errorDiv.textContent = 'Slug shader compilation failed.'; return; }
 
-  const vs = compileShader(vsSource, gl.VERTEX_SHADER);
-  const fs = compileShader(fsSource, gl.FRAGMENT_SHADER);
-  if (!vs || !fs) { errorDiv.style.display = 'block'; errorDiv.textContent = 'Shader compilation failed.'; return; }
+  // ---- Slug line shader for "show curves" overlay ----
+  const lineVsSrc = `#version 300 es
+    in vec2 a_position;
+    uniform mat4 u_mvp;
+    void main() {
+      gl_Position = u_mvp * vec4(a_position, 0.001, 1.0);
+    }
+  `;
 
-  const program = gl.createProgram();
-  gl.attachShader(program, vs); gl.attachShader(program, fs);
-  gl.linkProgram(program);
-  if (!gl.getProgramParameter(program, gl.LINK_STATUS)) { errorDiv.style.display = 'block'; return; }
+  const lineFsSrc = `#version 300 es
+    precision highp float;
+    uniform vec4 u_color;
+    out vec4 fragColor;
+    void main() {
+      fragColor = u_color;
+    }
+  `;
 
-  // ---- Build GPU data ----
+  const lineProgram = linkProgram(glSlug, lineVsSrc, lineFsSrc);
+
+  // ---- Bitmap Shaders ----
+  const bitmapVsSrc = `#version 300 es
+    in vec2 a_position;
+    in vec2 a_uv;
+    uniform mat4 u_mvp;
+    out vec2 v_uv;
+    void main() {
+      gl_Position = u_mvp * vec4(a_position, 0.0, 1.0);
+      v_uv = a_uv;
+    }
+  `;
+
+  const bitmapFsSrc = `#version 300 es
+    precision highp float;
+    in vec2 v_uv;
+    uniform sampler2D u_tex;
+    uniform vec4 u_color;
+    out vec4 fragColor;
+    void main() {
+      vec4 texel = texture(u_tex, v_uv);
+      float brightness = max(texel.r, max(texel.g, texel.b));
+      if (brightness < 0.05) discard;
+      fragColor = texel * u_color;
+    }
+  `;
+
+  const bitmapProgram = linkProgram(glBitmap, bitmapVsSrc, bitmapFsSrc);
+  if (!bitmapProgram) { errorDiv.style.display = 'block'; errorDiv.textContent = 'Bitmap shader compilation failed.'; return; }
+
+  // ---- Build Slug GPU data (same as before) ----
   const word = ['S', 'l', 'u', 'g'];
 
   function buildSlugData(glyphs) {
@@ -1603,26 +1693,26 @@ function initWebGLSection() {
 
   const slugData = buildSlugData(word);
 
-  // Textures
-  const curveTexture = gl.createTexture();
-  gl.activeTexture(gl.TEXTURE0);
-  gl.bindTexture(gl.TEXTURE_2D, curveTexture);
-  gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA32F, slugData.curveTexels.length / 4, 1, 0, gl.RGBA, gl.FLOAT, new Float32Array(slugData.curveTexels));
-  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
-  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
-  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
-  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+  // ---- Slug textures ----
+  const curveTexture = glSlug.createTexture();
+  glSlug.activeTexture(glSlug.TEXTURE0);
+  glSlug.bindTexture(glSlug.TEXTURE_2D, curveTexture);
+  glSlug.texImage2D(glSlug.TEXTURE_2D, 0, glSlug.RGBA32F, slugData.curveTexels.length / 4, 1, 0, glSlug.RGBA, glSlug.FLOAT, new Float32Array(slugData.curveTexels));
+  glSlug.texParameteri(glSlug.TEXTURE_2D, glSlug.TEXTURE_MIN_FILTER, glSlug.NEAREST);
+  glSlug.texParameteri(glSlug.TEXTURE_2D, glSlug.TEXTURE_MAG_FILTER, glSlug.NEAREST);
+  glSlug.texParameteri(glSlug.TEXTURE_2D, glSlug.TEXTURE_WRAP_S, glSlug.CLAMP_TO_EDGE);
+  glSlug.texParameteri(glSlug.TEXTURE_2D, glSlug.TEXTURE_WRAP_T, glSlug.CLAMP_TO_EDGE);
 
-  const bandTexture = gl.createTexture();
-  gl.activeTexture(gl.TEXTURE1);
-  gl.bindTexture(gl.TEXTURE_2D, bandTexture);
-  gl.texImage2D(gl.TEXTURE_2D, 0, gl.RG32UI, slugData.bandEntries.length / 2, 1, 0, gl.RG_INTEGER, gl.UNSIGNED_INT, new Uint32Array(slugData.bandEntries));
-  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
-  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
-  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
-  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+  const bandTexture = glSlug.createTexture();
+  glSlug.activeTexture(glSlug.TEXTURE1);
+  glSlug.bindTexture(glSlug.TEXTURE_2D, bandTexture);
+  glSlug.texImage2D(glSlug.TEXTURE_2D, 0, glSlug.RG32UI, slugData.bandEntries.length / 2, 1, 0, glSlug.RG_INTEGER, glSlug.UNSIGNED_INT, new Uint32Array(slugData.bandEntries));
+  glSlug.texParameteri(glSlug.TEXTURE_2D, glSlug.TEXTURE_MIN_FILTER, glSlug.NEAREST);
+  glSlug.texParameteri(glSlug.TEXTURE_2D, glSlug.TEXTURE_MAG_FILTER, glSlug.NEAREST);
+  glSlug.texParameteri(glSlug.TEXTURE_2D, glSlug.TEXTURE_WRAP_S, glSlug.CLAMP_TO_EDGE);
+  glSlug.texParameteri(glSlug.TEXTURE_2D, glSlug.TEXTURE_WRAP_T, glSlug.CLAMP_TO_EDGE);
 
-  // Geometry
+  // ---- Slug geometry (glyph quads in XY plane at z=0) ----
   const positions = [], texcoords = [], bandings = [], glyphDatas = [], indices = [];
   const totalAdvance = slugData.glyphInfos.reduce((s, g) => s + g.advance, 0);
   let cursorX = -totalAdvance / 2;
@@ -1642,254 +1732,269 @@ function initWebGLSection() {
     cursorX += info.advance;
   }
 
-  const vao = gl.createVertexArray();
-  gl.bindVertexArray(vao);
+  const slugVao = glSlug.createVertexArray();
+  glSlug.bindVertexArray(slugVao);
 
-  function makeBuf(data, attr, size, type, isInt) {
-    const buf = gl.createBuffer();
-    gl.bindBuffer(gl.ARRAY_BUFFER, buf);
-    gl.bufferData(gl.ARRAY_BUFFER, data, gl.STATIC_DRAW);
-    if (isInt) gl.vertexAttribIPointer(attr, size, type, 0, 0);
-    else gl.vertexAttribPointer(attr, size, type, false, 0, 0);
-    gl.enableVertexAttribArray(attr);
+  function makeSlugBuf(data, attr, size, type, isInt) {
+    const buf = glSlug.createBuffer();
+    glSlug.bindBuffer(glSlug.ARRAY_BUFFER, buf);
+    glSlug.bufferData(glSlug.ARRAY_BUFFER, data, glSlug.STATIC_DRAW);
+    if (isInt) glSlug.vertexAttribIPointer(attr, size, type, 0, 0);
+    else glSlug.vertexAttribPointer(attr, size, type, false, 0, 0);
+    glSlug.enableVertexAttribArray(attr);
   }
 
-  makeBuf(new Float32Array(positions), gl.getAttribLocation(program, 'a_position'), 2, gl.FLOAT, false);
-  makeBuf(new Float32Array(texcoords), gl.getAttribLocation(program, 'a_texcoord'), 2, gl.FLOAT, false);
-  makeBuf(new Float32Array(bandings), gl.getAttribLocation(program, 'a_banding'), 4, gl.FLOAT, false);
-  makeBuf(new Int32Array(glyphDatas), gl.getAttribLocation(program, 'a_glyph'), 4, gl.INT, true);
+  makeSlugBuf(new Float32Array(positions), glSlug.getAttribLocation(slugProgram, 'a_position'), 2, glSlug.FLOAT, false);
+  makeSlugBuf(new Float32Array(texcoords), glSlug.getAttribLocation(slugProgram, 'a_texcoord'), 2, glSlug.FLOAT, false);
+  makeSlugBuf(new Float32Array(bandings), glSlug.getAttribLocation(slugProgram, 'a_banding'), 4, glSlug.FLOAT, false);
+  makeSlugBuf(new Int32Array(glyphDatas), glSlug.getAttribLocation(slugProgram, 'a_glyph'), 4, glSlug.INT, true);
 
-  const indexBuf = gl.createBuffer();
-  gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, indexBuf);
-  gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, new Uint16Array(indices), gl.STATIC_DRAW);
-  gl.bindVertexArray(null);
+  const slugIndexBuf = glSlug.createBuffer();
+  glSlug.bindBuffer(glSlug.ELEMENT_ARRAY_BUFFER, slugIndexBuf);
+  glSlug.bufferData(glSlug.ELEMENT_ARRAY_BUFFER, new Uint16Array(indices), glSlug.STATIC_DRAW);
+  glSlug.bindVertexArray(null);
 
-  const uMvp = gl.getUniformLocation(program, 'u_mvp');
-  const uColor = gl.getUniformLocation(program, 'u_color');
-  const uCurveTex = gl.getUniformLocation(program, 'u_curveTexture');
-  const uBandTex = gl.getUniformLocation(program, 'u_bandTexture');
+  const slugUniforms = {
+    mvp: glSlug.getUniformLocation(slugProgram, 'u_mvp'),
+    color: glSlug.getUniformLocation(slugProgram, 'u_color'),
+    curveTex: glSlug.getUniformLocation(slugProgram, 'u_curveTexture'),
+    bandTex: glSlug.getUniformLocation(slugProgram, 'u_bandTexture'),
+  };
 
-  // ---- Bitmap side ----
-  // Render the same glyph outlines to a fixed-resolution bitmap that covers
-  // the exact same em-space region the Slug projection shows at 1x zoom.
-  // This way both sides are pixel-identical at 1x, differing only in what
-  // happens when you zoom in.
-  const bctx = bitmapCanvas.getContext('2d');
+  // ---- Curve overlay line geometry (built once) ----
+  const curveLineVerts = [];
+  const CURVE_SEGMENTS = 12;
+  let gcx = -totalAdvance / 2;
+  for (const ch of word) {
+    const g = GLYPH_DATA[ch];
+    for (const contour of g.contours) {
+      for (const c of contour) {
+        const cv = parseCurve(c, 0);
+        for (let si = 0; si <= CURVE_SEGMENTS; si++) {
+          const t = si / CURVE_SEGMENTS;
+          const pt = evalBezier(
+            { x: gcx + cv.p1.x, y: cv.p1.y },
+            { x: gcx + cv.p2.x, y: cv.p2.y },
+            { x: gcx + cv.p3.x, y: cv.p3.y }, t);
+          curveLineVerts.push(pt.x, pt.y);
+        }
+      }
+    }
+    gcx += g.advance;
+  }
 
-  // Compute the 1x view so "Slug" fits fully with padding.
-  // The word spans totalAdvance wide, glyphs range roughly y=-0.21 to y=0.76.
-  const baseCenterY = 0.28;
-  const bitmapAspect = bitmapDims.width / bitmapDims.height;
-  const wordPadding = 1.2; // 20% breathing room
-  const neededViewW = totalAdvance * wordPadding;
-  const neededViewH = 1.0 * wordPadding; // ~1em glyph height
-  // Pick whichever dimension is the constraint
-  const baseViewH = Math.max(neededViewH, neededViewW / bitmapAspect);
-  const baseViewW = baseViewH * bitmapAspect;
+  let lineVao = null, lineVertCount = 0;
+  if (lineProgram) {
+    lineVao = glSlug.createVertexArray();
+    glSlug.bindVertexArray(lineVao);
+    const lineBuf = glSlug.createBuffer();
+    glSlug.bindBuffer(glSlug.ARRAY_BUFFER, lineBuf);
+    glSlug.bufferData(glSlug.ARRAY_BUFFER, new Float32Array(curveLineVerts), glSlug.STATIC_DRAW);
+    const posLoc = glSlug.getAttribLocation(lineProgram, 'a_position');
+    glSlug.vertexAttribPointer(posLoc, 2, glSlug.FLOAT, false, 0, 0);
+    glSlug.enableVertexAttribArray(posLoc);
+    glSlug.bindVertexArray(null);
+    lineVertCount = curveLineVerts.length / 2;
+  }
 
-  // Em-space bounds of the 1x view
-  const viewEmLeft = -baseViewW / 2;
-  const viewEmRight = baseViewW / 2;
-  const viewEmBottom = baseCenterY - baseViewH / 2;
-  const viewEmTop = baseCenterY + baseViewH / 2;
-
-  // Render at a fixed pixel density
-  const bitmapPxPerEm = 100;
-  const offW = Math.ceil(baseViewW * bitmapPxPerEm);
-  const offH = Math.ceil(baseViewH * bitmapPxPerEm);
+  // ---- Bitmap side: render glyph outlines to offscreen canvas, upload as texture ----
+  const bitmapTexW = 256, bitmapTexH = 64;
   const offscreen = document.createElement('canvas');
-  offscreen.width = offW;
-  offscreen.height = offH;
+  offscreen.width = bitmapTexW;
+  offscreen.height = bitmapTexH;
   const octx = offscreen.getContext('2d');
-  octx.fillStyle = '#0e1220';
-  octx.fillRect(0, 0, offW, offH);
 
-  // Draw glyphs into the offscreen canvas.
-  // Map em-space to offscreen pixels: ox, oy are the pixel position of em-space (0, 0).
-  const offOx = -viewEmLeft * bitmapPxPerEm;  // pixel x of em-space x=0
-  const offOy = viewEmTop * bitmapPxPerEm;     // pixel y of em-space y=0 (y-up flipped)
+  // The word quad covers the full glyph bounds in em-space
+  const wordLeft = -totalAdvance / 2 + slugData.glyphInfos[0].bounds[0] - 0.02;
+  const wordRight = totalAdvance / 2 - (slugData.glyphInfos[slugData.glyphInfos.length-1].advance - slugData.glyphInfos[slugData.glyphInfos.length-1].bounds[2]) + 0.02;
+  const wordBottom = -0.22;
+  const wordTop = 0.78;
+  const wordW = wordRight - wordLeft;
+  const wordH = wordTop - wordBottom;
 
-  // Glyphs are centered at x=0 in em-space (cursorX starts at -totalAdvance/2)
+  // Draw into offscreen canvas
+  octx.fillStyle = 'rgba(0,0,0,0)';
+  octx.clearRect(0, 0, bitmapTexW, bitmapTexH);
+  const bitmapScale = Math.min(bitmapTexW / wordW, bitmapTexH / wordH);
+  const bitmapOx = -wordLeft * bitmapScale;
+  const bitmapOy = wordTop * bitmapScale;
+
   let emCursorX = -totalAdvance / 2;
   for (const ch of word) {
     const g = GLYPH_DATA[ch];
-    drawGlyphOutline(octx, g, offOx + emCursorX * bitmapPxPerEm, offOy, bitmapPxPerEm, {
+    drawGlyphOutline(octx, g, bitmapOx + emCursorX * bitmapScale, bitmapOy, bitmapScale, {
       fill: true, fillColor: '#b09860', strokeColor: null
     });
     emCursorX += g.advance;
   }
 
-  // ---- Pan + Zoom + Rotation state ----
-  let zoom = 1;
-  let panX = 0, panY = 0; // in em-space
-  let rotation = 0; // degrees
+  // Upload offscreen canvas as WebGL texture on the bitmap context
+  const bitmapTex = glBitmap.createTexture();
+  glBitmap.activeTexture(glBitmap.TEXTURE0);
+  glBitmap.bindTexture(glBitmap.TEXTURE_2D, bitmapTex);
+  glBitmap.pixelStorei(glBitmap.UNPACK_FLIP_Y_WEBGL, true);
+  glBitmap.texImage2D(glBitmap.TEXTURE_2D, 0, glBitmap.RGBA, glBitmap.RGBA, glBitmap.UNSIGNED_BYTE, offscreen);
+  glBitmap.texParameteri(glBitmap.TEXTURE_2D, glBitmap.TEXTURE_MIN_FILTER, glBitmap.LINEAR);
+  glBitmap.texParameteri(glBitmap.TEXTURE_2D, glBitmap.TEXTURE_MAG_FILTER, glBitmap.LINEAR);
+  glBitmap.texParameteri(glBitmap.TEXTURE_2D, glBitmap.TEXTURE_WRAP_S, glBitmap.CLAMP_TO_EDGE);
+  glBitmap.texParameteri(glBitmap.TEXTURE_2D, glBitmap.TEXTURE_WRAP_T, glBitmap.CLAMP_TO_EDGE);
+
+  // Bitmap quad: covers same em-space region as the slug quads
+  const bqPositions = new Float32Array([
+    wordLeft, wordBottom,
+    wordRight, wordBottom,
+    wordRight, wordTop,
+    wordLeft, wordTop,
+  ]);
+  const bqUVs = new Float32Array([
+    0, 0,
+    1, 0,
+    1, 1,
+    0, 1,
+  ]);
+  const bqIndices = new Uint16Array([0, 1, 2, 0, 2, 3]);
+
+  const bitmapVao = glBitmap.createVertexArray();
+  glBitmap.bindVertexArray(bitmapVao);
+
+  const bqPosBuf = glBitmap.createBuffer();
+  glBitmap.bindBuffer(glBitmap.ARRAY_BUFFER, bqPosBuf);
+  glBitmap.bufferData(glBitmap.ARRAY_BUFFER, bqPositions, glBitmap.STATIC_DRAW);
+  const bqPosLoc = glBitmap.getAttribLocation(bitmapProgram, 'a_position');
+  glBitmap.vertexAttribPointer(bqPosLoc, 2, glBitmap.FLOAT, false, 0, 0);
+  glBitmap.enableVertexAttribArray(bqPosLoc);
+
+  const bqUvBuf = glBitmap.createBuffer();
+  glBitmap.bindBuffer(glBitmap.ARRAY_BUFFER, bqUvBuf);
+  glBitmap.bufferData(glBitmap.ARRAY_BUFFER, bqUVs, glBitmap.STATIC_DRAW);
+  const bqUvLoc = glBitmap.getAttribLocation(bitmapProgram, 'a_uv');
+  glBitmap.vertexAttribPointer(bqUvLoc, 2, glBitmap.FLOAT, false, 0, 0);
+  glBitmap.enableVertexAttribArray(bqUvLoc);
+
+  const bqIdxBuf = glBitmap.createBuffer();
+  glBitmap.bindBuffer(glBitmap.ELEMENT_ARRAY_BUFFER, bqIdxBuf);
+  glBitmap.bufferData(glBitmap.ELEMENT_ARRAY_BUFFER, bqIndices, glBitmap.STATIC_DRAW);
+  glBitmap.bindVertexArray(null);
+
+  const bitmapUniforms = {
+    mvp: glBitmap.getUniformLocation(bitmapProgram, 'u_mvp'),
+    color: glBitmap.getUniformLocation(bitmapProgram, 'u_color'),
+    tex: glBitmap.getUniformLocation(bitmapProgram, 'u_tex'),
+  };
+
+  // ---- Camera state ----
+  let orbitAngleOffset = 0; // user drag adds to auto-orbit
   let showCurves = false;
+  let dragging = false, lastMx = 0;
+  const lookTarget = [0, 0.28, 0];
 
-  function drawBitmap() {
-    const w = bitmapDims.width, h = bitmapDims.height;
-    // Clear at device pixels (bypass the DPR scale)
-    const dprLocal = bitmapDims.dpr || (window.devicePixelRatio || 1);
-    bctx.save();
-    bctx.setTransform(1,0,0,1,0,0);
-    bctx.clearRect(0, 0, bitmapCanvas.width, bitmapCanvas.height);
-    bctx.setTransform(dprLocal,0,0,dprLocal,0,0);
-    bctx.fillStyle = '#0e1220';
-    bctx.fillRect(0, 0, w, h);
-    bctx.imageSmoothingEnabled = false;
+  function computeMVP(canvas, t) {
+    const aspect = canvas.width / canvas.height;
+    const orbitAngle = t * 0.3 + orbitAngleOffset;
+    const distBase = 3.75;
+    const distVar = 1.25;
+    const dist = distBase + distVar * Math.sin(t * 0.13);
+    const camX = dist * Math.sin(orbitAngle);
+    const camZ = dist * Math.cos(orbitAngle);
+    const camY = 0.8 * Math.sin(t * 0.17) + 0.5;
 
-    // The visible em-space region at current zoom/pan
-    const curViewH = baseViewH / zoom;
-    const curViewW = curViewH * bitmapAspect;
-    const cx = panX;
-    const cy = baseCenterY + panY;
-
-    // Map the visible em-space region to offscreen pixel coords
-    const srcX = (cx - curViewW / 2 - viewEmLeft) * bitmapPxPerEm;
-    const srcY = (viewEmTop - (cy + curViewH / 2)) * bitmapPxPerEm;
-    const srcW = curViewW * bitmapPxPerEm;
-    const srcH = curViewH * bitmapPxPerEm;
-
-    // Apply rotation around the canvas center
-    if (rotation !== 0) {
-      bctx.translate(w / 2, h / 2);
-      bctx.rotate(rotation * Math.PI / 180);
-      bctx.translate(-w / 2, -h / 2);
-    }
-
-    bctx.drawImage(offscreen, srcX, srcY, srcW, srcH, 0, 0, w, h);
-    bctx.restore();
+    const proj = mat4Perspective(Math.PI / 4, aspect, 0.1, 100);
+    const view = mat4LookAt([camX, camY, camZ], lookTarget, [0, 1, 0]);
+    return mat4Multiply(proj, view);
   }
 
-  function drawSlug() {
+  function drawSlug(mvp) {
+    const gl = glSlug;
     const w = slugCanvas.width, h = slugCanvas.height;
     gl.viewport(0, 0, w, h);
     gl.clearColor(0.055, 0.071, 0.125, 1.0);
-    gl.clear(gl.COLOR_BUFFER_BIT);
+    gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
     gl.enable(gl.BLEND);
     gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
-    gl.useProgram(program);
+    gl.useProgram(slugProgram);
 
-    const aspect = w / h;
-    const viewH = baseViewH / zoom;
-    const viewW = viewH * aspect;
-    const cx = panX, cy = baseCenterY + panY;
-
-    // MVP = Projection * Rotation * Translation (column-major for WebGL)
-    const rad = rotation * Math.PI / 180;
-    const cosR = Math.cos(rad), sinR = Math.sin(rad);
-    const sx = 2 / viewW, sy = 2 / viewH;
-
-    const mvp = new Float32Array([
-      sx * cosR,    sy * sinR,   0, 0,
-      -sx * sinR,   sy * cosR,   0, 0,
-      0,            0,           1, 0,
-      sx * (-cx * cosR + cy * sinR),
-      sy * (-cx * sinR - cy * cosR),
-      0, 1
-    ]);
-
-    gl.uniformMatrix4fv(uMvp, false, mvp);
-    gl.uniform4f(uColor, 0.69, 0.60, 0.38, 1.0);
-    gl.activeTexture(gl.TEXTURE0); gl.bindTexture(gl.TEXTURE_2D, curveTexture); gl.uniform1i(uCurveTex, 0);
-    gl.activeTexture(gl.TEXTURE1); gl.bindTexture(gl.TEXTURE_2D, bandTexture); gl.uniform1i(uBandTex, 1);
-    gl.bindVertexArray(vao);
+    gl.uniformMatrix4fv(slugUniforms.mvp, false, mvp);
+    gl.uniform4f(slugUniforms.color, 0.69, 0.60, 0.38, 1.0);
+    gl.activeTexture(gl.TEXTURE0); gl.bindTexture(gl.TEXTURE_2D, curveTexture); gl.uniform1i(slugUniforms.curveTex, 0);
+    gl.activeTexture(gl.TEXTURE1); gl.bindTexture(gl.TEXTURE_2D, bandTexture); gl.uniform1i(slugUniforms.bandTex, 1);
+    gl.bindVertexArray(slugVao);
     gl.drawElements(gl.TRIANGLES, indices.length, gl.UNSIGNED_SHORT, 0);
+    gl.bindVertexArray(null);
+
+    // Draw curve overlay lines if active
+    if (showCurves && lineProgram && lineVao) {
+      gl.useProgram(lineProgram);
+      gl.uniformMatrix4fv(gl.getUniformLocation(lineProgram, 'u_mvp'), false, mvp);
+      gl.uniform4f(gl.getUniformLocation(lineProgram, 'u_color'), 1.0, 1.0, 1.0, 0.85);
+      gl.bindVertexArray(lineVao);
+      // Draw as LINE_STRIP segments. Each curve has CURVE_SEGMENTS+1 verts.
+      let offset = 0;
+      let gcxCount = -totalAdvance / 2;
+      for (const ch of word) {
+        const g = GLYPH_DATA[ch];
+        for (const contour of g.contours) {
+          for (let qi = 0; qi < contour.length; qi++) {
+            gl.drawArrays(gl.LINE_STRIP, offset, CURVE_SEGMENTS + 1);
+            offset += CURVE_SEGMENTS + 1;
+          }
+        }
+        gcxCount += g.advance;
+      }
+      gl.bindVertexArray(null);
+    }
+  }
+
+  function drawBitmapSide(mvp) {
+    const gl = glBitmap;
+    const w = bitmapCanvas.width, h = bitmapCanvas.height;
+    gl.viewport(0, 0, w, h);
+    gl.clearColor(0.055, 0.071, 0.125, 1.0);
+    gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+    gl.enable(gl.BLEND);
+    gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
+    gl.useProgram(bitmapProgram);
+
+    gl.uniformMatrix4fv(bitmapUniforms.mvp, false, mvp);
+    gl.uniform4f(bitmapUniforms.color, 1.0, 1.0, 1.0, 1.0);
+    gl.activeTexture(gl.TEXTURE0);
+    gl.bindTexture(gl.TEXTURE_2D, bitmapTex);
+    gl.uniform1i(bitmapUniforms.tex, 0);
+    gl.bindVertexArray(bitmapVao);
+    gl.drawElements(gl.TRIANGLES, 6, gl.UNSIGNED_SHORT, 0);
     gl.bindVertexArray(null);
   }
 
-  // ---- Curve overlay on the Slug canvas ----
-  const overlayCanvas = document.getElementById('canvas-slug-overlay');
-  const overlayDims = setupCanvas(overlayCanvas);
-  const octx2 = overlayCanvas.getContext('2d');
+  // ---- Animation loop ----
+  let startTime = null;
 
-  function drawCurveOverlay() {
-    const ow = overlayDims.width, oh = overlayDims.height;
-    octx2.save();
-    octx2.setTransform(1,0,0,1,0,0);
-    octx2.clearRect(0, 0, overlayCanvas.width, overlayCanvas.height);
-    const dprO = overlayDims.dpr || 1;
-    octx2.setTransform(dprO,0,0,dprO,0,0);
+  function animate(timestamp) {
+    if (!startTime) startTime = timestamp;
+    const t = (timestamp - startTime) / 1000;
 
-    if (!showCurves) { octx2.restore(); return; }
+    const slugMvp = computeMVP(slugCanvas, t);
+    const bitmapMvp = computeMVP(bitmapCanvas, t);
 
-    // Apply the same view transform as the Slug projection
-    const viewH = baseViewH / zoom;
-    const viewW = viewH * (ow / oh);
-    const cx = panX, cy = baseCenterY + panY;
-    const rad = rotation * Math.PI / 180;
+    drawSlug(slugMvp);
+    drawBitmapSide(bitmapMvp);
 
-    // Map em-space to screen: translate, rotate, scale
-    octx2.translate(ow / 2, oh / 2);
-    octx2.rotate(-rad);
-    octx2.scale(ow / viewW, -oh / viewH);
-    octx2.translate(-cx, -cy);
-
-    // Draw each glyph's curves
-    let gcx = -totalAdvance / 2;
-    for (const ch of word) {
-      const g = GLYPH_DATA[ch];
-      for (const contour of g.contours) {
-        if (contour.length === 0) continue;
-        const first = parseCurve(contour[0], 0);
-        octx2.beginPath();
-        octx2.moveTo(gcx + first.p1.x, first.p1.y);
-        for (const c of contour) {
-          const cv = parseCurve(c, 0);
-          octx2.quadraticCurveTo(gcx + cv.p2.x, cv.p2.y, gcx + cv.p3.x, cv.p3.y);
-        }
-        octx2.closePath();
-        octx2.strokeStyle = 'rgba(255, 255, 255, 0.9)';
-        octx2.lineWidth = 2.5 * viewW / ow; // constant screen-space width
-        octx2.stroke();
-      }
-      gcx += g.advance;
-    }
-
-    octx2.restore();
+    requestAnimationFrame(animate);
   }
 
-  function render() { drawBitmap(); drawSlug(); drawCurveOverlay(); }
-  render();
+  requestAnimationFrame(animate);
 
-  slider.addEventListener('input', () => {
-    zoom = parseFloat(slider.value);
-    valueLabel.textContent = zoom + 'x';
-    render();
-  });
-
-  rotateSlider.addEventListener('input', () => {
-    rotation = parseFloat(rotateSlider.value);
-    rotateLabel.textContent = rotation + '\u00B0';
-    render();
-  });
-
-  btnShowCurves.addEventListener('click', () => {
-    showCurves = !showCurves;
-    btnShowCurves.classList.toggle('active', showCurves);
-    render();
-  });
-
-  // ---- Pan via drag (both canvases) ----
-  let dragging = false, lastMx = 0, lastMy = 0;
-
+  // ---- Drag to orbit (on either canvas) ----
   function startDrag(e) {
     dragging = true;
-    lastMx = e.clientX; lastMy = e.clientY;
+    lastMx = e.clientX;
     slugCanvas.style.cursor = 'grabbing';
     bitmapCanvas.style.cursor = 'grabbing';
   }
 
   function moveDrag(e) {
     if (!dragging) return;
-    const dx = e.clientX - lastMx, dy = e.clientY - lastMy;
-    lastMx = e.clientX; lastMy = e.clientY;
-    // Convert pixel drag to em-space
-    const aspect = slugCanvas.width / slugCanvas.height;
-    const viewH = 1.2 / zoom;
-    const viewW = viewH * aspect;
-    panX -= dx / slugDims.width * viewW;
-    panY += dy / slugDims.height * viewH;
-    render();
+    const dx = e.clientX - lastMx;
+    lastMx = e.clientX;
+    orbitAngleOffset += dx * 0.008;
   }
 
   function endDrag() {
@@ -1906,18 +2011,11 @@ function initWebGLSection() {
     c.addEventListener('mouseleave', endDrag);
   }
 
-  // ---- Scroll to zoom (on either canvas) ----
-  function handleWheel(e) {
-    e.preventDefault();
-    const delta = e.deltaY > 0 ? 0.9 : 1.1;
-    zoom = Math.max(1, Math.min(64, zoom * delta));
-    slider.value = zoom;
-    valueLabel.textContent = zoom.toFixed(1).replace(/\.0$/, '') + 'x';
-    render();
-  }
-
-  slugCanvas.addEventListener('wheel', handleWheel, { passive: false });
-  bitmapCanvas.addEventListener('wheel', handleWheel, { passive: false });
+  // ---- Show curves toggle ----
+  btnShowCurves.addEventListener('click', () => {
+    showCurves = !showCurves;
+    btnShowCurves.classList.toggle('active', showCurves);
+  });
 }
 
 // ================================================================
