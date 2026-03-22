@@ -491,7 +491,10 @@
     </div>
     <div>
       <div class="canvas-label">Slug (curves evaluated per-pixel on GPU)</div>
-      <canvas id="canvas-slug" class="demo"></canvas>
+      <div style="position:relative;">
+        <canvas id="canvas-slug" class="demo"></canvas>
+        <canvas id="canvas-slug-overlay" class="demo" style="position:absolute;top:0;left:0;pointer-events:none;background:transparent;border-color:transparent;"></canvas>
+      </div>
     </div>
   </div>
   <p class="pan-hint">drag to pan &middot; scroll or slider to zoom</p>
@@ -502,9 +505,19 @@
     <span class="value" id="zoom-value">1x</span>
   </div>
 
+  <div class="slider-row">
+    <label for="rotate-slider">Rotate</label>
+    <input type="range" id="rotate-slider" min="-180" max="180" value="0" step="1">
+    <span class="value" id="rotate-value">0&deg;</span>
+  </div>
+
+  <div class="controls-row">
+    <button id="btn-show-curves">Show curves</button>
+  </div>
+
   <div class="callout">
-    <p>Both canvases show the same glyph outlines at the same zoom and pan position. The left was rasterized once at a fixed resolution (a bitmap). The right evaluates the quadratic Bezier curves per-pixel on the GPU using the Slug algorithm.</p>
-    <p>Zoom in. The bitmap becomes a blocky mess. The Slug render stays perfectly sharp because it computes the mathematically exact curve for every pixel, every frame.</p>
+    <p>Both sides render the same glyph outlines. The left was rasterized once at a fixed resolution. The right evaluates the curves mathematically, per pixel, on the GPU.</p>
+    <p>Try rotating the text. In a game, text appears on angled signs, tilted HUDs, spinning objects. The bitmap smears and aliases. The Slug render stays perfectly sharp at any angle, any zoom, because it recomputes every pixel from the original curves.</p>
   </div>
 </section>
 
@@ -1358,6 +1371,9 @@ function initWebGLSection() {
   const bitmapCanvas = document.getElementById('canvas-bitmap');
   const slider = document.getElementById('zoom-slider');
   const valueLabel = document.getElementById('zoom-value');
+  const rotateSlider = document.getElementById('rotate-slider');
+  const rotateLabel = document.getElementById('rotate-value');
+  const btnShowCurves = document.getElementById('btn-show-curves');
   const errorDiv = document.getElementById('webgl-error');
 
   // Size canvases
@@ -1703,22 +1719,25 @@ function initWebGLSection() {
     emCursorX += g.advance;
   }
 
-  // ---- Pan + Zoom state ----
+  // ---- Pan + Zoom + Rotation state ----
   let zoom = 1;
   let panX = 0, panY = 0; // in em-space
+  let rotation = 0; // degrees
+  let showCurves = false;
 
   function drawBitmap() {
     const w = bitmapDims.width, h = bitmapDims.height;
+    // Clear at device pixels (bypass the DPR scale)
+    const dprLocal = bitmapDims.dpr || (window.devicePixelRatio || 1);
     bctx.save();
     bctx.setTransform(1,0,0,1,0,0);
     bctx.clearRect(0, 0, bitmapCanvas.width, bitmapCanvas.height);
-    bctx.restore();
+    bctx.setTransform(dprLocal,0,0,dprLocal,0,0);
     bctx.fillStyle = '#0e1220';
     bctx.fillRect(0, 0, w, h);
     bctx.imageSmoothingEnabled = false;
 
-    // The visible em-space region at current zoom/pan:
-    // same math as the Slug projection
+    // The visible em-space region at current zoom/pan
     const curViewH = baseViewH / zoom;
     const curViewW = curViewH * bitmapAspect;
     const cx = panX;
@@ -1730,7 +1749,15 @@ function initWebGLSection() {
     const srcW = curViewW * bitmapPxPerEm;
     const srcH = curViewH * bitmapPxPerEm;
 
+    // Apply rotation around the canvas center
+    if (rotation !== 0) {
+      bctx.translate(w / 2, h / 2);
+      bctx.rotate(rotation * Math.PI / 180);
+      bctx.translate(-w / 2, -h / 2);
+    }
+
     bctx.drawImage(offscreen, srcX, srcY, srcW, srcH, 0, 0, w, h);
+    bctx.restore();
   }
 
   function drawSlug() {
@@ -1747,11 +1774,18 @@ function initWebGLSection() {
     const viewW = viewH * aspect;
     const cx = panX, cy = baseCenterY + panY;
 
+    // MVP = Projection * Rotation * Translation (column-major for WebGL)
+    const rad = rotation * Math.PI / 180;
+    const cosR = Math.cos(rad), sinR = Math.sin(rad);
+    const sx = 2 / viewW, sy = 2 / viewH;
+
     const mvp = new Float32Array([
-      2/viewW, 0, 0, 0,
-      0, 2/viewH, 0, 0,
-      0, 0, 1, 0,
-      -2*cx/viewW, -2*cy/viewH, 0, 1
+      sx * cosR,    sy * sinR,   0, 0,
+      -sx * sinR,   sy * cosR,   0, 0,
+      0,            0,           1, 0,
+      sx * (-cx * cosR + cy * sinR),
+      sy * (-cx * sinR - cy * cosR),
+      0, 1
     ]);
 
     gl.uniformMatrix4fv(uMvp, false, mvp);
@@ -1763,12 +1797,75 @@ function initWebGLSection() {
     gl.bindVertexArray(null);
   }
 
-  function render() { drawBitmap(); drawSlug(); }
+  // ---- Curve overlay on the Slug canvas ----
+  const overlayCanvas = document.getElementById('canvas-slug-overlay');
+  const overlayDims = setupCanvas(overlayCanvas);
+  const octx2 = overlayCanvas.getContext('2d');
+
+  function drawCurveOverlay() {
+    const ow = overlayDims.width, oh = overlayDims.height;
+    octx2.save();
+    octx2.setTransform(1,0,0,1,0,0);
+    octx2.clearRect(0, 0, overlayCanvas.width, overlayCanvas.height);
+    const dprO = overlayDims.dpr || 1;
+    octx2.setTransform(dprO,0,0,dprO,0,0);
+
+    if (!showCurves) { octx2.restore(); return; }
+
+    // Apply the same view transform as the Slug projection
+    const viewH = baseViewH / zoom;
+    const viewW = viewH * (ow / oh);
+    const cx = panX, cy = baseCenterY + panY;
+    const rad = rotation * Math.PI / 180;
+
+    // Map em-space to screen: translate, rotate, scale
+    octx2.translate(ow / 2, oh / 2);
+    octx2.rotate(-rad);
+    octx2.scale(ow / viewW, -oh / viewH);
+    octx2.translate(-cx, -cy);
+
+    // Draw each glyph's curves
+    let gcx = -totalAdvance / 2;
+    for (const ch of word) {
+      const g = GLYPH_DATA[ch];
+      for (const contour of g.contours) {
+        if (contour.length === 0) continue;
+        const first = parseCurve(contour[0], 0);
+        octx2.beginPath();
+        octx2.moveTo(gcx + first.p1.x, first.p1.y);
+        for (const c of contour) {
+          const cv = parseCurve(c, 0);
+          octx2.quadraticCurveTo(gcx + cv.p2.x, cv.p2.y, gcx + cv.p3.x, cv.p3.y);
+        }
+        octx2.closePath();
+        octx2.strokeStyle = 'rgba(255, 255, 255, 0.9)';
+        octx2.lineWidth = 2.5 * viewW / ow; // constant screen-space width
+        octx2.stroke();
+      }
+      gcx += g.advance;
+    }
+
+    octx2.restore();
+  }
+
+  function render() { drawBitmap(); drawSlug(); drawCurveOverlay(); }
   render();
 
   slider.addEventListener('input', () => {
     zoom = parseFloat(slider.value);
     valueLabel.textContent = zoom + 'x';
+    render();
+  });
+
+  rotateSlider.addEventListener('input', () => {
+    rotation = parseFloat(rotateSlider.value);
+    rotateLabel.textContent = rotation + '\u00B0';
+    render();
+  });
+
+  btnShowCurves.addEventListener('click', () => {
+    showCurves = !showCurves;
+    btnShowCurves.classList.toggle('active', showCurves);
     render();
   });
 
