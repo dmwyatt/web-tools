@@ -373,12 +373,29 @@ h3 {
 .tag-gray { background: var(--code-bg); color: var(--text-muted); }
 
 /* LLM summary */
-.llm-summary {
-    background: var(--surface);
+.summary-detail {
     border: 1px solid var(--border);
     border-radius: 6px;
+    margin-bottom: 8px;
+}
+
+.summary-detail summary {
+    padding: 14px 20px;
+    cursor: pointer;
+    font-weight: 600;
+    font-size: 1rem;
+    background: var(--surface);
+    border-radius: 6px;
+}
+
+.summary-detail[open] summary {
+    border-bottom: 1px solid var(--border);
+    border-radius: 6px 6px 0 0;
+}
+
+.llm-summary {
+    background: var(--surface);
     padding: 28px;
-    margin-top: 16px;
     font-size: 0.92rem;
     line-height: 1.75;
 }
@@ -1575,11 +1592,15 @@ footer {
 </section>
 
 
-
 <section>
-    <h2>Most-Cited Generic Elements</h2>
-    <div class="llm-summary">
-        <table>
+    <h2>Evaluator Observations</h2>
+    <p class="section-desc">Evaluators provided free-text observations about each specimen. An LLM clustered and ranked these into themes. Click to expand each category.</p>
+
+    
+    <details class="summary-detail">
+        <summary>Most-Cited Generic Elements</summary>
+        <div class="llm-summary">
+            <table>
   <tr>
     <th>Rank</th>
     <th>Theme</th>
@@ -1716,13 +1737,13 @@ footer {
 
 <h4>Overall Takeaway</h4>
 <p>Across the observations, the strongest pattern is not one specific component but repeated dependence on familiar UI kits and landing-page formulas: dashboard shells, card grids, sidebars, testimonials, newsletter CTAs, and pricing blocks show up so often that many designs feel assembled from the same small set of defaults rather than shaped by a distinct concept or brand point of view.</p>
-    </div>
-</section>
-
-<section>
-    <h2>Most-Cited Distinctive Elements</h2>
-    <div class="llm-summary">
-        <table>
+        </div>
+    </details>
+    
+    <details class="summary-detail">
+        <summary>Most-Cited Distinctive Elements</summary>
+        <div class="llm-summary">
+            <table>
   <tr>
     <th>Rank</th>
     <th>Theme</th>
@@ -1823,13 +1844,13 @@ footer {
 
 <h4>Overall takeaway</h4>
 <p>The strongest patterns combine brand-level art direction with domain-specific UI detail: evaluators were most persuaded by pages that paired a clear typographic and color identity with realistic content structures, meaningful data widgets, and small semantic interface cues.</p>
-    </div>
-</section>
-
-<section>
-    <h2>Recurring AI Design Patterns</h2>
-    <div class="llm-summary">
-        <table>
+        </div>
+    </details>
+    
+    <details class="summary-detail">
+        <summary>Recurring AI Design Patterns</summary>
+        <div class="llm-summary">
+            <table>
   <tr>
     <th>Rank</th>
     <th>Theme</th>
@@ -1921,13 +1942,13 @@ footer {
 
 <h4>Overall takeaway</h4>
 <p>The observations cluster around a small set of highly reusable AI design defaults: dark dashboards, SaaS landing pages, docs shells, e-commerce PDPs, blog layouts, and story-driven marketing pages, all assembled from familiar card grids, sidebars, testimonial blocks, stats rows, and bottom CTA sections.</p>
-    </div>
-</section>
-
-<section>
-    <h2>Visual Decoration Techniques</h2>
-    <div class="llm-summary">
-        <table>
+        </div>
+    </details>
+    
+    <details class="summary-detail">
+        <summary>Visual Decoration Techniques</summary>
+        <div class="llm-summary">
+            <table>
   <tr>
     <th>Rank</th>
     <th>Theme</th>
@@ -2019,9 +2040,10 @@ footer {
 
 <h4>Overall takeaway</h4>
 <p>Across the observations, the dominant visual strategy is subtle atmospheric enhancement rather than heavy ornament: thin borders, rounded cards, muted shadows/glows, badges, overlays, gradients, and restrained texture are repeatedly used to give pages depth, mood, and hierarchy while keeping layouts clean and contemporary.</p>
-    </div>
+        </div>
+    </details>
+    
 </section>
-
 
 
 <section>
