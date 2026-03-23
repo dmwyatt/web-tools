@@ -13,6 +13,7 @@ Access these tools directly via GitHub Pages:
 - **Speech Synthesis Tester** - [Live Tool](https://dmwyatt.github.io/web-tools/speech-synthesis-tester/)
 - **Slug Font Rendering Demo** - [Live Tool](https://dmwyatt.github.io/web-tools/slug-font-rendering/)
 - **Subway Nutrition** - [Live Tool](https://dmwyatt.github.io/web-tools/subway-nutrition/)
+- **Claude Frontend Aesthetics Benchmark** - [Live Report](https://dmwyatt.github.io/web-tools/claude-frontend-aesthetics-benchmark/)
 
 ## Usage
 

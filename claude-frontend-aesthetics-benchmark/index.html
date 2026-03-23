@@ -1,0 +1,3367 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Claude Frontend Aesthetics Benchmark</title>
+<link href="https://fonts.googleapis.com/css2?family=Source+Serif+4:ital,opsz,wght@0,8..60,400;0,8..60,600;0,8..60,700;1,8..60,400&family=JetBrains+Mono:wght@400;600&family=Inter:wght@400;500;600&family=Outfit:wght@400;600&family=DM+Sans:wght@400;600&family=Cormorant+Garamond:wght@400;600&family=Instrument+Serif:ital@0;1&family=Space+Grotesk:wght@400;600&family=Playfair+Display:wght@400;700&display=swap" rel="stylesheet">
+<style>
+:root {
+    --bg: #fafaf8;
+    --surface: #ffffff;
+    --text: #1c1c1c;
+    --text-muted: #6b6b6b;
+    --border: #e2e0dc;
+    --accent: #1c1c1c;
+    --green: #2d5a27;
+    --red: #8b2020;
+    --amber: #856404;
+    --code-bg: #f0ede8;
+    --serif: 'Source Serif 4', Georgia, serif;
+    --mono: 'JetBrains Mono', 'SF Mono', monospace;
+    --sans: 'Inter', system-ui, sans-serif;
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+body {
+    font-family: var(--serif);
+    background: var(--bg);
+    color: var(--text);
+    line-height: 1.75;
+    font-size: 17px;
+}
+
+.container { max-width: 920px; margin: 0 auto; padding: 0 24px; }
+
+/* Header */
+header {
+    padding: 96px 0 48px;
+    border-bottom: 2px solid var(--text);
+}
+
+header h1 {
+    font-size: 2.6rem;
+    font-weight: 700;
+    line-height: 1.15;
+    margin-bottom: 24px;
+    letter-spacing: -0.03em;
+}
+
+header .subtitle {
+    font-size: 1.15rem;
+    color: var(--text-muted);
+    max-width: 640px;
+    line-height: 1.7;
+}
+
+/* About section */
+.about {
+    padding: 48px 0;
+    border-bottom: 1px solid var(--border);
+    margin-bottom: 64px;
+}
+
+.about h2 {
+    font-size: 1rem;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: var(--text-muted);
+    margin-bottom: 16px;
+    font-family: var(--sans);
+    font-weight: 600;
+}
+
+.about p { margin-bottom: 12px; max-width: 680px; }
+
+.about .prompt-example {
+    background: var(--code-bg);
+    font-family: var(--mono);
+    font-size: 0.85rem;
+    padding: 16px 20px;
+    border-radius: 4px;
+    margin: 20px 0;
+    line-height: 1.6;
+    color: var(--text-muted);
+}
+
+.about .prompt-example em {
+    color: var(--text);
+    font-style: normal;
+}
+
+/* Sections */
+section { margin-bottom: 72px; }
+
+section > h2 {
+    font-size: 1.5rem;
+    font-weight: 700;
+    margin-bottom: 8px;
+    letter-spacing: -0.01em;
+}
+
+section > .section-desc {
+    color: var(--text-muted);
+    margin-bottom: 28px;
+    max-width: 680px;
+    font-size: 0.95rem;
+}
+
+h3 {
+    font-size: 1.05rem;
+    font-weight: 600;
+    margin-bottom: 14px;
+    margin-top: 36px;
+}
+
+/* Big stat */
+.big-stat {
+    font-size: 4rem;
+    font-weight: 700;
+    letter-spacing: -0.04em;
+    line-height: 1;
+    margin-bottom: 4px;
+}
+
+.big-stat-label {
+    font-size: 0.9rem;
+    color: var(--text-muted);
+    margin-bottom: 32px;
+}
+
+/* Score bars */
+.score-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 6px;
+}
+
+.score-label {
+    width: 180px;
+    font-size: 0.8rem;
+    font-family: var(--mono);
+    flex-shrink: 0;
+    color: var(--text-muted);
+}
+
+.score-track {
+    flex: 1;
+    height: 22px;
+    background: var(--code-bg);
+    border-radius: 3px;
+    overflow: hidden;
+}
+
+.score-fill {
+    height: 100%;
+    background: var(--text);
+    border-radius: 3px;
+    transition: width 0.3s;
+}
+
+.score-value {
+    width: 32px;
+    text-align: right;
+    font-family: var(--mono);
+    font-size: 0.85rem;
+    font-weight: 600;
+}
+
+/* Swatches */
+.swatch-grid {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-bottom: 28px;
+}
+
+.swatch {
+    text-align: center;
+}
+
+.swatch-color {
+    width: 56px;
+    height: 56px;
+    border-radius: 4px;
+}
+
+.swatch code {
+    display: block;
+    font-family: var(--mono);
+    font-size: 0.65rem;
+    color: var(--text-muted);
+    margin-top: 4px;
+}
+
+.swatch-count {
+    display: block;
+    font-size: 0.7rem;
+    color: var(--text-muted);
+}
+
+/* Font table */
+.font-table { width: 100%; border-collapse: collapse; }
+.font-table th, .font-table td {
+    text-align: left;
+    padding: 10px 16px;
+    border-bottom: 1px solid var(--border);
+    font-size: 0.9rem;
+}
+.font-table th {
+    font-family: var(--sans);
+    font-weight: 600;
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--text-muted);
+}
+.font-table .font-sample {
+    font-size: 1.1rem;
+}
+.font-table .font-count {
+    font-family: var(--mono);
+    font-size: 0.8rem;
+    color: var(--text-muted);
+}
+.font-table .font-specimens {
+    font-size: 0.8rem;
+    color: var(--text-muted);
+}
+
+.table-grid {
+    display: grid;
+    grid-template-columns: 3fr 2fr;
+    gap: 40px;
+}
+@media (max-width: 700px) { .table-grid { grid-template-columns: 1fr; } }
+
+/* Distribution bars */
+.dist-bar {
+    display: flex;
+    height: 28px;
+    border-radius: 4px;
+    overflow: hidden;
+    margin-bottom: 10px;
+}
+
+.dist-segment { transition: opacity 0.2s; cursor: default; }
+.dist-segment:hover { opacity: 0.85; }
+
+.dist-legend {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 14px;
+    font-size: 0.8rem;
+    color: var(--text-muted);
+    margin-bottom: 8px;
+}
+
+.dist-legend span { display: flex; align-items: center; gap: 5px; }
+
+.legend-dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 2px;
+    flex-shrink: 0;
+}
+
+/* Agreement heatmap */
+.heatmap-section {
+    margin-bottom: 36px;
+}
+
+.heatmap-section h3 {
+    display: flex;
+    align-items: baseline;
+    gap: 12px;
+    margin-top: 0;
+}
+
+.agree-summary {
+    font-family: var(--mono);
+    font-size: 0.75rem;
+    font-weight: 400;
+    color: var(--text-muted);
+    background: var(--code-bg);
+    padding: 2px 8px;
+    border-radius: 3px;
+}
+
+.heatmap {
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    overflow: hidden;
+}
+
+.heatmap-header {
+    display: grid;
+    grid-template-columns: 180px 1fr 1fr 1fr;
+    column-gap: 12px;
+    padding: 8px 12px;
+    background: var(--code-bg);
+    font-family: var(--sans);
+    font-size: 0.7rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--text-muted);
+}
+
+.heatmap-header span:not(:first-child) {
+    text-align: center;
+}
+
+.heatmap-row {
+    display: grid;
+    grid-template-columns: 180px 1fr 1fr 1fr;
+    column-gap: 12px;
+    padding: 6px 12px;
+    border-bottom: 1px solid #f5f3f0;
+    font-size: 0.8rem;
+    align-items: center;
+}
+
+.heatmap-row:last-child { border-bottom: none; }
+
+.heatmap-row.disagree {
+    background: #f5f0ea;
+}
+
+.heatmap-label {
+    font-family: var(--mono);
+    font-size: 0.75rem;
+    color: var(--text-muted);
+}
+
+.hm-cell {
+    text-align: center;
+    padding: 3px 0;
+    font-family: var(--mono);
+    font-size: 0.72rem;
+    border-radius: 3px;
+}
+
+.hm-deliberate { background: #e8f0e6; color: var(--green); }
+.hm-default { background: #fde8e8; color: var(--red); }
+.hm-uncertain { background: var(--code-bg); color: var(--text-muted); }
+.hm-specific { background: #e8f0e6; color: var(--green); }
+.hm-generic { background: #fde8e8; color: var(--red); }
+.hm-mixed { background: #fef3cd; color: var(--amber); }
+.hm-yes { background: #fde8e8; color: var(--red); }
+.hm-no { background: #e8f0e6; color: var(--green); }
+.hm-heavy { background: #fde8e8; color: var(--red); }
+.hm-moderate { background: #fef3cd; color: var(--amber); }
+.hm-minimal { background: #e8f0e6; color: var(--green); }
+.hm-none { background: #e8f0e6; color: var(--green); }
+.hm-generous { background: #e8f0e6; color: var(--green); }
+.hm-dense { background: #fde8e8; color: var(--red); }
+
+/* Tags (used in specimen detail) */
+.tag {
+    display: inline-block;
+    padding: 1px 7px;
+    border-radius: 3px;
+    font-size: 0.7rem;
+    font-family: var(--mono);
+    margin-left: 4px;
+}
+
+.tag-green { background: #e8f0e6; color: var(--green); }
+.tag-red { background: #fde8e8; color: var(--red); }
+.tag-amber { background: #fef3cd; color: var(--amber); }
+.tag-gray { background: var(--code-bg); color: var(--text-muted); }
+
+/* LLM summary */
+.llm-summary {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 28px;
+    margin-top: 16px;
+    font-size: 0.92rem;
+    line-height: 1.75;
+}
+
+.llm-summary h4 {
+    font-size: 0.95rem;
+    margin-bottom: 4px;
+}
+
+.llm-summary p { margin-bottom: 12px; }
+
+.llm-summary .takeaway {
+    border-top: 1px solid var(--border);
+    padding-top: 16px;
+    margin-top: 20px;
+    font-weight: 600;
+}
+
+/* Specimen sections */
+.specimen {
+    border-top: 2px solid var(--border);
+    padding-top: 40px;
+    margin-bottom: 56px;
+}
+
+.specimen-header {
+    display: flex;
+    align-items: baseline;
+    gap: 16px;
+    margin-bottom: 24px;
+}
+
+.specimen-header h3 {
+    font-family: var(--mono);
+    font-size: 1.2rem;
+    margin: 0;
+}
+
+.specimen-verdict {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    margin-bottom: 28px;
+    padding: 20px 24px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+}
+
+.verdict-score {
+    font-family: var(--mono);
+    font-size: 2.8rem;
+    font-weight: 700;
+    line-height: 1;
+    letter-spacing: -0.03em;
+    flex-shrink: 0;
+}
+
+.verdict-score span {
+    font-size: 1rem;
+    font-weight: 400;
+    color: var(--text-muted);
+}
+
+.verdict-text {
+    font-size: 0.9rem;
+    line-height: 1.5;
+    color: var(--text-muted);
+}
+
+.verdict-text strong { color: var(--text); }
+
+.specimen-details {
+    display: flex;
+    gap: 32px;
+    margin-bottom: 24px;
+    font-size: 0.85rem;
+}
+
+.specimen-detail-group {
+    flex: 1;
+}
+
+.specimen-detail-group h4 {
+    font-family: var(--sans);
+    font-size: 0.7rem;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--text-muted);
+    margin-bottom: 8px;
+    padding-bottom: 6px;
+    border-bottom: 1px solid var(--border);
+    font-weight: 600;
+}
+
+.detail-row {
+    display: flex;
+    justify-content: space-between;
+    padding: 4px 0;
+    border-bottom: 1px solid #f5f3f0;
+}
+
+.detail-row:last-child { border-bottom: none; }
+
+.detail-key {
+    color: var(--text-muted);
+    font-size: 0.8rem;
+}
+
+.detail-val {
+    font-weight: 500;
+    font-size: 0.8rem;
+}
+
+.specimen-layout {
+    display: grid;
+    grid-template-columns: 380px 1fr;
+    gap: 28px;
+    align-items: start;
+}
+
+@media (max-width: 800px) { .specimen-layout { grid-template-columns: 1fr; } }
+
+.specimen-screenshot {
+    cursor: pointer;
+    position: relative;
+}
+
+.specimen-screenshot img {
+    width: 100%;
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    max-height: 500px;
+    object-fit: cover;
+    object-position: top;
+    transition: box-shadow 0.2s;
+}
+
+.specimen-screenshot:hover img {
+    box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+}
+
+.specimen-screenshot .click-hint {
+    position: absolute;
+    bottom: 8px;
+    right: 8px;
+    background: rgba(0,0,0,0.65);
+    color: #fff;
+    font-size: 0.7rem;
+    font-family: var(--sans);
+    padding: 3px 8px;
+    border-radius: 3px;
+    opacity: 0;
+    transition: opacity 0.2s;
+}
+
+.specimen-screenshot:hover .click-hint { opacity: 1; }
+
+.mini-swatches {
+    display: flex;
+    gap: 3px;
+    margin-bottom: 14px;
+}
+
+.mini-swatch {
+    width: 24px;
+    height: 24px;
+    border-radius: 3px;
+}
+
+.evaluator-detail {
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    margin-bottom: 6px;
+}
+
+.evaluator-detail summary {
+    padding: 8px 12px;
+    cursor: pointer;
+    font-weight: 600;
+    font-size: 0.8rem;
+    font-family: var(--sans);
+    background: var(--surface);
+    border-radius: 4px;
+}
+
+.evaluator-detail[open] summary {
+    border-bottom: 1px solid var(--border);
+    border-radius: 4px 4px 0 0;
+}
+
+.eval-grid {
+    padding: 12px;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 6px;
+    font-size: 0.8rem;
+}
+
+.eval-item-wide { grid-column: 1 / -1; }
+
+.eval-label {
+    display: block;
+    font-size: 0.65rem;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--text-muted);
+    font-family: var(--sans);
+}
+
+/* Lightbox */
+.lightbox {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.85);
+    z-index: 1000;
+    justify-content: center;
+    align-items: center;
+    cursor: zoom-out;
+}
+
+.lightbox.active { display: flex; }
+
+.lightbox img {
+    max-width: 95vw;
+    max-height: 95vh;
+    object-fit: contain;
+    border-radius: 4px;
+}
+
+/* Copy tone pills */
+.tone-pills {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin-top: 8px;
+}
+
+.tone-pill {
+    font-size: 0.75rem;
+    font-family: var(--mono);
+    background: var(--code-bg);
+    padding: 3px 10px;
+    border-radius: 12px;
+    color: var(--text-muted);
+}
+
+footer {
+    padding: 48px 0;
+    border-top: 1px solid var(--border);
+    color: var(--text-muted);
+    font-size: 0.82rem;
+}
+</style>
+</head>
+<body>
+
+<div class="container">
+
+<header>
+    <h1>Claude Frontend Aesthetics Benchmark</h1>
+    <p class="subtitle">What does Claude default to when asked to build a web page with no aesthetic guidance? This report identifies the recurring patterns, color palettes, fonts, and structural choices that form Claude's design fingerprint.</p>
+</header>
+
+<div class="about">
+    <h2>How This Works</h2>
+    <p>We gave Claude 10 prompts spanning marketing sites, content pages, and functional app UIs. Each prompt provides only the page type with no direction on colors, fonts, layout, or style:</p>
+    <div class="prompt-example">
+        <em>"Create a single-file HTML landing page for a coffee shop.<br>
+        Include all CSS inline. Make it look polished and production-ready."</em>
+    </div>
+    <p>The generated pages were then screenshotted and evaluated by three AI models (Claude Opus 4.6, GPT-5.4, Gemini 3.1 Pro) using two evaluator personas each: a <strong>brand agency critic</strong> focused on visual identity and distinctiveness, and a <strong>frontend developer</strong> focused on craft and polish. All evaluators answered the same rubric of design questions.</p>
+    <p>The result is a map of Claude's median aesthetic output: what it reaches for when you don't tell it what to do.</p>
+</div>
+
+
+<section>
+    <h2>Originality</h2>
+    <p class="section-desc">Each evaluator rated how original the design felt on a 1-10 scale, where 1 is "completely generic template" and 10 is "highly distinctive, clearly designed for this specific context."</p>
+
+    <div class="big-stat">4.6</div>
+    <div class="big-stat-label">out of 10, averaged across 60 evaluations</div>
+
+    
+    <div class="score-row">
+        <span class="score-label">personal-blog</span>
+        <div class="score-track"><div class="score-fill" style="width:65%"></div></div>
+        <span class="score-value">6.5</span>
+    </div>
+    
+    <div class="score-row">
+        <span class="score-label">coffee-shop</span>
+        <div class="score-track"><div class="score-fill" style="width:60%"></div></div>
+        <span class="score-value">6.0</span>
+    </div>
+    
+    <div class="score-row">
+        <span class="score-label">boutique-hotel</span>
+        <div class="score-track"><div class="score-fill" style="width:56%"></div></div>
+        <span class="score-value">5.7</span>
+    </div>
+    
+    <div class="score-row">
+        <span class="score-label">sneaker-brand</span>
+        <div class="score-track"><div class="score-fill" style="width:53%"></div></div>
+        <span class="score-value">5.3</span>
+    </div>
+    
+    <div class="score-row">
+        <span class="score-label">admin-panel</span>
+        <div class="score-track"><div class="score-fill" style="width:43%"></div></div>
+        <span class="score-value">4.3</span>
+    </div>
+    
+    <div class="score-row">
+        <span class="score-label">ecommerce-product</span>
+        <div class="score-track"><div class="score-fill" style="width:40%"></div></div>
+        <span class="score-value">4.0</span>
+    </div>
+    
+    <div class="score-row">
+        <span class="score-label">fitness-dashboard</span>
+        <div class="score-track"><div class="score-fill" style="width:40%"></div></div>
+        <span class="score-value">4.0</span>
+    </div>
+    
+    <div class="score-row">
+        <span class="score-label">documentation</span>
+        <div class="score-track"><div class="score-fill" style="width:35%"></div></div>
+        <span class="score-value">3.5</span>
+    </div>
+    
+    <div class="score-row">
+        <span class="score-label">saas-product</span>
+        <div class="score-track"><div class="score-fill" style="width:33%"></div></div>
+        <span class="score-value">3.3</span>
+    </div>
+    
+    <div class="score-row">
+        <span class="score-label">settings-page</span>
+        <div class="score-track"><div class="score-fill" style="width:30%"></div></div>
+        <span class="score-value">3.0</span>
+    </div>
+    
+</section>
+
+
+<section>
+    <h2>Font Fingerprint</h2>
+    <p class="section-desc">Which font families does Claude reach for? The "elements" count shows how many HTML elements used each font across all 10 specimens. Inter dominates at 8 out of 10 specimens.</p>
+
+    <table class="font-table">
+        <thead><tr><th>Font</th><th>Sample</th><th>Elements</th><th>Used In</th></tr></thead>
+        <tbody>
+            
+            <tr>
+                <td>Inter</td>
+                <td class="font-sample" style="font-family:'Inter',sans-serif">The quick brown fox</td>
+                <td class="font-count">1,684</td>
+                <td class="font-specimens">8 of 10 specimens</td>
+            </tr>
+            
+            <tr>
+                <td>Outfit</td>
+                <td class="font-sample" style="font-family:'Outfit',sans-serif">The quick brown fox</td>
+                <td class="font-count">517</td>
+                <td class="font-specimens">admin-panel</td>
+            </tr>
+            
+            <tr>
+                <td>JetBrains Mono</td>
+                <td class="font-sample" style="font-family:'JetBrains Mono',monospace">The quick brown fox</td>
+                <td class="font-count">243</td>
+                <td class="font-specimens">accent font</td>
+            </tr>
+            
+            <tr>
+                <td>DM Sans</td>
+                <td class="font-sample" style="font-family:'DM Sans',sans-serif">The quick brown fox</td>
+                <td class="font-count">141</td>
+                <td class="font-specimens">coffee-shop</td>
+            </tr>
+            
+            <tr>
+                <td>Arial</td>
+                <td class="font-sample" style="font-family:'Arial',sans-serif">The quick brown fox</td>
+                <td class="font-count">126</td>
+                <td class="font-specimens">accent font</td>
+            </tr>
+            
+            <tr>
+                <td>Times New Roman</td>
+                <td class="font-sample" style="font-family:'Times New Roman',serif">The quick brown fox</td>
+                <td class="font-count">73</td>
+                <td class="font-specimens">accent font</td>
+            </tr>
+            
+            <tr>
+                <td>Cormorant Garamond</td>
+                <td class="font-sample" style="font-family:'Cormorant Garamond',serif">The quick brown fox</td>
+                <td class="font-count">58</td>
+                <td class="font-specimens">accent font</td>
+            </tr>
+            
+            <tr>
+                <td>Playfair Display</td>
+                <td class="font-sample" style="font-family:'Playfair Display',serif">The quick brown fox</td>
+                <td class="font-count">57</td>
+                <td class="font-specimens">accent font</td>
+            </tr>
+            
+            <tr>
+                <td>Space Grotesk</td>
+                <td class="font-sample" style="font-family:'Space Grotesk',sans-serif">The quick brown fox</td>
+                <td class="font-count">40</td>
+                <td class="font-specimens">accent font</td>
+            </tr>
+            
+            <tr>
+                <td>monospace</td>
+                <td class="font-sample" style="font-family:'monospace',sans-serif">The quick brown fox</td>
+                <td class="font-count">10</td>
+                <td class="font-specimens">accent font</td>
+            </tr>
+            
+        </tbody>
+    </table>
+</section>
+
+
+<section>
+    <h2>Color Fingerprint</h2>
+    <p class="section-desc">Colors extracted from computed styles across all 10 generated pages. Counts show how many HTML elements used each color.</p>
+
+    <h3>Background Colors</h3>
+    <div class="swatch-grid">
+        
+        <div class="swatch">
+            <div class="swatch-color" style="background:#161b22"></div>
+            <code>#161b22</code>
+            <span class="swatch-count">74</span>
+        </div>
+        
+        <div class="swatch">
+            <div class="swatch-color" style="background:#ffffff;border:1px solid #ddd"></div>
+            <code>#ffffff</code>
+            <span class="swatch-count">38</span>
+        </div>
+        
+        <div class="swatch">
+            <div class="swatch-color" style="background:#22c55e"></div>
+            <code>#22c55e</code>
+            <span class="swatch-count">36</span>
+        </div>
+        
+        <div class="swatch">
+            <div class="swatch-color" style="background:#12121a"></div>
+            <code>#12121a</code>
+            <span class="swatch-count">20</span>
+        </div>
+        
+        <div class="swatch">
+            <div class="swatch-color" style="background:#1b1a23"></div>
+            <code>#1b1a23</code>
+            <span class="swatch-count">17</span>
+        </div>
+        
+        <div class="swatch">
+            <div class="swatch-color" style="background:#18181b"></div>
+            <code>#18181b</code>
+            <span class="swatch-count">15</span>
+        </div>
+        
+        <div class="swatch">
+            <div class="swatch-color" style="background:#262532"></div>
+            <code>#262532</code>
+            <span class="swatch-count">14</span>
+        </div>
+        
+        <div class="swatch">
+            <div class="swatch-color" style="background:#5ec269"></div>
+            <code>#5ec269</code>
+            <span class="swatch-count">13</span>
+        </div>
+        
+        <div class="swatch">
+            <div class="swatch-color" style="background:#1c2129"></div>
+            <code>#1c2129</code>
+            <span class="swatch-count">12</span>
+        </div>
+        
+        <div class="swatch">
+            <div class="swatch-color" style="background:#3b82f6"></div>
+            <code>#3b82f6</code>
+            <span class="swatch-count">12</span>
+        </div>
+        
+    </div>
+
+    <h3>Text Colors</h3>
+    <div class="swatch-grid">
+        
+        <div class="swatch">
+            <div class="swatch-color" style="background:#fafafa;border:1px solid #ddd"></div>
+            <code>#fafafa</code>
+            <span class="swatch-count">336</span>
+        </div>
+        
+        <div class="swatch">
+            <div class="swatch-color" style="background:#ece8e1"></div>
+            <code>#ece8e1</code>
+            <span class="swatch-count">256</span>
+        </div>
+        
+        <div class="swatch">
+            <div class="swatch-color" style="background:#6b6880"></div>
+            <code>#6b6880</code>
+            <span class="swatch-count">175</span>
+        </div>
+        
+        <div class="swatch">
+            <div class="swatch-color" style="background:#e8e8ed"></div>
+            <code>#e8e8ed</code>
+            <span class="swatch-count">162</span>
+        </div>
+        
+        <div class="swatch">
+            <div class="swatch-color" style="background:#1a1a18"></div>
+            <code>#1a1a18</code>
+            <span class="swatch-count">152</span>
+        </div>
+        
+        <div class="swatch">
+            <div class="swatch-color" style="background:#e6edf3"></div>
+            <code>#e6edf3</code>
+            <span class="swatch-count">123</span>
+        </div>
+        
+        <div class="swatch">
+            <div class="swatch-color" style="background:#8b949e"></div>
+            <code>#8b949e</code>
+            <span class="swatch-count">123</span>
+        </div>
+        
+        <div class="swatch">
+            <div class="swatch-color" style="background:#1e120b"></div>
+            <code>#1e120b</code>
+            <span class="swatch-count">103</span>
+        </div>
+        
+        <div class="swatch">
+            <div class="swatch-color" style="background:#a1a1aa"></div>
+            <code>#a1a1aa</code>
+            <span class="swatch-count">83</span>
+        </div>
+        
+        <div class="swatch">
+            <div class="swatch-color" style="background:#ffffff;border:1px solid #ddd"></div>
+            <code>#ffffff</code>
+            <span class="swatch-count">82</span>
+        </div>
+        
+    </div>
+</section>
+
+
+<section>
+    <h2>Layout Patterns</h2>
+    <p class="section-desc">Evaluators categorized each page's first viewport and overall structure. These distributions reveal what Claude builds when no layout is specified.</p>
+
+    
+    <h3>Hero / First Viewport</h3>
+    <div class="dist-bar">
+        
+        <div class="dist-segment" style="width:40.0%;background:#4a90d9" title="sidebar-with-content: 24"></div>
+        
+        <div class="dist-segment" style="width:26.7%;background:#d97b4a" title="split-hero-image-text: 16"></div>
+        
+        <div class="dist-segment" style="width:13.3%;background:#7b4ad9" title="full-bleed-image-hero: 8"></div>
+        
+        <div class="dist-segment" style="width:10.0%;background:#4ad97b" title="centered-text-no-image: 6"></div>
+        
+        <div class="dist-segment" style="width:6.7%;background:#d94a6e" title="other: 4"></div>
+        
+        <div class="dist-segment" style="width:3.3%;background:#999" title="centered-text-over-gradient: 2"></div>
+        
+    </div>
+    <div class="dist-legend">
+        
+        <span><span class="legend-dot" style="background:#4a90d9"></span>sidebar-with-content (24)</span>
+        
+        <span><span class="legend-dot" style="background:#d97b4a"></span>split-hero-image-text (16)</span>
+        
+        <span><span class="legend-dot" style="background:#7b4ad9"></span>full-bleed-image-hero (8)</span>
+        
+        <span><span class="legend-dot" style="background:#4ad97b"></span>centered-text-no-image (6)</span>
+        
+        <span><span class="legend-dot" style="background:#d94a6e"></span>other (4)</span>
+        
+        <span><span class="legend-dot" style="background:#999"></span>centered-text-over-gradient (2)</span>
+        
+    </div>
+    
+    <h3>Card Usage</h3>
+    <div class="dist-bar">
+        
+        <div class="dist-segment" style="width:50.0%;background:#e0c08b" title="moderate: 30"></div>
+        
+        <div class="dist-segment" style="width:48.3%;background:#d98b8b" title="heavy: 29"></div>
+        
+        <div class="dist-segment" style="width:1.7%;background:#8bc5e0" title="minimal: 1"></div>
+        
+    </div>
+    <div class="dist-legend">
+        
+        <span><span class="legend-dot" style="background:#e0c08b"></span>moderate (30)</span>
+        
+        <span><span class="legend-dot" style="background:#d98b8b"></span>heavy (29)</span>
+        
+        <span><span class="legend-dot" style="background:#8bc5e0"></span>minimal (1)</span>
+        
+    </div>
+    
+    <h3>Navigation</h3>
+    <div class="dist-bar">
+        
+        <div class="dist-segment" style="width:60.0%;background:#4a90d9" title="top-horizontal-bar: 36"></div>
+        
+        <div class="dist-segment" style="width:36.7%;background:#d97b4a" title="sidebar: 22"></div>
+        
+        <div class="dist-segment" style="width:3.3%;background:#7b4ad9" title="other: 2"></div>
+        
+    </div>
+    <div class="dist-legend">
+        
+        <span><span class="legend-dot" style="background:#4a90d9"></span>top-horizontal-bar (36)</span>
+        
+        <span><span class="legend-dot" style="background:#d97b4a"></span>sidebar (22)</span>
+        
+        <span><span class="legend-dot" style="background:#7b4ad9"></span>other (2)</span>
+        
+    </div>
+    
+    <h3>Footer</h3>
+    <div class="dist-bar">
+        
+        <div class="dist-segment" style="width:50.0%;background:#4a90d9" title="multi-column-links: 30"></div>
+        
+        <div class="dist-segment" style="width:33.3%;background:#d97b4a" title="no-footer: 20"></div>
+        
+        <div class="dist-segment" style="width:16.7%;background:#7b4ad9" title="minimal-single-line: 10"></div>
+        
+    </div>
+    <div class="dist-legend">
+        
+        <span><span class="legend-dot" style="background:#4a90d9"></span>multi-column-links (30)</span>
+        
+        <span><span class="legend-dot" style="background:#d97b4a"></span>no-footer (20)</span>
+        
+        <span><span class="legend-dot" style="background:#7b4ad9"></span>minimal-single-line (10)</span>
+        
+    </div>
+    
+    <h3>Whitespace</h3>
+    <div class="dist-bar">
+        
+        <div class="dist-segment" style="width:66.7%;background:#a8d8a8" title="generous: 40"></div>
+        
+        <div class="dist-segment" style="width:33.3%;background:#e0c08b" title="moderate: 20"></div>
+        
+    </div>
+    <div class="dist-legend">
+        
+        <span><span class="legend-dot" style="background:#a8d8a8"></span>generous (40)</span>
+        
+        <span><span class="legend-dot" style="background:#e0c08b"></span>moderate (20)</span>
+        
+    </div>
+    
+</section>
+
+
+<section>
+    <h2>Copy &amp; Content</h2>
+    <p class="section-desc">Does the written text on Claude's pages feel specific to the context, or does it read like generic placeholder copy? "Specific" means the copy feels written for this particular business. "Generic" means it could appear on any site in the category. "Mixed" is somewhere between.</p>
+
+    <div class="dist-bar">
+        
+        <div class="dist-segment" style="width:46.7%;background:#4a90d9" title="mixed: 28"></div>
+        
+        <div class="dist-segment" style="width:31.7%;background:#d97b4a" title="specific: 19"></div>
+        
+        <div class="dist-segment" style="width:21.7%;background:#7b4ad9" title="generic: 13"></div>
+        
+    </div>
+    <div class="dist-legend">
+        
+        <span><span class="legend-dot" style="background:#4a90d9"></span>mixed (28)</span>
+        
+        <span><span class="legend-dot" style="background:#d97b4a"></span>specific (19)</span>
+        
+        <span><span class="legend-dot" style="background:#7b4ad9"></span>generic (13)</span>
+        
+    </div>
+</section>
+
+
+<section>
+    <h2>Cross-Model Agreement</h2>
+    <p class="section-desc">Do the three evaluator models see the same things? Each row is a specimen, each column is a model. Cells show the majority answer from that model's evaluators. A highlighted row means the models disagreed. <strong>"Deliberate"</strong> means the model thought the choice looked intentionally designed for the context. <strong>"Default"</strong> means it looked like a generic tool output.</p>
+
+    
+    <div class="heatmap-section">
+        <h3>Color: Deliberate vs Default <span class="agree-summary">5 of 10 unanimous</span></h3>
+        
+        <div class="heatmap">
+            <div class="heatmap-header"><span>Specimen</span><span>Claude</span><span>Gemini</span><span>GPT-5.4</span></div>
+            
+            <div class="heatmap-row disagree">
+                <span class="heatmap-label">admin-panel</span>
+                
+                <span class="hm-cell hm-default">default</span>
+                
+                <span class="hm-cell hm-deliberate">deliberate</span>
+                
+                <span class="hm-cell hm-deliberate">deliberate</span>
+                
+            </div>
+            
+            <div class="heatmap-row agree">
+                <span class="heatmap-label">boutique-hotel</span>
+                
+                <span class="hm-cell hm-deliberate">deliberate</span>
+                
+                <span class="hm-cell hm-deliberate">deliberate</span>
+                
+                <span class="hm-cell hm-deliberate">deliberate</span>
+                
+            </div>
+            
+            <div class="heatmap-row agree">
+                <span class="heatmap-label">coffee-shop</span>
+                
+                <span class="hm-cell hm-deliberate">deliberate</span>
+                
+                <span class="hm-cell hm-deliberate">deliberate</span>
+                
+                <span class="hm-cell hm-deliberate">deliberate</span>
+                
+            </div>
+            
+            <div class="heatmap-row disagree">
+                <span class="heatmap-label">documentation</span>
+                
+                <span class="hm-cell hm-deliberate">deliberate</span>
+                
+                <span class="hm-cell hm-default">default</span>
+                
+                <span class="hm-cell hm-default">default</span>
+                
+            </div>
+            
+            <div class="heatmap-row disagree">
+                <span class="heatmap-label">ecommerce-product</span>
+                
+                <span class="hm-cell hm-deliberate">deliberate</span>
+                
+                <span class="hm-cell hm-default">default</span>
+                
+                <span class="hm-cell hm-default">default</span>
+                
+            </div>
+            
+            <div class="heatmap-row disagree">
+                <span class="heatmap-label">fitness-dashboard</span>
+                
+                <span class="hm-cell hm-deliberate">deliberate</span>
+                
+                <span class="hm-cell hm-default">default</span>
+                
+                <span class="hm-cell hm-default">default</span>
+                
+            </div>
+            
+            <div class="heatmap-row agree">
+                <span class="heatmap-label">personal-blog</span>
+                
+                <span class="hm-cell hm-deliberate">deliberate</span>
+                
+                <span class="hm-cell hm-deliberate">deliberate</span>
+                
+                <span class="hm-cell hm-deliberate">deliberate</span>
+                
+            </div>
+            
+            <div class="heatmap-row agree">
+                <span class="heatmap-label">saas-product</span>
+                
+                <span class="hm-cell hm-default">default</span>
+                
+                <span class="hm-cell hm-default">default</span>
+                
+                <span class="hm-cell hm-default">default</span>
+                
+            </div>
+            
+            <div class="heatmap-row disagree">
+                <span class="heatmap-label">settings-page</span>
+                
+                <span class="hm-cell hm-deliberate">deliberate</span>
+                
+                <span class="hm-cell hm-default">default</span>
+                
+                <span class="hm-cell hm-default">default</span>
+                
+            </div>
+            
+            <div class="heatmap-row agree">
+                <span class="heatmap-label">sneaker-brand</span>
+                
+                <span class="hm-cell hm-deliberate">deliberate</span>
+                
+                <span class="hm-cell hm-deliberate">deliberate</span>
+                
+                <span class="hm-cell hm-deliberate">deliberate</span>
+                
+            </div>
+            
+        </div>
+        
+    </div>
+    
+    <div class="heatmap-section">
+        <h3>Typography: Deliberate vs Default <span class="agree-summary">5 of 10 unanimous</span></h3>
+        
+        <div class="heatmap">
+            <div class="heatmap-header"><span>Specimen</span><span>Claude</span><span>Gemini</span><span>GPT-5.4</span></div>
+            
+            <div class="heatmap-row disagree">
+                <span class="heatmap-label">admin-panel</span>
+                
+                <span class="hm-cell hm-default">default</span>
+                
+                <span class="hm-cell hm-deliberate">deliberate</span>
+                
+                <span class="hm-cell hm-default">default</span>
+                
+            </div>
+            
+            <div class="heatmap-row disagree">
+                <span class="heatmap-label">boutique-hotel</span>
+                
+                <span class="hm-cell hm-deliberate">deliberate</span>
+                
+                <span class="hm-cell hm-deliberate">deliberate</span>
+                
+                <span class="hm-cell hm-default">default</span>
+                
+            </div>
+            
+            <div class="heatmap-row agree">
+                <span class="heatmap-label">coffee-shop</span>
+                
+                <span class="hm-cell hm-deliberate">deliberate</span>
+                
+                <span class="hm-cell hm-deliberate">deliberate</span>
+                
+                <span class="hm-cell hm-deliberate">deliberate</span>
+                
+            </div>
+            
+            <div class="heatmap-row agree">
+                <span class="heatmap-label">documentation</span>
+                
+                <span class="hm-cell hm-default">default</span>
+                
+                <span class="hm-cell hm-default">default</span>
+                
+                <span class="hm-cell hm-default">default</span>
+                
+            </div>
+            
+            <div class="heatmap-row agree">
+                <span class="heatmap-label">ecommerce-product</span>
+                
+                <span class="hm-cell hm-deliberate">deliberate</span>
+                
+                <span class="hm-cell hm-deliberate">deliberate</span>
+                
+                <span class="hm-cell hm-deliberate">deliberate</span>
+                
+            </div>
+            
+            <div class="heatmap-row agree">
+                <span class="heatmap-label">fitness-dashboard</span>
+                
+                <span class="hm-cell hm-default">default</span>
+                
+                <span class="hm-cell hm-default">default</span>
+                
+                <span class="hm-cell hm-default">default</span>
+                
+            </div>
+            
+            <div class="heatmap-row agree">
+                <span class="heatmap-label">personal-blog</span>
+                
+                <span class="hm-cell hm-deliberate">deliberate</span>
+                
+                <span class="hm-cell hm-deliberate">deliberate</span>
+                
+                <span class="hm-cell hm-deliberate">deliberate</span>
+                
+            </div>
+            
+            <div class="heatmap-row disagree">
+                <span class="heatmap-label">saas-product</span>
+                
+                <span class="hm-cell hm-deliberate">deliberate</span>
+                
+                <span class="hm-cell hm-default">default</span>
+                
+                <span class="hm-cell hm-default">default</span>
+                
+            </div>
+            
+            <div class="heatmap-row disagree">
+                <span class="heatmap-label">settings-page</span>
+                
+                <span class="hm-cell hm-deliberate">deliberate</span>
+                
+                <span class="hm-cell hm-default">default</span>
+                
+                <span class="hm-cell hm-default">default</span>
+                
+            </div>
+            
+            <div class="heatmap-row disagree">
+                <span class="heatmap-label">sneaker-brand</span>
+                
+                <span class="hm-cell hm-deliberate">deliberate</span>
+                
+                <span class="hm-cell hm-default">default</span>
+                
+                <span class="hm-cell hm-default">default</span>
+                
+            </div>
+            
+        </div>
+        
+    </div>
+    
+    <div class="heatmap-section">
+        <h3>Brand Interchangeability <span class="agree-summary">8 of 10 unanimous</span></h3>
+        
+        <div class="heatmap">
+            <div class="heatmap-header"><span>Specimen</span><span>Claude</span><span>Gemini</span><span>GPT-5.4</span></div>
+            
+            <div class="heatmap-row agree">
+                <span class="heatmap-label">admin-panel</span>
+                
+                <span class="hm-cell hm-yes">yes</span>
+                
+                <span class="hm-cell hm-yes">yes</span>
+                
+                <span class="hm-cell hm-yes">yes</span>
+                
+            </div>
+            
+            <div class="heatmap-row agree">
+                <span class="heatmap-label">boutique-hotel</span>
+                
+                <span class="hm-cell hm-yes">yes</span>
+                
+                <span class="hm-cell hm-yes">yes</span>
+                
+                <span class="hm-cell hm-yes">yes</span>
+                
+            </div>
+            
+            <div class="heatmap-row agree">
+                <span class="heatmap-label">coffee-shop</span>
+                
+                <span class="hm-cell hm-yes">yes</span>
+                
+                <span class="hm-cell hm-yes">yes</span>
+                
+                <span class="hm-cell hm-yes">yes</span>
+                
+            </div>
+            
+            <div class="heatmap-row agree">
+                <span class="heatmap-label">documentation</span>
+                
+                <span class="hm-cell hm-yes">yes</span>
+                
+                <span class="hm-cell hm-yes">yes</span>
+                
+                <span class="hm-cell hm-yes">yes</span>
+                
+            </div>
+            
+            <div class="heatmap-row agree">
+                <span class="heatmap-label">ecommerce-product</span>
+                
+                <span class="hm-cell hm-yes">yes</span>
+                
+                <span class="hm-cell hm-yes">yes</span>
+                
+                <span class="hm-cell hm-yes">yes</span>
+                
+            </div>
+            
+            <div class="heatmap-row agree">
+                <span class="heatmap-label">fitness-dashboard</span>
+                
+                <span class="hm-cell hm-yes">yes</span>
+                
+                <span class="hm-cell hm-yes">yes</span>
+                
+                <span class="hm-cell hm-yes">yes</span>
+                
+            </div>
+            
+            <div class="heatmap-row disagree">
+                <span class="heatmap-label">personal-blog</span>
+                
+                <span class="hm-cell hm-no">no</span>
+                
+                <span class="hm-cell hm-yes">yes</span>
+                
+                <span class="hm-cell hm-yes">yes</span>
+                
+            </div>
+            
+            <div class="heatmap-row agree">
+                <span class="heatmap-label">saas-product</span>
+                
+                <span class="hm-cell hm-yes">yes</span>
+                
+                <span class="hm-cell hm-yes">yes</span>
+                
+                <span class="hm-cell hm-yes">yes</span>
+                
+            </div>
+            
+            <div class="heatmap-row agree">
+                <span class="heatmap-label">settings-page</span>
+                
+                <span class="hm-cell hm-yes">yes</span>
+                
+                <span class="hm-cell hm-yes">yes</span>
+                
+                <span class="hm-cell hm-yes">yes</span>
+                
+            </div>
+            
+            <div class="heatmap-row disagree">
+                <span class="heatmap-label">sneaker-brand</span>
+                
+                <span class="hm-cell hm-no">no</span>
+                
+                <span class="hm-cell hm-yes">yes</span>
+                
+                <span class="hm-cell hm-yes">yes</span>
+                
+            </div>
+            
+        </div>
+        
+    </div>
+    
+    <div class="heatmap-section">
+        <h3>Copy Originality <span class="agree-summary">3 of 10 unanimous</span></h3>
+        
+        <div class="heatmap">
+            <div class="heatmap-header"><span>Specimen</span><span>Claude</span><span>Gemini</span><span>GPT-5.4</span></div>
+            
+            <div class="heatmap-row disagree">
+                <span class="heatmap-label">admin-panel</span>
+                
+                <span class="hm-cell hm-generic">generic</span>
+                
+                <span class="hm-cell hm-generic">generic</span>
+                
+                <span class="hm-cell hm-mixed">mixed</span>
+                
+            </div>
+            
+            <div class="heatmap-row disagree">
+                <span class="heatmap-label">boutique-hotel</span>
+                
+                <span class="hm-cell hm-specific">specific</span>
+                
+                <span class="hm-cell hm-specific">specific</span>
+                
+                <span class="hm-cell hm-mixed">mixed</span>
+                
+            </div>
+            
+            <div class="heatmap-row agree">
+                <span class="heatmap-label">coffee-shop</span>
+                
+                <span class="hm-cell hm-mixed">mixed</span>
+                
+                <span class="hm-cell hm-mixed">mixed</span>
+                
+                <span class="hm-cell hm-mixed">mixed</span>
+                
+            </div>
+            
+            <div class="heatmap-row agree">
+                <span class="heatmap-label">documentation</span>
+                
+                <span class="hm-cell hm-specific">specific</span>
+                
+                <span class="hm-cell hm-specific">specific</span>
+                
+                <span class="hm-cell hm-specific">specific</span>
+                
+            </div>
+            
+            <div class="heatmap-row disagree">
+                <span class="heatmap-label">ecommerce-product</span>
+                
+                <span class="hm-cell hm-specific">specific</span>
+                
+                <span class="hm-cell hm-mixed">mixed</span>
+                
+                <span class="hm-cell hm-mixed">mixed</span>
+                
+            </div>
+            
+            <div class="heatmap-row disagree">
+                <span class="heatmap-label">fitness-dashboard</span>
+                
+                <span class="hm-cell hm-mixed">mixed</span>
+                
+                <span class="hm-cell hm-generic">generic</span>
+                
+                <span class="hm-cell hm-mixed">mixed</span>
+                
+            </div>
+            
+            <div class="heatmap-row agree">
+                <span class="heatmap-label">personal-blog</span>
+                
+                <span class="hm-cell hm-specific">specific</span>
+                
+                <span class="hm-cell hm-specific">specific</span>
+                
+                <span class="hm-cell hm-specific">specific</span>
+                
+            </div>
+            
+            <div class="heatmap-row disagree">
+                <span class="heatmap-label">saas-product</span>
+                
+                <span class="hm-cell hm-mixed">mixed</span>
+                
+                <span class="hm-cell hm-generic">generic</span>
+                
+                <span class="hm-cell hm-generic">generic</span>
+                
+            </div>
+            
+            <div class="heatmap-row disagree">
+                <span class="heatmap-label">settings-page</span>
+                
+                <span class="hm-cell hm-mixed">mixed</span>
+                
+                <span class="hm-cell hm-generic">generic</span>
+                
+                <span class="hm-cell hm-mixed">mixed</span>
+                
+            </div>
+            
+            <div class="heatmap-row disagree">
+                <span class="heatmap-label">sneaker-brand</span>
+                
+                <span class="hm-cell hm-mixed">mixed</span>
+                
+                <span class="hm-cell hm-generic">generic</span>
+                
+                <span class="hm-cell hm-mixed">mixed</span>
+                
+            </div>
+            
+        </div>
+        
+    </div>
+    
+</section>
+
+
+<section>
+    <h2>Per-Specimen Detail</h2>
+    <p class="section-desc">Each specimen below shows the screenshot alongside a consensus summary and individual evaluator breakdowns. Click any screenshot to view it full-size.</p>
+
+    
+    <div class="specimen">
+        <div class="specimen-header">
+            <h3>personal-blog</h3>
+        </div>
+
+        <div class="specimen-verdict">
+            <div class="verdict-score">6.5 <span>/10</span></div>
+            <div class="verdict-text">5 of 6 evaluators agreed this design <strong>could belong to any personal blog</strong>. Copy rated as <strong>specific</strong> originality. Color seen as <strong>deliberate</strong>, typography as <strong>deliberate</strong>.</div>
+        </div>
+
+        <div class="specimen-details">
+            <div class="specimen-detail-group">
+                <h4>Structure</h4>
+                
+                <div class="detail-row"><span class="detail-key">Layout</span><span class="detail-val">Centered Text No Image</span></div>
+                
+                <div class="detail-row"><span class="detail-key">Navigation</span><span class="detail-val">Top Horizontal Bar</span></div>
+                
+                <div class="detail-row"><span class="detail-key">Footer</span><span class="detail-val">Minimal Single Line</span></div>
+                
+                <div class="detail-row"><span class="detail-key">Cards</span><span class="detail-val">Moderate</span></div>
+                
+                <div class="detail-row"><span class="detail-key">Whitespace</span><span class="detail-val">Generous</span></div>
+                
+            </div>
+            <div class="specimen-detail-group">
+                <h4>Evaluator Consensus</h4>
+                
+                <div class="detail-row">
+                    <span class="detail-key">Color</span>
+                    <span class="detail-val">
+                        
+                        <span class="tag tag-green">deliberate: 6</span>
+                        
+                    </span>
+                </div>
+                
+                <div class="detail-row">
+                    <span class="detail-key">Typography</span>
+                    <span class="detail-val">
+                        
+                        <span class="tag tag-green">deliberate: 6</span>
+                        
+                    </span>
+                </div>
+                
+                <div class="detail-row">
+                    <span class="detail-key">Copy</span>
+                    <span class="detail-val">
+                        
+                        <span class="tag tag-green">specific: 6</span>
+                        
+                    </span>
+                </div>
+                
+                <div class="detail-row">
+                    <span class="detail-key">Brand Test</span>
+                    <span class="detail-val">
+                        
+                        <span class="tag tag-gray">interchangeable: 5</span>
+                        
+                        <span class="tag tag-gray">distinctive: 1</span>
+                        
+                    </span>
+                </div>
+                
+            </div>
+        </div>
+
+        <div class="specimen-layout">
+            <div class="specimen-screenshot" onclick="openLightbox('screenshots/personal-blog/desktop.png')">
+                <img src="screenshots/personal-blog/desktop.png" alt="personal-blog screenshot" loading="lazy">
+                <span class="click-hint">Click to enlarge</span>
+            </div>
+            <div>
+                <div class="mini-swatches">
+                    
+                    <div class="mini-swatch" style="background:#ffffff;border:1px solid #ddd"></div>
+                    
+                    <div class="mini-swatch" style="background:#c45d3e"></div>
+                    
+                    <div class="mini-swatch" style="background:#faf8f5"></div>
+                    
+                    <div class="mini-swatch" style="background:#e2ded8"></div>
+                    
+                    <div class="mini-swatch" style="background:#1a1a1a"></div>
+                    
+                </div>
+
+                
+                <div class="tone-pills">
+                    
+                    <span class="tone-pill">craft-focused</span>
+                    
+                    <span class="tone-pill">craft-oriented</span>
+                    
+                    <span class="tone-pill">design-focused</span>
+                    
+                    <span class="tone-pill">editorial</span>
+                    
+                    <span class="tone-pill">personal</span>
+                    
+                    <span class="tone-pill">polished</span>
+                    
+                </div>
+                
+
+                
+                <details class="evaluator-detail" style="margin-top:14px">
+                    <summary>Claude (Brand Critic) &mdash; 6/10</summary>
+                    <div class="eval-grid">
+                        <div><span class="eval-label">Color Palette</span>Warm cream, terracotta, dark charcoal</div>
+                        <div><span class="eval-label">Layout</span>centered-text-no-image</div>
+                        <div class="eval-item-wide"><span class="eval-label">Generic Elements</span>Three-column recent posts card grid, email newsletter signup CTA block, category pill/tag badges on posts</div>
+                        <div class="eval-item-wide"><span class="eval-label">Distinctive Elements</span>Serif italic 'design' with underline accent in hero headline, warm terracotta and cream color palette with intentional warmth, the mix of serif headings with sans-serif body creating a personal editorial voice</div>
+                    </div>
+                </details>
+                
+                <details class="evaluator-detail">
+                    <summary>Claude (Frontend Dev) &mdash; 7/10</summary>
+                    <div class="eval-grid">
+                        <div><span class="eval-label">Color Palette</span>Warm cream, terracotta, dark charcoal</div>
+                        <div><span class="eval-label">Layout</span>centered-text-no-image</div>
+                        <div class="eval-item-wide"><span class="eval-label">Generic Elements</span>Email newsletter signup section with standard input/button, three-column recent posts card grid, category tag pills above post titles</div>
+                        <div class="eval-item-wide"><span class="eval-label">Distinctive Elements</span>Serif italic treatment on 'design' with underline accent in hero heading, warm terracotta and cream color palette that feels personally curated, consistent dot-pattern texture on all post thumbnail images</div>
+                    </div>
+                </details>
+                
+                <details class="evaluator-detail">
+                    <summary>Gemini (Brand Critic) &mdash; 6/10</summary>
+                    <div class="eval-grid">
+                        <div><span class="eval-label">Color Palette</span>warm neutral, terracotta, muted earth</div>
+                        <div><span class="eval-label">Layout</span>centered-text-no-image</div>
+                        <div class="eval-item-wide"><span class="eval-label">Generic Elements</span>3-column card grid for recent posts, standard top horizontal navigation, standard newsletter subscription form UI</div>
+                        <div class="eval-item-wide"><span class="eval-label">Distinctive Elements</span>High-contrast editorial serif typography with italicized color highlight, custom geometric patterns in post thumbnails matching the brand palette, the contrast of the dark curved newsletter block against the light page</div>
+                    </div>
+                </details>
+                
+                <details class="evaluator-detail">
+                    <summary>Gemini (Frontend Dev) &mdash; 7/10</summary>
+                    <div class="eval-grid">
+                        <div><span class="eval-label">Color Palette</span>Cream, terracotta, dark charcoal</div>
+                        <div><span class="eval-label">Layout</span>centered-text-no-image</div>
+                        <div class="eval-item-wide"><span class="eval-label">Generic Elements</span>3-column post card grid, email subscription form, standard top right navigation</div>
+                        <div class="eval-item-wide"><span class="eval-label">Distinctive Elements</span>Italicized serif accent word in hero, consistent terracotta accent color, specific patterned image placeholders</div>
+                    </div>
+                </details>
+                
+                <details class="evaluator-detail">
+                    <summary>GPT-5.4 (Brand Critic) &mdash; 6/10</summary>
+                    <div class="eval-grid">
+                        <div><span class="eval-label">Color Palette</span>warm cream, charcoal, terracotta</div>
+                        <div><span class="eval-label">Layout</span>other</div>
+                        <div class="eval-item-wide"><span class="eval-label">Generic Elements</span>Top-right minimalist nav, featured/recent post card grid, email newsletter signup block near footer</div>
+                        <div class="eval-item-wide"><span class="eval-label">Distinctive Elements</span>Expressive oversized serif headline with italic terracotta emphasis, restrained warm editorial palette, dark subscription panel with cropped circular forms</div>
+                    </div>
+                </details>
+                
+                <details class="evaluator-detail">
+                    <summary>GPT-5.4 (Frontend Dev) &mdash; 7/10</summary>
+                    <div class="eval-grid">
+                        <div><span class="eval-label">Color Palette</span>warm ivory, charcoal, terracotta</div>
+                        <div><span class="eval-label">Layout</span>other</div>
+                        <div class="eval-item-wide"><span class="eval-label">Generic Elements</span>Top-right horizontal nav, three-column recent posts card grid, email newsletter signup block</div>
+                        <div class="eval-item-wide"><span class="eval-label">Distinctive Elements</span>Large editorial hero headline with italic accent word, refined serif/sans pairing with strong typographic hierarchy, warm restrained palette with patterned content thumbnails</div>
+                    </div>
+                </details>
+                
+            </div>
+        </div>
+    </div>
+    
+    <div class="specimen">
+        <div class="specimen-header">
+            <h3>coffee-shop</h3>
+        </div>
+
+        <div class="specimen-verdict">
+            <div class="verdict-score">6.0 <span>/10</span></div>
+            <div class="verdict-text">6 of 6 evaluators agreed this design <strong>could belong to any coffee shop</strong>. Copy rated as <strong>mixed</strong> originality. Color seen as <strong>deliberate</strong>, typography as <strong>deliberate</strong>.</div>
+        </div>
+
+        <div class="specimen-details">
+            <div class="specimen-detail-group">
+                <h4>Structure</h4>
+                
+                <div class="detail-row"><span class="detail-key">Layout</span><span class="detail-val">Split Hero Image Text</span></div>
+                
+                <div class="detail-row"><span class="detail-key">Navigation</span><span class="detail-val">Top Horizontal Bar</span></div>
+                
+                <div class="detail-row"><span class="detail-key">Footer</span><span class="detail-val">Multi Column Links</span></div>
+                
+                <div class="detail-row"><span class="detail-key">Cards</span><span class="detail-val">Moderate</span></div>
+                
+                <div class="detail-row"><span class="detail-key">Whitespace</span><span class="detail-val">Generous</span></div>
+                
+            </div>
+            <div class="specimen-detail-group">
+                <h4>Evaluator Consensus</h4>
+                
+                <div class="detail-row">
+                    <span class="detail-key">Color</span>
+                    <span class="detail-val">
+                        
+                        <span class="tag tag-green">deliberate: 6</span>
+                        
+                    </span>
+                </div>
+                
+                <div class="detail-row">
+                    <span class="detail-key">Typography</span>
+                    <span class="detail-val">
+                        
+                        <span class="tag tag-green">deliberate: 6</span>
+                        
+                    </span>
+                </div>
+                
+                <div class="detail-row">
+                    <span class="detail-key">Copy</span>
+                    <span class="detail-val">
+                        
+                        <span class="tag tag-amber">mixed: 6</span>
+                        
+                    </span>
+                </div>
+                
+                <div class="detail-row">
+                    <span class="detail-key">Brand Test</span>
+                    <span class="detail-val">
+                        
+                        <span class="tag tag-gray">interchangeable: 6</span>
+                        
+                    </span>
+                </div>
+                
+            </div>
+        </div>
+
+        <div class="specimen-layout">
+            <div class="specimen-screenshot" onclick="openLightbox('screenshots/coffee-shop/desktop.png')">
+                <img src="screenshots/coffee-shop/desktop.png" alt="coffee-shop screenshot" loading="lazy">
+                <span class="click-hint">Click to enlarge</span>
+            </div>
+            <div>
+                <div class="mini-swatches">
+                    
+                    <div class="mini-swatch" style="background:#f5ecd7"></div>
+                    
+                    <div class="mini-swatch" style="background:#1e120b"></div>
+                    
+                    <div class="mini-swatch" style="background:#faf6ee"></div>
+                    
+                    <div class="mini-swatch" style="background:#d4a574"></div>
+                    
+                    <div class="mini-swatch" style="background:#2c1810"></div>
+                    
+                </div>
+
+                
+                <div class="tone-pills">
+                    
+                    <span class="tone-pill">artisanal</span>
+                    
+                    <span class="tone-pill">intentional</span>
+                    
+                    <span class="tone-pill">inviting</span>
+                    
+                    <span class="tone-pill">poetic</span>
+                    
+                    <span class="tone-pill">quiet</span>
+                    
+                    <span class="tone-pill">refined</span>
+                    
+                </div>
+                
+
+                
+                <details class="evaluator-detail" style="margin-top:14px">
+                    <summary>Claude (Brand Critic) &mdash; 5/10</summary>
+                    <div class="eval-grid">
+                        <div><span class="eval-label">Color Palette</span>Warm cream, taupe, muted brown</div>
+                        <div><span class="eval-label">Layout</span>split-hero-image-text</div>
+                        <div class="eval-item-wide"><span class="eval-label">Generic Elements</span>1. The four-step 'From farm to your cup' numbered process section, 2. The 'Stay in the loop' email newsletter bar, 3. The multi-column footer with social links</div>
+                        <div class="eval-item-wide"><span class="eval-label">Distinctive Elements</span>1. The warm earth-tone color palette with intentional beige/cream layering, 2. The serif/italic accent typography ('story', 'selections', 'your cup') adding personality, 3. The overlapping photo composition in the about section</div>
+                    </div>
+                </details>
+                
+                <details class="evaluator-detail">
+                    <summary>Claude (Frontend Dev) &mdash; 6/10</summary>
+                    <div class="eval-grid">
+                        <div><span class="eval-label">Color Palette</span>Warm beige cream brown muted</div>
+                        <div><span class="eval-label">Layout</span>split-hero-image-text</div>
+                        <div class="eval-item-wide"><span class="eval-label">Generic Elements</span>The numbered 01-04 process steps section, the stats row (12 origin countries/8k cups/6 years), the newsletter email signup bar</div>
+                        <div class="eval-item-wide"><span class="eval-label">Distinctive Elements</span>The serif/italic treatment on key words like 'story' and 'your cup' creating visual emphasis, the warm earthy color palette that genuinely suits a specialty coffee brand, the overlapping photo collage in the about section</div>
+                    </div>
+                </details>
+                
+                <details class="evaluator-detail">
+                    <summary>Gemini (Brand Critic) &mdash; 6/10</summary>
+                    <div class="eval-grid">
+                        <div><span class="eval-label">Color Palette</span>Warm neutrals, earthy dark brown</div>
+                        <div><span class="eval-label">Layout</span>full-bleed-image-hero</div>
+                        <div class="eval-item-wide"><span class="eval-label">Generic Elements</span>The cliché hero headline ('Where every cup tells a story'), the standard 4-up feature grid ('Source, Roast, Brew, Share'), the basic newsletter signup block</div>
+                        <div class="eval-item-wide"><span class="eval-label">Distinctive Elements</span>The elegant pairing of roman and italic serif fonts, the offset and overlapping image gallery, the muted earthy color styling</div>
+                    </div>
+                </details>
+                
+                <details class="evaluator-detail">
+                    <summary>Gemini (Frontend Dev) &mdash; 7/10</summary>
+                    <div class="eval-grid">
+                        <div><span class="eval-label">Color Palette</span>Warm neutrals and deep brown</div>
+                        <div><span class="eval-label">Layout</span>full-bleed-image-hero</div>
+                        <div class="eval-item-wide"><span class="eval-label">Generic Elements</span>Top navigation layout, newsletter signup strip, standard multi-column footer layout</div>
+                        <div class="eval-item-wide"><span class="eval-label">Distinctive Elements</span>Elegant typography mixing serifs and italics, overlapping image composition in the 'Our Story' section, subtle coffee cup texture in the hero background</div>
+                    </div>
+                </details>
+                
+                <details class="evaluator-detail">
+                    <summary>GPT-5.4 (Brand Critic) &mdash; 6/10</summary>
+                    <div class="eval-grid">
+                        <div><span class="eval-label">Color Palette</span>warm cream, espresso brown, taupe</div>
+                        <div><span class="eval-label">Layout</span>split-hero-image-text</div>
+                        <div class="eval-item-wide"><span class="eval-label">Generic Elements</span>Large serif lifestyle headline with one italicized word; dark product card grid for featured offerings; testimonial quote band followed by contact and newsletter/footer stack</div>
+                        <div class="eval-item-wide"><span class="eval-label">Distinctive Elements</span>Dusty tonal palette with coffee-appropriate restraint; hazy full-bleed hero image treatment that feels atmospheric rather than promotional; elegant serif typography with italic emphasis used consistently across headings</div>
+                    </div>
+                </details>
+                
+                <details class="evaluator-detail">
+                    <summary>GPT-5.4 (Frontend Dev) &mdash; 6/10</summary>
+                    <div class="eval-grid">
+                        <div><span class="eval-label">Color Palette</span>warm cream, mocha brown, taupe</div>
+                        <div><span class="eval-label">Layout</span>split-hero-image-text</div>
+                        <div class="eval-item-wide"><span class="eval-label">Generic Elements</span>Top nav with CTA button, dark card-based product grid, newsletter signup bar in footer</div>
+                        <div class="eval-item-wide"><span class="eval-label">Distinctive Elements</span>Washed-out textured hero with barely-there coffee imagery, elegant serif/italic headline treatment, restrained café palette carried consistently through sections</div>
+                    </div>
+                </details>
+                
+            </div>
+        </div>
+    </div>
+    
+    <div class="specimen">
+        <div class="specimen-header">
+            <h3>boutique-hotel</h3>
+        </div>
+
+        <div class="specimen-verdict">
+            <div class="verdict-score">5.7 <span>/10</span></div>
+            <div class="verdict-text">6 of 6 evaluators agreed this design <strong>could belong to any boutique hotel</strong>. Copy rated as <strong>specific</strong> originality. Color seen as <strong>deliberate</strong>, typography as <strong>deliberate</strong>.</div>
+        </div>
+
+        <div class="specimen-details">
+            <div class="specimen-detail-group">
+                <h4>Structure</h4>
+                
+                <div class="detail-row"><span class="detail-key">Layout</span><span class="detail-val">Full Bleed Image Hero</span></div>
+                
+                <div class="detail-row"><span class="detail-key">Navigation</span><span class="detail-val">Top Horizontal Bar</span></div>
+                
+                <div class="detail-row"><span class="detail-key">Footer</span><span class="detail-val">Multi Column Links</span></div>
+                
+                <div class="detail-row"><span class="detail-key">Cards</span><span class="detail-val">Moderate</span></div>
+                
+                <div class="detail-row"><span class="detail-key">Whitespace</span><span class="detail-val">Generous</span></div>
+                
+            </div>
+            <div class="specimen-detail-group">
+                <h4>Evaluator Consensus</h4>
+                
+                <div class="detail-row">
+                    <span class="detail-key">Color</span>
+                    <span class="detail-val">
+                        
+                        <span class="tag tag-green">deliberate: 6</span>
+                        
+                    </span>
+                </div>
+                
+                <div class="detail-row">
+                    <span class="detail-key">Typography</span>
+                    <span class="detail-val">
+                        
+                        <span class="tag tag-green">deliberate: 5</span>
+                        
+                        <span class="tag tag-red">default: 1</span>
+                        
+                    </span>
+                </div>
+                
+                <div class="detail-row">
+                    <span class="detail-key">Copy</span>
+                    <span class="detail-val">
+                        
+                        <span class="tag tag-green">specific: 4</span>
+                        
+                        <span class="tag tag-amber">mixed: 2</span>
+                        
+                    </span>
+                </div>
+                
+                <div class="detail-row">
+                    <span class="detail-key">Brand Test</span>
+                    <span class="detail-val">
+                        
+                        <span class="tag tag-gray">interchangeable: 6</span>
+                        
+                    </span>
+                </div>
+                
+            </div>
+        </div>
+
+        <div class="specimen-layout">
+            <div class="specimen-screenshot" onclick="openLightbox('screenshots/boutique-hotel/desktop.png')">
+                <img src="screenshots/boutique-hotel/desktop.png" alt="boutique-hotel screenshot" loading="lazy">
+                <span class="click-hint">Click to enlarge</span>
+            </div>
+            <div>
+                <div class="mini-swatches">
+                    
+                    <div class="mini-swatch" style="background:#faf8f5"></div>
+                    
+                    <div class="mini-swatch" style="background:#1a1814"></div>
+                    
+                    <div class="mini-swatch" style="background:#f5f0ea"></div>
+                    
+                    <div class="mini-swatch" style="background:#ffffff;border:1px solid #ddd"></div>
+                    
+                    <div class="mini-swatch" style="background:#b8956a"></div>
+                    
+                </div>
+
+                
+                <div class="tone-pills">
+                    
+                    <span class="tone-pill">aspirational</span>
+                    
+                    <span class="tone-pill">calm</span>
+                    
+                    <span class="tone-pill">elegant</span>
+                    
+                    <span class="tone-pill">inviting</span>
+                    
+                    <span class="tone-pill">luxurious</span>
+                    
+                    <span class="tone-pill">luxury</span>
+                    
+                </div>
+                
+
+                
+                <details class="evaluator-detail" style="margin-top:14px">
+                    <summary>Claude (Brand Critic) &mdash; 6/10</summary>
+                    <div class="eval-grid">
+                        <div><span class="eval-label">Color Palette</span>Warm cream, charcoal, muted gold</div>
+                        <div><span class="eval-label">Layout</span>full-bleed-image-hero</div>
+                        <div class="eval-item-wide"><span class="eval-label">Generic Elements</span>Icon grid section for amenities (Crafted for Slow Living), the four-column icon row with generic circular icons, the CTA booking section with dark background overlay</div>
+                        <div class="eval-item-wide"><span class="eval-label">Distinctive Elements</span>The serif typography pairing with editorial sensibility, the specific copywriting voice ('Where Stillness Becomes Luxury', 'A Legacy Written in Limestone'), the warm Provençal color palette tied to place</div>
+                    </div>
+                </details>
+                
+                <details class="evaluator-detail">
+                    <summary>Claude (Frontend Dev) &mdash; 6/10</summary>
+                    <div class="eval-grid">
+                        <div><span class="eval-label">Color Palette</span>Warm cream, white, dark charcoal</div>
+                        <div><span class="eval-label">Layout</span>full-bleed-image-hero</div>
+                        <div class="eval-item-wide"><span class="eval-label">Generic Elements</span>Icon grid for amenities section with thin-line icons, three-column room cards with price and CTA, multi-column footer layout</div>
+                        <div class="eval-item-wide"><span class="eval-label">Distinctive Elements</span>Evocative headline 'Where Stillness Becomes Luxury', deliberate serif typography creating editorial feel, warm muted color palette matching Provençal aesthetic</div>
+                    </div>
+                </details>
+                
+                <details class="evaluator-detail">
+                    <summary>Gemini (Brand Critic) &mdash; 6/10</summary>
+                    <div class="eval-grid">
+                        <div><span class="eval-label">Color Palette</span>warm cream, charcoal, muted copper</div>
+                        <div><span class="eval-label">Layout</span>full-bleed-image-hero</div>
+                        <div class="eval-item-wide"><span class="eval-label">Generic Elements</span>Standard 3-column layout for room cards, generic thin outline icons for the experience section, ghost buttons overlaid on wide photography</div>
+                        <div class="eval-item-wide"><span class="eval-label">Distinctive Elements</span>Delicate and sophisticated serif typography pairing, highly localized and descriptive narrative copy, thoughtful pacing with generous whitespace</div>
+                    </div>
+                </details>
+                
+                <details class="evaluator-detail">
+                    <summary>Gemini (Frontend Dev) &mdash; 6/10</summary>
+                    <div class="eval-grid">
+                        <div><span class="eval-label">Color Palette</span>Warm neutrals, beige, charcoal</div>
+                        <div><span class="eval-label">Layout</span>full-bleed-image-hero</div>
+                        <div class="eval-item-wide"><span class="eval-label">Generic Elements</span>Three-column icon feature block, full-width dark overlay hero, standard multi-column footer</div>
+                        <div class="eval-item-wide"><span class="eval-label">Distinctive Elements</span>Provence-specific copy details, elegant serif typography pairing, warm cohesive color palette</div>
+                    </div>
+                </details>
+                
+                <details class="evaluator-detail">
+                    <summary>GPT-5.4 (Brand Critic) &mdash; 4/10</summary>
+                    <div class="eval-grid">
+                        <div><span class="eval-label">Color Palette</span>warm beige, charcoal, wood-brown, muted gold</div>
+                        <div><span class="eval-label">Layout</span>full-bleed-image-hero</div>
+                        <div class="eval-item-wide"><span class="eval-label">Generic Elements</span>Centered luxury-hotel hero headline over full-bleed image; three-column room cards with image/title/specs/pricing; testimonial quote followed by a darkened booking CTA banner</div>
+                        <div class="eval-item-wide"><span class="eval-label">Distinctive Elements</span>Warm Provence-appropriate palette paired with dark editorial bands; refined serif-led headline styling with spacious composition; strong reliance on immersive property photography to set mood</div>
+                    </div>
+                </details>
+                
+                <details class="evaluator-detail">
+                    <summary>GPT-5.4 (Frontend Dev) &mdash; 6/10</summary>
+                    <div class="eval-grid">
+                        <div><span class="eval-label">Color Palette</span>warm beige, charcoal, wood-brown</div>
+                        <div><span class="eval-label">Layout</span>full-bleed-image-hero</div>
+                        <div class="eval-item-wide"><span class="eval-label">Generic Elements</span>Full-bleed luxury hotel hero with centered headline, three-column room cards, testimonial quote above a booking CTA</div>
+                        <div class="eval-item-wide"><span class="eval-label">Distinctive Elements</span>Warm limestone-and-charcoal palette tied to hospitality mood, strong editorial serif typography paired with airy spacing, immersive property photography carrying most of the brand atmosphere</div>
+                    </div>
+                </details>
+                
+            </div>
+        </div>
+    </div>
+    
+    <div class="specimen">
+        <div class="specimen-header">
+            <h3>sneaker-brand</h3>
+        </div>
+
+        <div class="specimen-verdict">
+            <div class="verdict-score">5.3 <span>/10</span></div>
+            <div class="verdict-text">5 of 6 evaluators agreed this design <strong>could belong to any sneaker brand</strong>. Copy rated as <strong>mixed</strong> originality. Color seen as <strong>deliberate</strong>, typography as <strong>default</strong>.</div>
+        </div>
+
+        <div class="specimen-details">
+            <div class="specimen-detail-group">
+                <h4>Structure</h4>
+                
+                <div class="detail-row"><span class="detail-key">Layout</span><span class="detail-val">Split Hero Image Text</span></div>
+                
+                <div class="detail-row"><span class="detail-key">Navigation</span><span class="detail-val">Top Horizontal Bar</span></div>
+                
+                <div class="detail-row"><span class="detail-key">Footer</span><span class="detail-val">Multi Column Links</span></div>
+                
+                <div class="detail-row"><span class="detail-key">Cards</span><span class="detail-val">Heavy</span></div>
+                
+                <div class="detail-row"><span class="detail-key">Whitespace</span><span class="detail-val">Generous</span></div>
+                
+            </div>
+            <div class="specimen-detail-group">
+                <h4>Evaluator Consensus</h4>
+                
+                <div class="detail-row">
+                    <span class="detail-key">Color</span>
+                    <span class="detail-val">
+                        
+                        <span class="tag tag-green">deliberate: 6</span>
+                        
+                    </span>
+                </div>
+                
+                <div class="detail-row">
+                    <span class="detail-key">Typography</span>
+                    <span class="detail-val">
+                        
+                        <span class="tag tag-red">default: 4</span>
+                        
+                        <span class="tag tag-green">deliberate: 2</span>
+                        
+                    </span>
+                </div>
+                
+                <div class="detail-row">
+                    <span class="detail-key">Copy</span>
+                    <span class="detail-val">
+                        
+                        <span class="tag tag-amber">mixed: 4</span>
+                        
+                        <span class="tag tag-red">generic: 2</span>
+                        
+                    </span>
+                </div>
+                
+                <div class="detail-row">
+                    <span class="detail-key">Brand Test</span>
+                    <span class="detail-val">
+                        
+                        <span class="tag tag-gray">interchangeable: 5</span>
+                        
+                        <span class="tag tag-gray">distinctive: 1</span>
+                        
+                    </span>
+                </div>
+                
+            </div>
+        </div>
+
+        <div class="specimen-layout">
+            <div class="specimen-screenshot" onclick="openLightbox('screenshots/sneaker-brand/desktop.png')">
+                <img src="screenshots/sneaker-brand/desktop.png" alt="sneaker-brand screenshot" loading="lazy">
+                <span class="click-hint">Click to enlarge</span>
+            </div>
+            <div>
+                <div class="mini-swatches">
+                    
+                    <div class="mini-swatch" style="background:#e8ff47"></div>
+                    
+                    <div class="mini-swatch" style="background:#2a2a2a"></div>
+                    
+                    <div class="mini-swatch" style="background:#ffffff;border:1px solid #ddd"></div>
+                    
+                    <div class="mini-swatch" style="background:#0a0a0a"></div>
+                    
+                    <div class="mini-swatch" style="background:#fafafa;border:1px solid #ddd"></div>
+                    
+                    <div class="mini-swatch" style="background:#ff6b5a"></div>
+                    
+                </div>
+
+                
+                <div class="tone-pills">
+                    
+                    <span class="tone-pill">aspirational</span>
+                    
+                    <span class="tone-pill">athletic</span>
+                    
+                    <span class="tone-pill">concise</span>
+                    
+                    <span class="tone-pill">confident</span>
+                    
+                    <span class="tone-pill">contemporary</span>
+                    
+                    <span class="tone-pill">performance-driven</span>
+                    
+                </div>
+                
+
+                
+                <details class="evaluator-detail" style="margin-top:14px">
+                    <summary>Claude (Brand Critic) &mdash; 6/10</summary>
+                    <div class="eval-grid">
+                        <div><span class="eval-label">Color Palette</span>Dark charcoal, neon yellow-green, muted purples</div>
+                        <div><span class="eval-label">Layout</span>split-hero-image-text</div>
+                        <div class="eval-item-wide"><span class="eval-label">Generic Elements</span>Three-column testimonial cards with star ratings and avatars, four-column feature/technology grid with icons, email signup CTA banner section</div>
+                        <div class="eval-item-wide"><span class="eval-label">Distinctive Elements</span>Neon yellow-green accent on dark background creating strong athletic energy, scrolling press/media ticker bar, bold condensed serif-like typography for headlines with 'Movement' in accent color</div>
+                    </div>
+                </details>
+                
+                <details class="evaluator-detail">
+                    <summary>Claude (Frontend Dev) &mdash; 7/10</summary>
+                    <div class="eval-grid">
+                        <div><span class="eval-label">Color Palette</span>Dark black, neon yellow-green, muted purples</div>
+                        <div><span class="eval-label">Layout</span>split-hero-image-text</div>
+                        <div class="eval-item-wide"><span class="eval-label">Generic Elements</span>Technology feature cards with icons, testimonial cards with star ratings and avatars, email signup CTA section with rounded input field</div>
+                        <div class="eval-item-wide"><span class="eval-label">Distinctive Elements</span>Neon yellow-green accent on dark background creating strong brand identity, the stats bar (4.9★ / 38g / 72hr) with specific metrics, the press/media ticker marquee strip</div>
+                    </div>
+                </details>
+                
+                <details class="evaluator-detail">
+                    <summary>Gemini (Brand Critic) &mdash; 4/10</summary>
+                    <div class="eval-grid">
+                        <div><span class="eval-label">Color Palette</span>Black, dark grey, neon yellow</div>
+                        <div><span class="eval-label">Layout</span>split-hero-image-text</div>
+                        <div class="eval-item-wide"><span class="eval-label">Generic Elements</span>3D emoji illustrations instead of real product photography, the standard 4-column feature card grid with emojis, generic testimonial cards with 5 stars and circular initial avatars</div>
+                        <div class="eval-item-wide"><span class="eval-label">Distinctive Elements</span>High-contrast neon yellow accents, concentric ring graphic behind the hero sneaker, the marquee/ticker tape divider banner</div>
+                    </div>
+                </details>
+                
+                <details class="evaluator-detail">
+                    <summary>Gemini (Frontend Dev) &mdash; 4/10</summary>
+                    <div class="eval-grid">
+                        <div><span class="eval-label">Color Palette</span>Dark gray, neon yellow</div>
+                        <div><span class="eval-label">Layout</span>split-hero-image-text</div>
+                        <div class="eval-item-wide"><span class="eval-label">Generic Elements</span>Basic sans-serif typography, equal-width card grids, standard multi-column footer layout</div>
+                        <div class="eval-item-wide"><span class="eval-label">Distinctive Elements</span>Concentric circle background pattern in hero, neon yellow high-contrast accent color, use of 3D-rendered imagery instead of photos</div>
+                    </div>
+                </details>
+                
+                <details class="evaluator-detail">
+                    <summary>GPT-5.4 (Brand Critic) &mdash; 5/10</summary>
+                    <div class="eval-grid">
+                        <div><span class="eval-label">Color Palette</span>black, charcoal, neon-lime accents</div>
+                        <div><span class="eval-label">Layout</span>split-hero-image-text</div>
+                        <div class="eval-item-wide"><span class="eval-label">Generic Elements</span>Split hero with headline/product visual and dual CTAs; repeated rounded feature/testimonial/product cards; dark startup-style footer with multi-column link lists</div>
+                        <div class="eval-item-wide"><span class="eval-label">Distinctive Elements</span>Acid-lime accent used sparingly against the dark palette; concentric radar-like rings framing the shoe in the hero; playful simplified product/runner illustrations instead of standard photography</div>
+                    </div>
+                </details>
+                
+                <details class="evaluator-detail">
+                    <summary>GPT-5.4 (Frontend Dev) &mdash; 6/10</summary>
+                    <div class="eval-grid">
+                        <div><span class="eval-label">Color Palette</span>black, charcoal, neon lime</div>
+                        <div><span class="eval-label">Layout</span>split-hero-image-text</div>
+                        <div class="eval-item-wide"><span class="eval-label">Generic Elements</span>Top nav with simple links and CTA button; three-column product card grid; email signup banner with input and bright button</div>
+                        <div class="eval-item-wide"><span class="eval-label">Distinctive Elements</span>Neon lime accent used consistently against the dark performance aesthetic; concentric radial rings framing the hero shoe illustration; playful illustrated product/category imagery instead of standard product photography</div>
+                    </div>
+                </details>
+                
+            </div>
+        </div>
+    </div>
+    
+    <div class="specimen">
+        <div class="specimen-header">
+            <h3>admin-panel</h3>
+        </div>
+
+        <div class="specimen-verdict">
+            <div class="verdict-score">4.3 <span>/10</span></div>
+            <div class="verdict-text">6 of 6 evaluators agreed this design <strong>could belong to any admin panel</strong>. Copy rated as <strong>generic</strong> originality. Color seen as <strong>deliberate</strong>, typography as <strong>default</strong>.</div>
+        </div>
+
+        <div class="specimen-details">
+            <div class="specimen-detail-group">
+                <h4>Structure</h4>
+                
+                <div class="detail-row"><span class="detail-key">Layout</span><span class="detail-val">Sidebar With Content</span></div>
+                
+                <div class="detail-row"><span class="detail-key">Navigation</span><span class="detail-val">Sidebar</span></div>
+                
+                <div class="detail-row"><span class="detail-key">Footer</span><span class="detail-val">No Footer</span></div>
+                
+                <div class="detail-row"><span class="detail-key">Cards</span><span class="detail-val">Heavy</span></div>
+                
+                <div class="detail-row"><span class="detail-key">Whitespace</span><span class="detail-val">Moderate</span></div>
+                
+            </div>
+            <div class="specimen-detail-group">
+                <h4>Evaluator Consensus</h4>
+                
+                <div class="detail-row">
+                    <span class="detail-key">Color</span>
+                    <span class="detail-val">
+                        
+                        <span class="tag tag-green">deliberate: 4</span>
+                        
+                        <span class="tag tag-red">default: 2</span>
+                        
+                    </span>
+                </div>
+                
+                <div class="detail-row">
+                    <span class="detail-key">Typography</span>
+                    <span class="detail-val">
+                        
+                        <span class="tag tag-red">default: 4</span>
+                        
+                        <span class="tag tag-green">deliberate: 2</span>
+                        
+                    </span>
+                </div>
+                
+                <div class="detail-row">
+                    <span class="detail-key">Copy</span>
+                    <span class="detail-val">
+                        
+                        <span class="tag tag-red">generic: 3</span>
+                        
+                        <span class="tag tag-amber">mixed: 3</span>
+                        
+                    </span>
+                </div>
+                
+                <div class="detail-row">
+                    <span class="detail-key">Brand Test</span>
+                    <span class="detail-val">
+                        
+                        <span class="tag tag-gray">interchangeable: 6</span>
+                        
+                    </span>
+                </div>
+                
+            </div>
+        </div>
+
+        <div class="specimen-layout">
+            <div class="specimen-screenshot" onclick="openLightbox('screenshots/admin-panel/desktop.png')">
+                <img src="screenshots/admin-panel/desktop.png" alt="admin-panel screenshot" loading="lazy">
+                <span class="click-hint">Click to enlarge</span>
+            </div>
+            <div>
+                <div class="mini-swatches">
+                    
+                    <div class="mini-swatch" style="background:#1b1a23"></div>
+                    
+                    <div class="mini-swatch" style="background:#262532"></div>
+                    
+                    <div class="mini-swatch" style="background:#5ec269"></div>
+                    
+                    <div class="mini-swatch" style="background:#14131a"></div>
+                    
+                    <div class="mini-swatch" style="background:#d4a853"></div>
+                    
+                    <div class="mini-swatch" style="background:#5b8def"></div>
+                    
+                </div>
+
+                
+                <div class="tone-pills">
+                    
+                    <span class="tone-pill">admin-focused</span>
+                    
+                    <span class="tone-pill">admin-speak</span>
+                    
+                    <span class="tone-pill">administrative</span>
+                    
+                    <span class="tone-pill">concise</span>
+                    
+                    <span class="tone-pill">direct</span>
+                    
+                    <span class="tone-pill">functional</span>
+                    
+                </div>
+                
+
+                
+                <details class="evaluator-detail" style="margin-top:14px">
+                    <summary>Claude (Brand Critic) &mdash; 3/10</summary>
+                    <div class="eval-grid">
+                        <div><span class="eval-label">Color Palette</span>Dark charcoal gold green accents</div>
+                        <div><span class="eval-label">Layout</span>sidebar-with-content</div>
+                        <div class="eval-item-wide"><span class="eval-label">Generic Elements</span>1. The four stat cards with percentage changes at the top, 2. The user table with role/status/last active columns, 3. The sidebar navigation with icon labels and badge counts</div>
+                        <div class="eval-item-wide"><span class="eval-label">Distinctive Elements</span>1. The activity feed with color-coded action icons on the right, 2. The recent content panel with status badges (Published, In Review, Draft), 3. The warm gold/amber accent used for the primary CTA button pairing</div>
+                    </div>
+                </details>
+                
+                <details class="evaluator-detail">
+                    <summary>Claude (Frontend Dev) &mdash; 4/10</summary>
+                    <div class="eval-grid">
+                        <div><span class="eval-label">Color Palette</span>Dark charcoal with amber accents</div>
+                        <div><span class="eval-label">Layout</span>sidebar-with-content</div>
+                        <div class="eval-item-wide"><span class="eval-label">Generic Elements</span>1. The four KPI stat cards at the top with percentage change indicators, 2. The user table with role/status badges and action icons, 3. The sidebar navigation with icon+label+badge count pattern</div>
+                        <div class="eval-item-wide"><span class="eval-label">Distinctive Elements</span>1. The activity feed with colored action-type icons (green checkmark, orange pencil, red archive), 2. The Recent Content panel with status badges and view counts, 3. The breadcrumb navigation combined with search bar and notification bell in the top bar</div>
+                    </div>
+                </details>
+                
+                <details class="evaluator-detail">
+                    <summary>Gemini (Brand Critic) &mdash; 4/10</summary>
+                    <div class="eval-grid">
+                        <div><span class="eval-label">Color Palette</span>Dark gray, gold, muted status</div>
+                        <div><span class="eval-label">Layout</span>sidebar-with-content</div>
+                        <div class="eval-item-wide"><span class="eval-label">Generic Elements</span>The layout structure consisting of a left sidebar and standard top header, the data table with status pills and line-item actions, the standard right-aligned activity feed.</div>
+                        <div class="eval-item-wide"><span class="eval-label">Distinctive Elements</span>The use of a serif font for page titles and large metric numbers, the specific gold brand accent color against the dark theme, the subtle colored top borders on the metric cards.</div>
+                    </div>
+                </details>
+                
+                <details class="evaluator-detail">
+                    <summary>Gemini (Frontend Dev) &mdash; 6/10</summary>
+                    <div class="eval-grid">
+                        <div><span class="eval-label">Color Palette</span>Dark gray, amber, muted accents</div>
+                        <div><span class="eval-label">Layout</span>sidebar-with-content</div>
+                        <div class="eval-item-wide"><span class="eval-label">Generic Elements</span>Left sidebar navigation structure, top search bar and notification bell, standard paginated data table</div>
+                        <div class="eval-item-wide"><span class="eval-label">Distinctive Elements</span>Use of serif font for main headers and KPI numbers, subtle colored top borders on stat cards, amber brand accent color</div>
+                    </div>
+                </details>
+                
+                <details class="evaluator-detail">
+                    <summary>GPT-5.4 (Brand Critic) &mdash; 4/10</summary>
+                    <div class="eval-grid">
+                        <div><span class="eval-label">Color Palette</span>charcoal navy with gold</div>
+                        <div><span class="eval-label">Layout</span>sidebar-with-content</div>
+                        <div class="eval-item-wide"><span class="eval-label">Generic Elements</span>dark SaaS admin dashboard layout, KPI stat cards across the top, rounded data table and activity cards with pill status badges</div>
+                        <div class="eval-item-wide"><span class="eval-label">Distinctive Elements</span>warm gold accent system against the dark palette, serif-style page heading paired with utilitarian UI text, color-coded role/status chips and avatars with restrained contrast</div>
+                    </div>
+                </details>
+                
+                <details class="evaluator-detail">
+                    <summary>GPT-5.4 (Frontend Dev) &mdash; 5/10</summary>
+                    <div class="eval-grid">
+                        <div><span class="eval-label">Color Palette</span>charcoal, navy, gold accents</div>
+                        <div><span class="eval-label">Layout</span>sidebar-with-content</div>
+                        <div class="eval-item-wide"><span class="eval-label">Generic Elements</span>Dark SaaS dashboard layout, KPI stat cards across the top, right-column activity and recent content panels</div>
+                        <div class="eval-item-wide"><span class="eval-label">Distinctive Elements</span>Warm gold accent system against the dark UI, serif-styled page heading paired with sans UI text, polished role/status chips with color-coded icon containers</div>
+                    </div>
+                </details>
+                
+            </div>
+        </div>
+    </div>
+    
+    <div class="specimen">
+        <div class="specimen-header">
+            <h3>ecommerce-product</h3>
+        </div>
+
+        <div class="specimen-verdict">
+            <div class="verdict-score">4.0 <span>/10</span></div>
+            <div class="verdict-text">6 of 6 evaluators agreed this design <strong>could belong to any ecommerce product</strong>. Copy rated as <strong>mixed</strong> originality. Color seen as <strong>default</strong>, typography as <strong>deliberate</strong>.</div>
+        </div>
+
+        <div class="specimen-details">
+            <div class="specimen-detail-group">
+                <h4>Structure</h4>
+                
+                <div class="detail-row"><span class="detail-key">Layout</span><span class="detail-val">Split Hero Image Text</span></div>
+                
+                <div class="detail-row"><span class="detail-key">Navigation</span><span class="detail-val">Top Horizontal Bar</span></div>
+                
+                <div class="detail-row"><span class="detail-key">Footer</span><span class="detail-val">Multi Column Links</span></div>
+                
+                <div class="detail-row"><span class="detail-key">Cards</span><span class="detail-val">Moderate</span></div>
+                
+                <div class="detail-row"><span class="detail-key">Whitespace</span><span class="detail-val">Generous</span></div>
+                
+            </div>
+            <div class="specimen-detail-group">
+                <h4>Evaluator Consensus</h4>
+                
+                <div class="detail-row">
+                    <span class="detail-key">Color</span>
+                    <span class="detail-val">
+                        
+                        <span class="tag tag-red">default: 3</span>
+                        
+                        <span class="tag tag-green">deliberate: 2</span>
+                        
+                        <span class="tag tag-gray">uncertain: 1</span>
+                        
+                    </span>
+                </div>
+                
+                <div class="detail-row">
+                    <span class="detail-key">Typography</span>
+                    <span class="detail-val">
+                        
+                        <span class="tag tag-green">deliberate: 5</span>
+                        
+                        <span class="tag tag-red">default: 1</span>
+                        
+                    </span>
+                </div>
+                
+                <div class="detail-row">
+                    <span class="detail-key">Copy</span>
+                    <span class="detail-val">
+                        
+                        <span class="tag tag-amber">mixed: 4</span>
+                        
+                        <span class="tag tag-green">specific: 2</span>
+                        
+                    </span>
+                </div>
+                
+                <div class="detail-row">
+                    <span class="detail-key">Brand Test</span>
+                    <span class="detail-val">
+                        
+                        <span class="tag tag-gray">interchangeable: 6</span>
+                        
+                    </span>
+                </div>
+                
+            </div>
+        </div>
+
+        <div class="specimen-layout">
+            <div class="specimen-screenshot" onclick="openLightbox('screenshots/ecommerce-product/desktop.png')">
+                <img src="screenshots/ecommerce-product/desktop.png" alt="ecommerce-product screenshot" loading="lazy">
+                <span class="click-hint">Click to enlarge</span>
+            </div>
+            <div>
+                <div class="mini-swatches">
+                    
+                    <div class="mini-swatch" style="background:#f5f5f4"></div>
+                    
+                    <div class="mini-swatch" style="background:#fafaf9"></div>
+                    
+                    <div class="mini-swatch" style="background:#ffffff;border:1px solid #ddd"></div>
+                    
+                    <div class="mini-swatch" style="background:#1c1917"></div>
+                    
+                    <div class="mini-swatch" style="background:#e7e5e4"></div>
+                    
+                    <div class="mini-swatch" style="background:#ecfdf5"></div>
+                    
+                </div>
+
+                
+                <div class="tone-pills">
+                    
+                    <span class="tone-pill">benefit-driven</span>
+                    
+                    <span class="tone-pill">clear</span>
+                    
+                    <span class="tone-pill">commerce-focused</span>
+                    
+                    <span class="tone-pill">concise</span>
+                    
+                    <span class="tone-pill">confident</span>
+                    
+                    <span class="tone-pill">e-commerce</span>
+                    
+                </div>
+                
+
+                
+                <details class="evaluator-detail" style="margin-top:14px">
+                    <summary>Claude (Brand Critic) &mdash; 4/10</summary>
+                    <div class="eval-grid">
+                        <div><span class="eval-label">Color Palette</span>White, black, mustard yellow, warm neutrals</div>
+                        <div><span class="eval-label">Layout</span>split-hero-image-text</div>
+                        <div class="eval-item-wide"><span class="eval-label">Generic Elements</span>Three benefit icon cards (Free Shipping, 30-Day Returns, 2-Year Warranty), accordion-style specification sections, review cards with avatar initials and star ratings</div>
+                        <div class="eval-item-wide"><span class="eval-label">Distinctive Elements</span>Yellow product photography background adding color personality, serif typeface for product title and reviews heading creating editorial feel, specific and believable customer review copy with competitor comparisons</div>
+                    </div>
+                </details>
+                
+                <details class="evaluator-detail">
+                    <summary>Claude (Frontend Dev) &mdash; 5/10</summary>
+                    <div class="eval-grid">
+                        <div><span class="eval-label">Color Palette</span>White, black, mustard yellow, warm neutrals</div>
+                        <div><span class="eval-label">Layout</span>split-hero-image-text</div>
+                        <div class="eval-item-wide"><span class="eval-label">Generic Elements</span>Three trust badge icons (Free Shipping, 30-Day Returns, 2-Year Warranty), accordion-style specification sections, quantity stepper with +/- buttons</div>
+                        <div class="eval-item-wide"><span class="eval-label">Distinctive Elements</span>Bold yellow product photography background creating visual energy, serif typeface for headings adding editorial/premium feel, specific and believable customer reviews with competitor comparisons (Sony XM5s)</div>
+                    </div>
+                </details>
+                
+                <details class="evaluator-detail">
+                    <summary>Gemini (Brand Critic) &mdash; 4/10</summary>
+                    <div class="eval-grid">
+                        <div><span class="eval-label">Color Palette</span>Minimalist white, black, gray</div>
+                        <div><span class="eval-label">Layout</span>split-hero-image-text</div>
+                        <div class="eval-item-wide"><span class="eval-label">Generic Elements</span>Accordion menus for specifications, standard value proposition boxes with generic icons, 3-column review card layout</div>
+                        <div class="eval-item-wide"><span class="eval-label">Distinctive Elements</span>Use of a serif font for a technology product heading, high-contrast vibrant yellow product photography against the minimalist UI, restrained 'Add to Cart' hierarchy</div>
+                    </div>
+                </details>
+                
+                <details class="evaluator-detail">
+                    <summary>Gemini (Frontend Dev) &mdash; 3/10</summary>
+                    <div class="eval-grid">
+                        <div><span class="eval-label">Color Palette</span>white, black, gray, light teal</div>
+                        <div><span class="eval-label">Layout</span>split-hero-image-text</div>
+                        <div class="eval-item-wide"><span class="eval-label">Generic Elements</span>star ratings, accordion menus, 'Add to Cart' button</div>
+                        <div class="eval-item-wide"><span class="eval-label">Distinctive Elements</span>serif heading font, product image gallery, 'Save 19%' tag</div>
+                    </div>
+                </details>
+                
+                <details class="evaluator-detail">
+                    <summary>GPT-5.4 (Brand Critic) &mdash; 4/10</summary>
+                    <div class="eval-grid">
+                        <div><span class="eval-label">Color Palette</span>white, black, warm yellow</div>
+                        <div><span class="eval-label">Layout</span>split-hero-image-text</div>
+                        <div class="eval-item-wide"><span class="eval-label">Generic Elements</span>Split product image/detail layout, standard review cards with star ratings, generic multi-column ecommerce footer</div>
+                        <div class="eval-item-wide"><span class="eval-label">Distinctive Elements</span>High-contrast yellow product image backdrop, elegant serif product/title typography, restrained black-and-cream premium audio styling</div>
+                    </div>
+                </details>
+                
+                <details class="evaluator-detail">
+                    <summary>GPT-5.4 (Frontend Dev) &mdash; 4/10</summary>
+                    <div class="eval-grid">
+                        <div><span class="eval-label">Color Palette</span>white black warm yellow</div>
+                        <div><span class="eval-label">Layout</span>split-hero-image-text</div>
+                        <div class="eval-item-wide"><span class="eval-label">Generic Elements</span>Split product gallery/details layout, standard add-to-cart row with quantity stepper and wishlist icon, multi-column ecommerce footer with shop/support/company links</div>
+                        <div class="eval-item-wide"><span class="eval-label">Distinctive Elements</span>High-contrast yellow hero product photography, elegant serif product/title typography paired with clean sans body text, restrained monochrome UI with small green stock/savings accents</div>
+                    </div>
+                </details>
+                
+            </div>
+        </div>
+    </div>
+    
+    <div class="specimen">
+        <div class="specimen-header">
+            <h3>fitness-dashboard</h3>
+        </div>
+
+        <div class="specimen-verdict">
+            <div class="verdict-score">4.0 <span>/10</span></div>
+            <div class="verdict-text">6 of 6 evaluators agreed this design <strong>could belong to any fitness dashboard</strong>. Copy rated as <strong>mixed</strong> originality. Color seen as <strong>default</strong>, typography as <strong>default</strong>.</div>
+        </div>
+
+        <div class="specimen-details">
+            <div class="specimen-detail-group">
+                <h4>Structure</h4>
+                
+                <div class="detail-row"><span class="detail-key">Layout</span><span class="detail-val">Sidebar With Content</span></div>
+                
+                <div class="detail-row"><span class="detail-key">Navigation</span><span class="detail-val">Sidebar</span></div>
+                
+                <div class="detail-row"><span class="detail-key">Footer</span><span class="detail-val">No Footer</span></div>
+                
+                <div class="detail-row"><span class="detail-key">Cards</span><span class="detail-val">Heavy</span></div>
+                
+                <div class="detail-row"><span class="detail-key">Whitespace</span><span class="detail-val">Moderate</span></div>
+                
+            </div>
+            <div class="specimen-detail-group">
+                <h4>Evaluator Consensus</h4>
+                
+                <div class="detail-row">
+                    <span class="detail-key">Color</span>
+                    <span class="detail-val">
+                        
+                        <span class="tag tag-red">default: 3</span>
+                        
+                        <span class="tag tag-green">deliberate: 3</span>
+                        
+                    </span>
+                </div>
+                
+                <div class="detail-row">
+                    <span class="detail-key">Typography</span>
+                    <span class="detail-val">
+                        
+                        <span class="tag tag-red">default: 6</span>
+                        
+                    </span>
+                </div>
+                
+                <div class="detail-row">
+                    <span class="detail-key">Copy</span>
+                    <span class="detail-val">
+                        
+                        <span class="tag tag-amber">mixed: 3</span>
+                        
+                        <span class="tag tag-red">generic: 2</span>
+                        
+                        <span class="tag tag-green">specific: 1</span>
+                        
+                    </span>
+                </div>
+                
+                <div class="detail-row">
+                    <span class="detail-key">Brand Test</span>
+                    <span class="detail-val">
+                        
+                        <span class="tag tag-gray">interchangeable: 6</span>
+                        
+                    </span>
+                </div>
+                
+            </div>
+        </div>
+
+        <div class="specimen-layout">
+            <div class="specimen-screenshot" onclick="openLightbox('screenshots/fitness-dashboard/desktop.png')">
+                <img src="screenshots/fitness-dashboard/desktop.png" alt="fitness-dashboard screenshot" loading="lazy">
+                <span class="click-hint">Click to enlarge</span>
+            </div>
+            <div>
+                <div class="mini-swatches">
+                    
+                    <div class="mini-swatch" style="background:#22c55e"></div>
+                    
+                    <div class="mini-swatch" style="background:#12121a"></div>
+                    
+                    <div class="mini-swatch" style="background:#3b82f6"></div>
+                    
+                    <div class="mini-swatch" style="background:#16161f"></div>
+                    
+                    <div class="mini-swatch" style="background:#ef4444"></div>
+                    
+                    <div class="mini-swatch" style="background:#f97316"></div>
+                    
+                </div>
+
+                
+                <div class="tone-pills">
+                    
+                    <span class="tone-pill">clear</span>
+                    
+                    <span class="tone-pill">concise</span>
+                    
+                    <span class="tone-pill">data-driven</span>
+                    
+                    <span class="tone-pill">encouraging</span>
+                    
+                    <span class="tone-pill">fitness-focused</span>
+                    
+                    <span class="tone-pill">functional</span>
+                    
+                </div>
+                
+
+                
+                <details class="evaluator-detail" style="margin-top:14px">
+                    <summary>Claude (Brand Critic) &mdash; 3/10</summary>
+                    <div class="eval-grid">
+                        <div><span class="eval-label">Color Palette</span>Dark navy, green, orange, cyan</div>
+                        <div><span class="eval-label">Layout</span>sidebar-with-content</div>
+                        <div class="eval-item-wide"><span class="eval-label">Generic Elements</span>1. KPI stat cards with percentage change badges at top, 2. Weekly bar chart with standard Mon-Sun layout, 3. Circular progress ring for daily goal</div>
+                        <div class="eval-item-wide"><span class="eval-label">Distinctive Elements</span>1. Heart rate waveform visualization with zone distribution bars, 2. Activity streak calendar grid with green fill pattern, 3. Workout list with sport-specific colored icons</div>
+                    </div>
+                </details>
+                
+                <details class="evaluator-detail">
+                    <summary>Claude (Frontend Dev) &mdash; 4/10</summary>
+                    <div class="eval-grid">
+                        <div><span class="eval-label">Color Palette</span>Dark navy, green, orange, cyan</div>
+                        <div><span class="eval-label">Layout</span>sidebar-with-content</div>
+                        <div class="eval-item-wide"><span class="eval-label">Generic Elements</span>KPI stat cards with percentage change badges, bar chart with generic styling, progress bars for weekly goals</div>
+                        <div class="eval-item-wide"><span class="eval-label">Distinctive Elements</span>Heart rate waveform visualization with zone distribution, Apple Watch-style triple ring daily goal widget, Activity streak calendar grid with green fill pattern</div>
+                    </div>
+                </details>
+                
+                <details class="evaluator-detail">
+                    <summary>Gemini (Brand Critic) &mdash; 3/10</summary>
+                    <div class="eval-grid">
+                        <div><span class="eval-label">Color Palette</span>Dark gray, neon bright accents</div>
+                        <div><span class="eval-label">Layout</span>sidebar-with-content</div>
+                        <div class="eval-item-wide"><span class="eval-label">Generic Elements</span>Sidebar navigation with standard icons, top numeric metric cards with percentage change pills, vertical bar charts</div>
+                        <div class="eval-item-wide"><span class="eval-label">Distinctive Elements</span>Concentric daily goal rings, ECG-style heart rate visual, grid-based activity streak heatmap</div>
+                    </div>
+                </details>
+                
+                <details class="evaluator-detail">
+                    <summary>Gemini (Frontend Dev) &mdash; 5/10</summary>
+                    <div class="eval-grid">
+                        <div><span class="eval-label">Color Palette</span>Dark grey with neon accents</div>
+                        <div><span class="eval-label">Layout</span>sidebar-with-content</div>
+                        <div class="eval-item-wide"><span class="eval-label">Generic Elements</span>Left sidebar layout, standard system sans-serif typography, grid layout of data cards</div>
+                        <div class="eval-item-wide"><span class="eval-label">Distinctive Elements</span>Multi-ringed circular progress chart, stylized EKG heart rate line, vibrant athletic color accents</div>
+                    </div>
+                </details>
+                
+                <details class="evaluator-detail">
+                    <summary>GPT-5.4 (Brand Critic) &mdash; 4/10</summary>
+                    <div class="eval-grid">
+                        <div><span class="eval-label">Color Palette</span>dark navy, neon green, blue, orange</div>
+                        <div><span class="eval-label">Layout</span>sidebar-with-content</div>
+                        <div class="eval-item-wide"><span class="eval-label">Generic Elements</span>Dark dashboard UI with rounded statistic cards; standard sidebar navigation with simple line icons; common data visualizations like bar chart, progress rings, and progress bars</div>
+                        <div class="eval-item-wide"><span class="eval-label">Distinctive Elements</span>Bright green-led dark palette consistently tied across charts and states; concentric daily goal rings with bold central percentage; workout list with colorful activity-specific icon chips and calorie totals</div>
+                    </div>
+                </details>
+                
+                <details class="evaluator-detail">
+                    <summary>GPT-5.4 (Frontend Dev) &mdash; 5/10</summary>
+                    <div class="eval-grid">
+                        <div><span class="eval-label">Color Palette</span>dark navy with neon accents</div>
+                        <div><span class="eval-label">Layout</span>sidebar-with-content</div>
+                        <div class="eval-item-wide"><span class="eval-label">Generic Elements</span>Dark dashboard card grid, left sidebar with icon navigation, standard stat cards with colored percentage badges</div>
+                        <div class="eval-item-wide"><span class="eval-label">Distinctive Elements</span>Concentric daily goal rings, activity streak mini-calendar, cohesive fitness-specific icon/color coding across widgets</div>
+                    </div>
+                </details>
+                
+            </div>
+        </div>
+    </div>
+    
+    <div class="specimen">
+        <div class="specimen-header">
+            <h3>documentation</h3>
+        </div>
+
+        <div class="specimen-verdict">
+            <div class="verdict-score">3.5 <span>/10</span></div>
+            <div class="verdict-text">6 of 6 evaluators agreed this design <strong>could belong to any documentation</strong>. Copy rated as <strong>specific</strong> originality. Color seen as <strong>default</strong>, typography as <strong>default</strong>.</div>
+        </div>
+
+        <div class="specimen-details">
+            <div class="specimen-detail-group">
+                <h4>Structure</h4>
+                
+                <div class="detail-row"><span class="detail-key">Layout</span><span class="detail-val">Sidebar With Content</span></div>
+                
+                <div class="detail-row"><span class="detail-key">Navigation</span><span class="detail-val">Sidebar</span></div>
+                
+                <div class="detail-row"><span class="detail-key">Footer</span><span class="detail-val">Minimal Single Line</span></div>
+                
+                <div class="detail-row"><span class="detail-key">Cards</span><span class="detail-val">Moderate</span></div>
+                
+                <div class="detail-row"><span class="detail-key">Whitespace</span><span class="detail-val">Moderate</span></div>
+                
+            </div>
+            <div class="specimen-detail-group">
+                <h4>Evaluator Consensus</h4>
+                
+                <div class="detail-row">
+                    <span class="detail-key">Color</span>
+                    <span class="detail-val">
+                        
+                        <span class="tag tag-red">default: 5</span>
+                        
+                        <span class="tag tag-green">deliberate: 1</span>
+                        
+                    </span>
+                </div>
+                
+                <div class="detail-row">
+                    <span class="detail-key">Typography</span>
+                    <span class="detail-val">
+                        
+                        <span class="tag tag-red">default: 6</span>
+                        
+                    </span>
+                </div>
+                
+                <div class="detail-row">
+                    <span class="detail-key">Copy</span>
+                    <span class="detail-val">
+                        
+                        <span class="tag tag-green">specific: 6</span>
+                        
+                    </span>
+                </div>
+                
+                <div class="detail-row">
+                    <span class="detail-key">Brand Test</span>
+                    <span class="detail-val">
+                        
+                        <span class="tag tag-gray">interchangeable: 6</span>
+                        
+                    </span>
+                </div>
+                
+            </div>
+        </div>
+
+        <div class="specimen-layout">
+            <div class="specimen-screenshot" onclick="openLightbox('screenshots/documentation/desktop.png')">
+                <img src="screenshots/documentation/desktop.png" alt="documentation screenshot" loading="lazy">
+                <span class="click-hint">Click to enlarge</span>
+            </div>
+            <div>
+                <div class="mini-swatches">
+                    
+                    <div class="mini-swatch" style="background:#161b22"></div>
+                    
+                    <div class="mini-swatch" style="background:#1c2129"></div>
+                    
+                    <div class="mini-swatch" style="background:#d29922"></div>
+                    
+                    <div class="mini-swatch" style="background:#388bfd"></div>
+                    
+                    <div class="mini-swatch" style="background:#3fb950"></div>
+                    
+                    <div class="mini-swatch" style="background:#0e1117"></div>
+                    
+                </div>
+
+                
+                <div class="tone-pills">
+                    
+                    <span class="tone-pill">concise</span>
+                    
+                    <span class="tone-pill">developer-focused</span>
+                    
+                    <span class="tone-pill">direct</span>
+                    
+                    <span class="tone-pill">instructional</span>
+                    
+                    <span class="tone-pill">objective</span>
+                    
+                    <span class="tone-pill">precise</span>
+                    
+                </div>
+                
+
+                
+                <details class="evaluator-detail" style="margin-top:14px">
+                    <summary>Claude (Brand Critic) &mdash; 3/10</summary>
+                    <div class="eval-grid">
+                        <div><span class="eval-label">Color Palette</span>Dark navy, blue accents, white text</div>
+                        <div><span class="eval-label">Layout</span>sidebar-with-content</div>
+                        <div class="eval-item-wide"><span class="eval-label">Generic Elements</span>Card grid in hero area with icons, standard sidebar navigation layout, generic top horizontal navigation bar with search</div>
+                        <div class="eval-item-wide"><span class="eval-label">Distinctive Elements</span>Extensive syntax-highlighted code examples, detailed API reference tables with operators, version changelog section at the bottom</div>
+                    </div>
+                </details>
+                
+                <details class="evaluator-detail">
+                    <summary>Claude (Frontend Dev) &mdash; 4/10</summary>
+                    <div class="eval-grid">
+                        <div><span class="eval-label">Color Palette</span>Dark navy, blue, muted grays</div>
+                        <div><span class="eval-label">Layout</span>sidebar-with-content</div>
+                        <div class="eval-item-wide"><span class="eval-label">Generic Elements</span>Quick start card grid at top, horizontal navigation bar, standard table styling for query operators</div>
+                        <div class="eval-item-wide"><span class="eval-label">Distinctive Elements</span>Persistent sidebar documentation navigation, well-styled syntax-highlighted code blocks with dark theme, colored callout/warning banners with icons</div>
+                    </div>
+                </details>
+                
+                <details class="evaluator-detail">
+                    <summary>Gemini (Brand Critic) &mdash; 3/10</summary>
+                    <div class="eval-grid">
+                        <div><span class="eval-label">Color Palette</span>Dark gray, blue, syntax accents</div>
+                        <div><span class="eval-label">Layout</span>sidebar-with-content</div>
+                        <div class="eval-item-wide"><span class="eval-label">Generic Elements</span>Three-column documentation layout, standard dark mode color scheme, typical 'copy to clipboard' code blocks</div>
+                        <div class="eval-item-wide"><span class="eval-label">Distinctive Elements</span>Neon blue accent color usage, stylized status badges (New, Beta) in nav, cleanly styled inline code within tables</div>
+                    </div>
+                </details>
+                
+                <details class="evaluator-detail">
+                    <summary>Gemini (Frontend Dev) &mdash; 4/10</summary>
+                    <div class="eval-grid">
+                        <div><span class="eval-label">Color Palette</span>Dark mode, neutral, blue accents</div>
+                        <div><span class="eval-label">Layout</span>sidebar-with-content</div>
+                        <div class="eval-item-wide"><span class="eval-label">Generic Elements</span>Three-column documentation layout, copy-to-clipboard buttons on code blocks, standard top navigation bar with search box.</div>
+                        <div class="eval-item-wide"><span class="eval-label">Distinctive Elements</span>Blue gradient text on the 'SDK' title, pill-style styling for API parameters, specific color-coding for different types of callout alerts.</div>
+                    </div>
+                </details>
+                
+                <details class="evaluator-detail">
+                    <summary>GPT-5.4 (Brand Critic) &mdash; 3/10</summary>
+                    <div class="eval-grid">
+                        <div><span class="eval-label">Color Palette</span>dark navy slate blue</div>
+                        <div><span class="eval-label">Layout</span>sidebar-with-content</div>
+                        <div class="eval-item-wide"><span class="eval-label">Generic Elements</span>Dark documentation theme, left sidebar plus right table-of-contents layout, boxed feature cards and code snippets with copy buttons</div>
+                        <div class="eval-item-wide"><span class="eval-label">Distinctive Elements</span>Prominent SDK capability cards near the top, dense developer-doc structure with colored notice banners, three-column docs shell with left nav and right in-page anchors</div>
+                    </div>
+                </details>
+                
+                <details class="evaluator-detail">
+                    <summary>GPT-5.4 (Frontend Dev) &mdash; 4/10</summary>
+                    <div class="eval-grid">
+                        <div><span class="eval-label">Color Palette</span>dark navy slate blue</div>
+                        <div><span class="eval-label">Layout</span>sidebar-with-content</div>
+                        <div class="eval-item-wide"><span class="eval-label">Generic Elements</span>Left docs sidebar navigation, dark bordered code-example blocks with copy buttons, top search/header bar</div>
+                        <div class="eval-item-wide"><span class="eval-label">Distinctive Elements</span>Feature cards with colored icons at the top, dense API-doc style tables mixed with alerts, consistent dark developer-docs treatment with right-side table of contents</div>
+                    </div>
+                </details>
+                
+            </div>
+        </div>
+    </div>
+    
+    <div class="specimen">
+        <div class="specimen-header">
+            <h3>saas-product</h3>
+        </div>
+
+        <div class="specimen-verdict">
+            <div class="verdict-score">3.3 <span>/10</span></div>
+            <div class="verdict-text">6 of 6 evaluators agreed this design <strong>could belong to any saas product</strong>. Copy rated as <strong>generic</strong> originality. Color seen as <strong>default</strong>, typography as <strong>default</strong>.</div>
+        </div>
+
+        <div class="specimen-details">
+            <div class="specimen-detail-group">
+                <h4>Structure</h4>
+                
+                <div class="detail-row"><span class="detail-key">Layout</span><span class="detail-val">Other</span></div>
+                
+                <div class="detail-row"><span class="detail-key">Navigation</span><span class="detail-val">Top Horizontal Bar</span></div>
+                
+                <div class="detail-row"><span class="detail-key">Footer</span><span class="detail-val">Multi Column Links</span></div>
+                
+                <div class="detail-row"><span class="detail-key">Cards</span><span class="detail-val">Heavy</span></div>
+                
+                <div class="detail-row"><span class="detail-key">Whitespace</span><span class="detail-val">Generous</span></div>
+                
+            </div>
+            <div class="specimen-detail-group">
+                <h4>Evaluator Consensus</h4>
+                
+                <div class="detail-row">
+                    <span class="detail-key">Color</span>
+                    <span class="detail-val">
+                        
+                        <span class="tag tag-red">default: 6</span>
+                        
+                    </span>
+                </div>
+                
+                <div class="detail-row">
+                    <span class="detail-key">Typography</span>
+                    <span class="detail-val">
+                        
+                        <span class="tag tag-red">default: 5</span>
+                        
+                        <span class="tag tag-green">deliberate: 1</span>
+                        
+                    </span>
+                </div>
+                
+                <div class="detail-row">
+                    <span class="detail-key">Copy</span>
+                    <span class="detail-val">
+                        
+                        <span class="tag tag-red">generic: 3</span>
+                        
+                        <span class="tag tag-amber">mixed: 3</span>
+                        
+                    </span>
+                </div>
+                
+                <div class="detail-row">
+                    <span class="detail-key">Brand Test</span>
+                    <span class="detail-val">
+                        
+                        <span class="tag tag-gray">interchangeable: 6</span>
+                        
+                    </span>
+                </div>
+                
+            </div>
+        </div>
+
+        <div class="specimen-layout">
+            <div class="specimen-screenshot" onclick="openLightbox('screenshots/saas-product/desktop.png')">
+                <img src="screenshots/saas-product/desktop.png" alt="saas-product screenshot" loading="lazy">
+                <span class="click-hint">Click to enlarge</span>
+            </div>
+            <div>
+                <div class="mini-swatches">
+                    
+                    <div class="mini-swatch" style="background:#18181b"></div>
+                    
+                    <div class="mini-swatch" style="background:#09090b"></div>
+                    
+                    <div class="mini-swatch" style="background:#a78bfa"></div>
+                    
+                    <div class="mini-swatch" style="background:#34d399"></div>
+                    
+                    <div class="mini-swatch" style="background:#000000"></div>
+                    
+                    <div class="mini-swatch" style="background:#ef4444"></div>
+                    
+                </div>
+
+                
+                <div class="tone-pills">
+                    
+                    <span class="tone-pill">confident</span>
+                    
+                    <span class="tone-pill">data-centric</span>
+                    
+                    <span class="tone-pill">data-focused</span>
+                    
+                    <span class="tone-pill">direct</span>
+                    
+                    <span class="tone-pill">feature-driven</span>
+                    
+                    <span class="tone-pill">generic</span>
+                    
+                </div>
+                
+
+                
+                <details class="evaluator-detail" style="margin-top:14px">
+                    <summary>Claude (Brand Critic) &mdash; 3/10</summary>
+                    <div class="eval-grid">
+                        <div><span class="eval-label">Color Palette</span>Dark purple, green accents, white</div>
+                        <div><span class="eval-label">Layout</span>centered-text-no-image</div>
+                        <div class="eval-item-wide"><span class="eval-label">Generic Elements</span>1. Three-column pricing cards with 'Most Popular' badge, 2. Logo trust bar ('Trusted by data teams at'), 3. Three-column testimonial cards with star ratings and avatars</div>
+                        <div class="eval-item-wide"><span class="eval-label">Distinctive Elements</span>1. The 'illuminate' wordmark treatment in green in the hero headline, 2. The dark-themed analytics dashboard mockup with colored bar charts, 3. The large stats row (50B+, 99.99%, <50ms, 2,400+)</div>
+                    </div>
+                </details>
+                
+                <details class="evaluator-detail">
+                    <summary>Claude (Frontend Dev) &mdash; 4/10</summary>
+                    <div class="eval-grid">
+                        <div><span class="eval-label">Color Palette</span>Dark purple, green accents, white</div>
+                        <div><span class="eval-label">Layout</span>centered-text-no-image</div>
+                        <div class="eval-item-wide"><span class="eval-label">Generic Elements</span>1. The three-column pricing cards with starter/pro/enterprise tiers, 2. The logo trust bar (Stripe, Vercel, Linear, Notion, Figma, Plaid), 3. The three-column testimonial cards with star ratings and avatars</div>
+                        <div class="eval-item-wide"><span class="eval-label">Distinctive Elements</span>1. The dark-themed analytics dashboard mockup with bar charts and KPI cards, 2. The 'illuminate' word highlighted in green gradient in the hero headline, 3. The stats row (50B+, 99.99%, <50ms, 2,400+) with specific metrics</div>
+                    </div>
+                </details>
+                
+                <details class="evaluator-detail">
+                    <summary>Gemini (Brand Critic) &mdash; 3/10</summary>
+                    <div class="eval-grid">
+                        <div><span class="eval-label">Color Palette</span>Dark gray, purple, white</div>
+                        <div><span class="eval-label">Layout</span>other</div>
+                        <div class="eval-item-wide"><span class="eval-label">Generic Elements</span>3-tier pricing setup, inline logo cloud for social proof, centered hero text layout with dual buttons</div>
+                        <div class="eval-item-wide"><span class="eval-label">Distinctive Elements</span>Gradient shading on the dashboard bar charts, specific purple gradient on 'illuminate', pill-shaped top beta badge</div>
+                    </div>
+                </details>
+                
+                <details class="evaluator-detail">
+                    <summary>Gemini (Frontend Dev) &mdash; 3/10</summary>
+                    <div class="eval-grid">
+                        <div><span class="eval-label">Color Palette</span>Dark mode with purple accents</div>
+                        <div><span class="eval-label">Layout</span>other</div>
+                        <div class="eval-item-wide"><span class="eval-label">Generic Elements</span>3-tier pricing pricing cards, logo cloud social proof, feature grid with minimal icons</div>
+                        <div class="eval-item-wide"><span class="eval-label">Distinctive Elements</span>Stylized gradient bar charts in the hero UI, neon text highlight in the main headline, heavy contrasting dark theme execution</div>
+                    </div>
+                </details>
+                
+                <details class="evaluator-detail">
+                    <summary>GPT-5.4 (Brand Critic) &mdash; 3/10</summary>
+                    <div class="eval-grid">
+                        <div><span class="eval-label">Color Palette</span>black, charcoal, violet, white</div>
+                        <div><span class="eval-label">Layout</span>centered-text-over-gradient</div>
+                        <div class="eval-item-wide"><span class="eval-label">Generic Elements</span>Centered hero with gradient glow and dual CTAs; 3-column feature card grid with line icons; highlighted middle pricing tier with testimonial cards below</div>
+                        <div class="eval-item-wide"><span class="eval-label">Distinctive Elements</span>Large embedded analytics dashboard mockup in the hero; restrained dark-mode palette with purple used consistently in charts and CTAs; big single-word emphasis in the headline ('illuminate')</div>
+                    </div>
+                </details>
+                
+                <details class="evaluator-detail">
+                    <summary>GPT-5.4 (Frontend Dev) &mdash; 4/10</summary>
+                    <div class="eval-grid">
+                        <div><span class="eval-label">Color Palette</span>black, white, purple gradients</div>
+                        <div><span class="eval-label">Layout</span>centered-text-over-gradient</div>
+                        <div class="eval-item-wide"><span class="eval-label">Generic Elements</span>Centered hero with bold headline and dual CTAs; six-feature card grid with line-item blurbs; three-tier pricing table with highlighted middle plan</div>
+                        <div class="eval-item-wide"><span class="eval-label">Distinctive Elements</span>Large analytics dashboard mockup with purple bar-chart motif; restrained dark theme with consistent violet accenting; floating status pill above hero headline</div>
+                    </div>
+                </details>
+                
+            </div>
+        </div>
+    </div>
+    
+    <div class="specimen">
+        <div class="specimen-header">
+            <h3>settings-page</h3>
+        </div>
+
+        <div class="specimen-verdict">
+            <div class="verdict-score">3.0 <span>/10</span></div>
+            <div class="verdict-text">6 of 6 evaluators agreed this design <strong>could belong to any settings page</strong>. Copy rated as <strong>generic</strong> originality. Color seen as <strong>default</strong>, typography as <strong>default</strong>.</div>
+        </div>
+
+        <div class="specimen-details">
+            <div class="specimen-detail-group">
+                <h4>Structure</h4>
+                
+                <div class="detail-row"><span class="detail-key">Layout</span><span class="detail-val">Sidebar With Content</span></div>
+                
+                <div class="detail-row"><span class="detail-key">Navigation</span><span class="detail-val">Sidebar</span></div>
+                
+                <div class="detail-row"><span class="detail-key">Footer</span><span class="detail-val">No Footer</span></div>
+                
+                <div class="detail-row"><span class="detail-key">Cards</span><span class="detail-val">Heavy</span></div>
+                
+                <div class="detail-row"><span class="detail-key">Whitespace</span><span class="detail-val">Generous</span></div>
+                
+            </div>
+            <div class="specimen-detail-group">
+                <h4>Evaluator Consensus</h4>
+                
+                <div class="detail-row">
+                    <span class="detail-key">Color</span>
+                    <span class="detail-val">
+                        
+                        <span class="tag tag-red">default: 4</span>
+                        
+                        <span class="tag tag-green">deliberate: 2</span>
+                        
+                    </span>
+                </div>
+                
+                <div class="detail-row">
+                    <span class="detail-key">Typography</span>
+                    <span class="detail-val">
+                        
+                        <span class="tag tag-red">default: 4</span>
+                        
+                        <span class="tag tag-green">deliberate: 1</span>
+                        
+                        <span class="tag tag-gray">uncertain: 1</span>
+                        
+                    </span>
+                </div>
+                
+                <div class="detail-row">
+                    <span class="detail-key">Copy</span>
+                    <span class="detail-val">
+                        
+                        <span class="tag tag-red">generic: 3</span>
+                        
+                        <span class="tag tag-amber">mixed: 3</span>
+                        
+                    </span>
+                </div>
+                
+                <div class="detail-row">
+                    <span class="detail-key">Brand Test</span>
+                    <span class="detail-val">
+                        
+                        <span class="tag tag-gray">interchangeable: 6</span>
+                        
+                    </span>
+                </div>
+                
+            </div>
+        </div>
+
+        <div class="specimen-layout">
+            <div class="specimen-screenshot" onclick="openLightbox('screenshots/settings-page/desktop.png')">
+                <img src="screenshots/settings-page/desktop.png" alt="settings-page screenshot" loading="lazy">
+                <span class="click-hint">Click to enlarge</span>
+            </div>
+            <div>
+                <div class="mini-swatches">
+                    
+                    <div class="mini-swatch" style="background:#ffffff;border:1px solid #ddd"></div>
+                    
+                    <div class="mini-swatch" style="background:#fafaf8"></div>
+                    
+                    <div class="mini-swatch" style="background:#f8f8f6"></div>
+                    
+                    <div class="mini-swatch" style="background:#2d5a3d"></div>
+                    
+                    <div class="mini-swatch" style="background:#e8f0eb"></div>
+                    
+                    <div class="mini-swatch" style="background:#d4d1ca"></div>
+                    
+                </div>
+
+                
+                <div class="tone-pills">
+                    
+                    <span class="tone-pill">administrative</span>
+                    
+                    <span class="tone-pill">clear</span>
+                    
+                    <span class="tone-pill">concise</span>
+                    
+                    <span class="tone-pill">direct</span>
+                    
+                    <span class="tone-pill">enterprise-neutral</span>
+                    
+                    <span class="tone-pill">functional</span>
+                    
+                </div>
+                
+
+                
+                <details class="evaluator-detail" style="margin-top:14px">
+                    <summary>Claude (Brand Critic) &mdash; 4/10</summary>
+                    <div class="eval-grid">
+                        <div><span class="eval-label">Color Palette</span>Warm cream olive green white</div>
+                        <div><span class="eval-label">Layout</span>sidebar-with-content</div>
+                        <div class="eval-item-wide"><span class="eval-label">Generic Elements</span>Toggle switches with standard styling, form input fields with basic borders, tabbed navigation bar with underline indicator</div>
+                        <div class="eval-item-wide"><span class="eval-label">Distinctive Elements</span>Warm cream/olive color palette instead of typical blue/gray SaaS, Danger Zone section with thoughtful warning treatment, API Keys table with colored status badges (Active/Expiring)</div>
+                    </div>
+                </details>
+                
+                <details class="evaluator-detail">
+                    <summary>Claude (Frontend Dev) &mdash; 5/10</summary>
+                    <div class="eval-grid">
+                        <div><span class="eval-label">Color Palette</span>Warm cream, olive green, white</div>
+                        <div><span class="eval-label">Layout</span>sidebar-with-content</div>
+                        <div class="eval-item-wide"><span class="eval-label">Generic Elements</span>Toggle switches with standard on/off styling, form input fields with basic borders, tabbed navigation bar at the top of content area</div>
+                        <div class="eval-item-wide"><span class="eval-label">Distinctive Elements</span>Warm earthy cream background with olive green accent color palette, the Danger Zone section with deliberate red/amber visual hierarchy, the Active Sessions section with device icons and contextual location data</div>
+                    </div>
+                </details>
+                
+                <details class="evaluator-detail">
+                    <summary>Gemini (Brand Critic) &mdash; 2/10</summary>
+                    <div class="eval-grid">
+                        <div><span class="eval-label">Color Palette</span>White, light gray, dark green</div>
+                        <div><span class="eval-label">Layout</span>sidebar-with-content</div>
+                        <div class="eval-item-wide"><span class="eval-label">Generic Elements</span>The left sidebar navigation with generic icons, standard toggle switches, boilerplate form input fields.</div>
+                        <div class="eval-item-wide"><span class="eval-label">Distinctive Elements</span>The dark green accent color for primary buttons, the specific Meridian checkmark logo, the very restrained 'Danger Zone' styling.</div>
+                    </div>
+                </details>
+                
+                <details class="evaluator-detail">
+                    <summary>Gemini (Frontend Dev) &mdash; 2/10</summary>
+                    <div class="eval-grid">
+                        <div><span class="eval-label">Color Palette</span>white, light gray, dark green</div>
+                        <div><span class="eval-label">Layout</span>sidebar-with-content</div>
+                        <div class="eval-item-wide"><span class="eval-label">Generic Elements</span>Toggle switches, input fields, tabular lists</div>
+                        <div class="eval-item-wide"><span class="eval-label">Distinctive Elements</span>Green primary buttons, 'Danger Zone' styling, subtle tab underlines</div>
+                    </div>
+                </details>
+                
+                <details class="evaluator-detail">
+                    <summary>GPT-5.4 (Brand Critic) &mdash; 2/10</summary>
+                    <div class="eval-grid">
+                        <div><span class="eval-label">Color Palette</span>off-white, sage green, gray</div>
+                        <div><span class="eval-label">Layout</span>sidebar-with-content</div>
+                        <div class="eval-item-wide"><span class="eval-label">Generic Elements</span>Left admin sidebar with simple line icons; white settings cards with rounded corners and thin gray borders; standard toggles, tables, and destructive danger zone styling</div>
+                        <div class="eval-item-wide"><span class="eval-label">Distinctive Elements</span>Restrained sage-green accent used consistently; nicely organized long-form settings hierarchy with tabs plus sectional cards; calm enterprise feel with muted status badges and understated danger treatment</div>
+                    </div>
+                </details>
+                
+                <details class="evaluator-detail">
+                    <summary>GPT-5.4 (Frontend Dev) &mdash; 3/10</summary>
+                    <div class="eval-grid">
+                        <div><span class="eval-label">Color Palette</span>off-white, forest green, gray</div>
+                        <div><span class="eval-label">Layout</span>sidebar-with-content</div>
+                        <div class="eval-item-wide"><span class="eval-label">Generic Elements</span>Left admin sidebar navigation, rounded settings cards with toggle rows, standard green primary button and tab underline treatment</div>
+                        <div class="eval-item-wide"><span class="eval-label">Distinctive Elements</span>Well-structured danger zone with warning callout, active sessions list with device/location metadata, API keys table with status pills and revoke actions</div>
+                    </div>
+                </details>
+                
+            </div>
+        </div>
+    </div>
+    
+</section>
+
+<footer>
+    <p>Generated by the Claude Frontend Aesthetics Benchmark. Specimens generated by Claude (via Claude Code CLI). Evaluated by Claude Opus 4.6, GPT-5.4, and Gemini 3.1 Pro via OpenRouter.</p>
+</footer>
+
+</div>
+
+<div class="lightbox" id="lightbox" onclick="closeLightbox()">
+    <img id="lightbox-img" src="" alt="Full-size screenshot">
+</div>
+
+<script>
+function openLightbox(src) {
+    document.getElementById('lightbox-img').src = src;
+    document.getElementById('lightbox').classList.add('active');
+}
+function closeLightbox() {
+    document.getElementById('lightbox').classList.remove('active');
+}
+document.addEventListener('keydown', e => { if (e.key === 'Escape') closeLightbox(); });
+</script>
+
+</body>
+</html>
